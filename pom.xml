@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <artifactId>platform-bom</artifactId>
+    <groupId>io.spring.platform</groupId>
+    <version>2.0.7.RELEASE</version>
+    <relativePath />
+  </parent>
+  <groupId>com.github.zhanhb</groupId>
+  <artifactId>ckfinder-spring-boot</artifactId>
+  <version>0.0.1.BUILD-SNAPSHOT</version>
+  <packaging>pom</packaging>
+  <name>CKFinder Spring Boot</name>
+  <description>Spring Boot Support for CKFinder</description>
+  
+  <licenses>
+    <license>
+      <name>LGPL, version 3</name>
+      <url>https://www.gnu.org/licenses/lgpl-3.0.txt</url>
+    </license>
+  </licenses>
+
+  <modules>
+    <module>ckfinder-spring-boot-starter</module>
+    <module>ckfinder-spring-boot-autoconfigure</module>
+    <module>ckfinder-spring-boot-samples</module>
+  </modules>
+
+  <scm>
+    <connection>scm:git:git@github.com:zhanhb/ckfinder-spring-boot.git</connection>
+    <developerConnection>scm:git:git@github.com:zhanhb/ckfinder-spring-boot.git</developerConnection>
+    <tag>HEAD</tag>
+    <url>https://github.com/zhanhb/ckfinder-spring-boot</url>
+  </scm>
+
+  <properties>
+    <com-junichi11-netbeans-changelf.enable>true</com-junichi11-netbeans-changelf.enable>
+    <com-junichi11-netbeans-changelf.lf-kind>LF</com-junichi11-netbeans-changelf.lf-kind>
+    <com-junichi11-netbeans-changelf.use-global>false</com-junichi11-netbeans-changelf.use-global>
+    <com-junichi11-netbeans-changelf.use-project>true</com-junichi11-netbeans-changelf.use-project>
+    <gson.version>2.7</gson.version>
+    <java.version>1.8</java.version>
+    <lombok.version>1.16.10</lombok.version>
+    <netbeans.compile.on.save>none</netbeans.compile.on.save>
+    <org-netbeans-modules-editor-indent.CodeStyle.project.indent-shift-width>2</org-netbeans-modules-editor-indent.CodeStyle.project.indent-shift-width>
+    <org-netbeans-modules-editor-indent.CodeStyle.project.spaces-per-tab>2</org-netbeans-modules-editor-indent.CodeStyle.project.spaces-per-tab>
+    <org-netbeans-modules-editor-indent.CodeStyle.project.tab-size>8</org-netbeans-modules-editor-indent.CodeStyle.project.tab-size>
+    <org-netbeans-modules-editor-indent.CodeStyle.project.text-limit-width>80</org-netbeans-modules-editor-indent.CodeStyle.project.text-limit-width>
+    <org-netbeans-modules-editor-indent.CodeStyle.project.text-line-wrap>words</org-netbeans-modules-editor-indent.CodeStyle.project.text-line-wrap>
+    <org-netbeans-modules-editor-indent.CodeStyle.usedProfile>project</org-netbeans-modules-editor-indent.CodeStyle.usedProfile>
+    <org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.importGroupsOrder>*;static *</org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.importGroupsOrder>
+    <org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.separateStaticImports>true</org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.separateStaticImports>
+  </properties>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>com.github.ekryd.sortpom</groupId>
+          <artifactId>sortpom-maven-plugin</artifactId>
+          <version>2.5.0</version>
+          <executions>
+            <execution>
+              <phase>verify</phase>
+              <goals>
+                <goal>sort</goal>
+              </goals>
+            </execution>
+          </executions>
+          <configuration>
+            <sortProperties>true</sortProperties>
+            <nrOfIndentSpace>2</nrOfIndentSpace>
+            <sortDependencies>groupId,artifactId</sortDependencies>
+            <sortPlugins>groupId,artifactId</sortPlugins>
+            <keepBlankLines>true</keepBlankLines>
+            <expandEmptyElements>false</expandEmptyElements>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.1</version>
+          <configuration>
+            <fork>true</fork>
+            <compilerArgs>
+              <arg>-J-Duser.language=en_us</arg>
+              <arg>-J-Dfile.encoding=${file.encoding}</arg>
+            </compilerArgs>
+            <showDeprecation>true</showDeprecation>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-release-plugin</artifactId>
+          <version>2.5.3</version>
+          <configuration>
+            <autoVersionSubmodules>true</autoVersionSubmodules>
+            <tagNameFormat>v@{project.version}</tagNameFormat>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+</project>

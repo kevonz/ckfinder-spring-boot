@@ -1,0 +1,61 @@
+ckfinder:
+  enabled: true
+  baseDir:
+  baseURL:
+  licenseKey:
+  licenseName:
+  imgWidth: 1600
+  imgHeight: 1200
+  imgQuality: 80
+  defaultResourceTypes:
+  types:
+    - name: Files
+      url: '%BASE_URL%files/'
+      directory: '%BASE_DIR%files'
+      maxSize: 0
+      allowedExtensions: 7z,aiff,asf,avi,bmp,csv,doc,docx,fla,flv,gif,gz,gzip,jpeg,jpg,mid,mov,mp3,mp4,mpc,mpeg,mpg,ods,odt,pdf,png,ppt,pptx,pxd,qt,ram,rar,rm,rmi,rmvb,rtf,sdc,sitd,swf,sxc,sxw,tar,tgz,tif,tiff,txt,vsd,wav,wma,wmv,xls,xlsx,zip
+      deniedExtensions: exe,jsp,jspx,asp,aspx
+    - name: Images
+      url: '%BASE_URL%images/'
+      directory: '%BASE_DIR%images'
+      maxSize: 0
+      allowedExtensions: bmp,gif,jpeg,jpg,png
+      deniedExtensions:
+#    - name: Flash
+#      url: %BASE_URL%flash/
+#      directory: %BASE_DIR%flash
+#      maxSize: 0
+#      allowedExtensions: swf,flv
+#      deniedExtensions:
+  userRoleSessionVar: CKFinder_UserRole
+  accessControls:
+    role: '*'
+    resourceType: '*'
+    folder: /
+    folderView: true
+    folderCreate: true
+    folderRename: true
+    folderDelete: true
+    fileView: true
+    fileUpload: true
+    fileRename: true
+    fileDelete: true
+  thumbs:
+    enabled: true
+    url: '%BASE_URL%_thumbs/'
+    directory: '%BASE_DIR%_thumbs'
+    directAccess: false
+    maxHeight: 100
+    maxWidth: 100
+    quality: 80
+  disallowUnsafeCharacters: false
+  checkDoubleExtension: true
+  checkSizeAfterScaling: true
+  secureImageUploads: true
+  htmlExtensions: html,htm,xml,js
+  forceASCII: false
+  enableCsrfProtection: false
+  hideFolders:
+  hideFiles:
+  plugins:
+  basePathBuilder:

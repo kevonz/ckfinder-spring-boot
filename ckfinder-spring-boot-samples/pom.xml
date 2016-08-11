@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <artifactId>ckfinder-spring-boot</artifactId>
+    <groupId>com.github.zhanhb</groupId>
+    <version>0.0.1.BUILD-SNAPSHOT</version>
+  </parent>
+  <artifactId>ckfinder-spring-boot-samples</artifactId>
+  <packaging>pom</packaging>
+  <name>CKFinder Spring Boot Samples</name>
+  <description>Spring Boot Samples for CKFinder</description>
+  <modules>
+    <module>ckfinder-spring-boot-yml</module>
+    <module>ckfinder-spring-boot-sample-xml</module>
+  </modules>
+</project>
