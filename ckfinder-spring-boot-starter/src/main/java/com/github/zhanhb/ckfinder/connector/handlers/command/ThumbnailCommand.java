@@ -18,7 +18,6 @@ import com.github.zhanhb.ckfinder.connector.utils.AccessControl;
 import com.github.zhanhb.ckfinder.connector.utils.FileUtils;
 import com.github.zhanhb.ckfinder.connector.utils.ImageUtils;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -29,6 +28,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Locale;
 import javax.servlet.ServletContext;
+import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -119,9 +119,9 @@ public class ThumbnailCommand extends Command {
   private String fullCurrentPath;
 
   @Override
-  public void setResponseHeader(HttpServletResponse response, ServletContext sc) {
+  public void setResponseHeader(HttpServletRequest request, HttpServletResponse response) {
     response.setHeader("Cache-Control", "public");
-    String mimetype = getMimeTypeOfImage(sc, response);
+    String mimetype = getMimeTypeOfImage(request.getServletContext(), response);
     if (mimetype != null) {
       response.setContentType(mimetype);
     }
@@ -158,11 +158,11 @@ public class ThumbnailCommand extends Command {
   }
 
   @Override
-  public void execute(OutputStream out) throws ConnectorException, IOException {
+  protected void execute(HttpServletResponse response) throws ConnectorException, IOException {
     validate();
     createThumb();
     if (setResponseHeadersAfterCreatingFile()) {
-      try {
+      try (ServletOutputStream out = response.getOutputStream()) {
         FileUtils.printFileContentToResponse(thumbFile, out);
       } catch (IOException e) {
         log.error("", e);
@@ -201,11 +201,11 @@ public class ThumbnailCommand extends Command {
    * @throws ConnectorException when validation fails.
    */
   private void validate() throws ConnectorException, IOException {
-    if (!this.getConfiguration().getThumbsEnabled()) {
+    if (!this.getConfiguration().isThumbsEnabled()) {
       throw new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_THUMBNAILS_DISABLED);
     }
-    if (!checkIfTypeExists(getType())) {
+    if (!isTypeExists(getType())) {
       this.setType(null);
       throw new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE, false);
@@ -217,12 +217,12 @@ public class ThumbnailCommand extends Command {
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_UNAUTHORIZED);
     }
 
-    if (!FileUtils.checkFileName(this.fileName)) {
+    if (!FileUtils.isFileNameInvalid(this.fileName)) {
       throw new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST);
     }
 
-    if (FileUtils.checkIfFileIsHidden(this.fileName, this.getConfiguration())) {
+    if (FileUtils.isFileHidden(this.fileName, this.getConfiguration())) {
       throw new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_FILE_NOT_FOUND);
     }

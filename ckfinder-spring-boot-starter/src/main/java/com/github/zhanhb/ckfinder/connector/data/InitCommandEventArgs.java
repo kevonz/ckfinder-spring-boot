@@ -11,21 +11,23 @@
  */
 package com.github.zhanhb.ckfinder.connector.data;
 
-import com.github.zhanhb.ckfinder.connector.utils.XMLCreator;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
+import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 /**
  * Event data for
- * {@link com.github.zhanhb.ckfinder.connector.configuration.Events#addInitCommandEventHandler(java.util.function.Supplier) }
+ * {@link com.github.zhanhb.ckfinder.connector.configuration.Events.Builder#initCommandEventHandler(java.util.function.Supplier) }
  * event.
  */
 @Getter
 @RequiredArgsConstructor
+@ToString
 public class InitCommandEventArgs extends EventArgs {
 
-  private final XMLCreator xml;
+  private final Document document;
   private final Element rootElement;
 
 }

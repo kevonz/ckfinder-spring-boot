@@ -16,12 +16,12 @@ import com.github.zhanhb.ckfinder.connector.data.PluginInfo;
 import com.github.zhanhb.ckfinder.connector.data.PluginParam;
 import lombok.Builder;
 import lombok.Getter;
-import org.springframework.context.ApplicationContext;
 import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 
 @Builder(builderClassName = "Builder")
 @Getter
-class WatermarkSettings {
+public class WatermarkSettings {
 
   public static final String WATERMARK = "watermark";
   public static final String SOURCE = "source";
@@ -32,11 +32,11 @@ class WatermarkSettings {
 
   /**
    * @param configuration
-   * @param applicationContext
+   * @param resourceLoader
    * @return
    * @throws Exception
    */
-  public static WatermarkSettings createFromConfiguration(IConfiguration configuration, ApplicationContext applicationContext) throws Exception {
+  public static WatermarkSettings createFromConfiguration(IConfiguration configuration, ResourceLoader resourceLoader) throws Exception {
     Builder settings = WatermarkSettings.builder();
 
     for (PluginInfo pluginInfo : configuration.getPlugins()) {
@@ -46,7 +46,7 @@ class WatermarkSettings {
           final String value = param.getValue();
           switch (name) {
             case SOURCE:
-              settings.source(applicationContext.getResource(value));
+              settings.source(resourceLoader.getResource(value));
               break;
             case TRANSPARENCY:
               settings.transparency(Float.parseFloat(value));

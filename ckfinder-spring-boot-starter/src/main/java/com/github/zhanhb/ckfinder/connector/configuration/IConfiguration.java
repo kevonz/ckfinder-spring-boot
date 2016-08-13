@@ -11,15 +11,13 @@
  */
 package com.github.zhanhb.ckfinder.connector.configuration;
 
-import com.github.zhanhb.ckfinder.connector.data.AccessControlLevel;
 import com.github.zhanhb.ckfinder.connector.data.PluginInfo;
 import com.github.zhanhb.ckfinder.connector.data.ResourceType;
+import com.github.zhanhb.ckfinder.connector.plugins.WatermarkSettings;
 import com.github.zhanhb.ckfinder.connector.utils.AccessControl;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.servlet.http.HttpServletRequest;
-import org.springframework.context.ApplicationContext;
 
 /**
  * Interface for configuration.
@@ -37,14 +35,6 @@ public interface IConfiguration {
   String DEFAULT_BASE_URL = "/userfiles";
 
   /**
-   * method to check if user is authenticated.
-   *
-   * @param request current request
-   * @return true if is
-   */
-  public boolean checkAuthentication(HttpServletRequest request);
-
-  /**
    * gets user role name sets in config.
    *
    * @return role name
@@ -57,20 +47,6 @@ public interface IConfiguration {
    * @return resources map
    */
   public Map<String, ResourceType> getTypes();
-
-  /**
-   * gets location of ckfinder in app. For ex. /ckfinder/.
-   *
-   * @return base directory
-   */
-  public String getBaseDir();
-
-  /**
-   * returns path to ckfinder with app name for ex. /webapp/ckfinder/.
-   *
-   * @return base url
-   */
-  public String getBaseURL();
 
   /**
    * returns license key.
@@ -91,14 +67,14 @@ public interface IConfiguration {
    *
    * @return max image height
    */
-  public Integer getImgWidth();
+  public int getImgWidth();
 
   /**
    * get image max height.
    *
    * @return max image height
    */
-  public Integer getImgHeight();
+  public int getImgHeight();
 
   /**
    * get image quality.
@@ -112,14 +88,14 @@ public interface IConfiguration {
    *
    * @return if connector is enabled
    */
-  public boolean enabled();
+  public boolean isEnabled();
 
   /**
    * check if thums are enabled.
    *
    * @return true if thums are enabled
    */
-  public boolean getThumbsEnabled();
+  public boolean isThumbsEnabled();
 
   /**
    * gets url to thumbs dir(path from baseUrl).
@@ -154,7 +130,7 @@ public interface IConfiguration {
    *
    * @return true if thumbs can be accessed directly
    */
-  public boolean getThumbsDirectAccess();
+  public boolean isThumbsDirectAccess();
 
   /**
    * gets max width of thumb.
@@ -169,13 +145,6 @@ public interface IConfiguration {
    * @return max height of thumb
    */
   public int getMaxThumbHeight();
-
-  /**
-   * get list of access control levels.
-   *
-   * @return list of access control levels
-   */
-  public List<AccessControlLevel> getAccessConrolLevels();
 
   /**
    * get regex for hidden folders.
@@ -196,14 +165,14 @@ public interface IConfiguration {
    *
    * @return configuration value.
    */
-  public boolean ckeckDoubleFileExtensions();
+  public boolean isCheckDoubleFileExtensions();
 
   /**
    * flag to check if force ASCII.
    *
    * @return true if force ASCII.
    */
-  public boolean forceASCII();
+  public boolean isForceAscii();
 
   /**
    * Checks if disallowed characters in file and folder names are turned on.
@@ -217,7 +186,7 @@ public interface IConfiguration {
    *
    * @return true if check.
    */
-  public boolean checkSizeAfterScaling();
+  public boolean isCheckSizeAfterScaling();
 
   /**
    * gets a list of plugins.
@@ -238,14 +207,14 @@ public interface IConfiguration {
    *
    * @return true if is set
    */
-  public boolean getSecureImageUploads();
+  public boolean isSecureImageUploads();
 
   /**
    * gets html extensions.
    *
    * @return list of html extensions.
    */
-  public List<String> getHTMLExtensions();
+  public List<String> getHtmlExtensions();
 
   /**
    * gets a list of default resource types.
@@ -255,22 +224,11 @@ public interface IConfiguration {
   public Set<String> getDefaultResourceTypes();
 
   /**
-   * gets UserFilePathBuilder implementation from configuration.
-   *
-   * @return IUserFilePathBuilder implementation
-   */
-  public IBasePathBuilder getBasePathBuilder();
-
-  /**
-   *
-   * @return the application context
-   */
-  public ApplicationContext getApplicationContext();
-
-  /**
    *
    * @return the configuration
    */
   public AccessControl getAccessControl();
+
+  public WatermarkSettings getWatermarkSettings();
 
 }

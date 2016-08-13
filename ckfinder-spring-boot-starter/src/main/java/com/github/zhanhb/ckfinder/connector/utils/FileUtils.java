@@ -26,7 +26,6 @@ import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -35,6 +34,8 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
 import javax.servlet.http.Part;
 
@@ -61,16 +62,14 @@ public class FileUtils {
    * @return list of files or subdirectories in selected directory
    * @throws java.io.IOException
    */
-  public static List<String> findChildrensList(Path dir,
-          boolean searchDirs) throws IOException {
-    @SuppressWarnings("CollectionWithoutInitialCapacity")
-    List<String> files = new ArrayList<>();
+  public static List<String> findChildrensList(Path dir, boolean searchDirs)
+          throws IOException {
     try (DirectoryStream<Path> ds = Files.newDirectoryStream(dir, file -> searchDirs == Files.isDirectory(file))) {
-      for (Path file : ds) {
-        files.add(file.getFileName().toString());
-      }
+      return StreamSupport.stream(ds.spliterator(), false)
+              .map(Path::getFileName)
+              .map(Object::toString)
+              .collect(Collectors.toList());
     }
-    return files;
   }
 
   /**
@@ -193,7 +192,7 @@ public class FileUtils {
    * @param conf connector configuration
    * @return true if matches.
    */
-  public static boolean checkIfDirIsHidden(String dirName,
+  public static boolean isDirectoryHidden(String dirName,
           IConfiguration conf) {
     if (dirName == null || dirName.isEmpty()) {
       return false;
@@ -217,7 +216,7 @@ public class FileUtils {
    * @param conf connector configuration
    * @return true if matches.
    */
-  public static boolean checkIfFileIsHidden(String fileName, IConfiguration conf) {
+  public static boolean isFileHidden(String fileName, IConfiguration conf) {
     return Pattern.compile(getHiddenFileOrFolderRegex(
             conf.getHiddenFiles())).matcher(fileName).matches();
   }
@@ -264,11 +263,11 @@ public class FileUtils {
    * @param fileName file name
    * @return true if file name is correct
    */
-  public static boolean checkFileName(String fileName) {
+  public static boolean isFileNameInvalid(String fileName) {
     return !(fileName == null || fileName.isEmpty()
             || fileName.charAt(fileName.length() - 1) == '.'
             || fileName.contains("..")
-            || checkFolderNamePattern(fileName));
+            || isFileNameCharacterInvalid(fileName));
   }
 
   /**
@@ -277,7 +276,7 @@ public class FileUtils {
    * @param fileName file name
    * @return true if it does contain disallowed characters.
    */
-  private static boolean checkFolderNamePattern(String fileName) {
+  private static boolean isFileNameCharacterInvalid(String fileName) {
     return invalidFileNamePatt.matcher(fileName).find();
   }
 
@@ -298,7 +297,7 @@ public class FileUtils {
       return 0;
     }
 
-    return checkSingleExtension(getFileExtension(fileName), type) ? 0 : 1;
+    return isExtensionAllowed(getFileExtension(fileName), type) ? 0 : 1;
   }
 
   /**
@@ -311,23 +310,22 @@ public class FileUtils {
    * allowed extensions is empty. The {@code false} is returned when file is on
    * denied extensions list or if none of the above conditions is met.
    */
-  private static boolean checkSingleExtension(String fileExt,
-          ResourceType type) {
-    StringTokenizer scanner = new StringTokenizer(type.getDeniedExtensions(), ",");
-    while (scanner.hasMoreTokens()) {
-      if (scanner.nextToken().equalsIgnoreCase(fileExt)) {
+  private static boolean isExtensionAllowed(String fileExt, ResourceType type) {
+    StringTokenizer st = new StringTokenizer(type.getDeniedExtensions(), ",");
+    while (st.hasMoreTokens()) {
+      if (st.nextToken().equalsIgnoreCase(fileExt)) {
         return false;
       }
     }
 
-    scanner = new StringTokenizer(type.getAllowedExtensions(), ",");
+    st = new StringTokenizer(type.getAllowedExtensions(), ",");
     //The allowedExtensions is empty. Allow everything that isn't dissallowed.
-    if (!scanner.hasMoreTokens()) {
+    if (!st.hasMoreTokens()) {
       return true;
     }
 
-    while (scanner.hasMoreTokens()) {
-      if (scanner.nextToken().equalsIgnoreCase(fileExt)) {
+    while (st.hasMoreTokens()) {
+      if (st.nextToken().equalsIgnoreCase(fileExt)) {
         return true;
       }
     }
@@ -378,7 +376,7 @@ public class FileUtils {
    * @param fileSize file size
    * @return true if file size isn't bigger then max size for type.
    */
-  public static boolean checkFileSize(ResourceType type, long fileSize) {
+  public static boolean isFileSizeInRange(ResourceType type, long fileSize) {
     final long maxSize = type.getMaxSize();
     return (maxSize == 0 || maxSize > fileSize);
   }
@@ -390,10 +388,10 @@ public class FileUtils {
    * @param configuration connector configuration
    * @return true if has
    */
-  public static boolean checkIfFileIsHtmlFile(String file,
+  public static boolean isExtensionHtml(String file,
           IConfiguration configuration) {
 
-    return configuration.getHTMLExtensions().contains(
+    return configuration.getHtmlExtensions().contains(
             getFileExtension(file).toLowerCase());
 
   }
@@ -473,7 +471,7 @@ public class FileUtils {
       if (subDirsList != null) {
         for (Path subDirsList1 : subDirsList) {
           String subDirName = subDirsList1.getFileName().toString();
-          if (!FileUtils.checkIfDirIsHidden(subDirName, configuration)
+          if (!FileUtils.isDirectoryHidden(subDirName, configuration)
                   && accessControl.checkFolderACL(resourceType,
                           dirPath + subDirName, currentUserRole, AccessControl.CKFINDER_CONNECTOR_ACL_FOLDER_VIEW)) {
             return true;
@@ -507,7 +505,7 @@ public class FileUtils {
     while (tokens.hasMoreTokens()) {
       currToken = tokens.nextToken();
       if (tokens.hasMoreElements()) {
-        cfileName = cfileName.concat(checkSingleExtension(currToken, type) ? "." : "_");
+        cfileName = cfileName.concat(isExtensionAllowed(currToken, type) ? "." : "_");
         cfileName = cfileName.concat(currToken);
       } else {
         cfileName = cfileName.concat(".".concat(currToken));
@@ -524,15 +522,15 @@ public class FileUtils {
     return fileNameHelper;
   }
 
-  public static boolean checkFolderName(String folderName, IConfiguration configuration) {
+  public static boolean isFolderNameInvalid(String folderName, IConfiguration configuration) {
     return !((configuration.isDisallowUnsafeCharacters()
             && (folderName.contains(".") || folderName.contains(";")))
-            || FileUtils.checkFolderNamePattern(folderName));
+            || FileUtils.isFileNameCharacterInvalid(folderName));
   }
 
-  public static boolean checkFileName(String fileName, IConfiguration configuration) {
+  public static boolean isFileNameInvalid(String fileName, IConfiguration configuration) {
     return !((configuration.isDisallowUnsafeCharacters() && fileName.contains(";"))
-            || !FileUtils.checkFileName(fileName));
+            || !FileUtils.isFileNameInvalid(fileName));
   }
 
   public static String backupWithBackSlash(String fileName, String toReplace) {

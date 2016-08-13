@@ -16,10 +16,14 @@ import com.github.zhanhb.ckfinder.connector.configuration.IConfiguration;
 import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
 import com.github.zhanhb.ckfinder.connector.utils.XMLCreator;
 import java.io.IOException;
-import java.io.OutputStream;
-import javax.servlet.ServletContext;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import lombok.AccessLevel;
+import lombok.Getter;
+import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 /**
@@ -27,20 +31,23 @@ import org.w3c.dom.Element;
  */
 public abstract class XMLCommand extends Command {
 
-  private final XMLCreator creator;
+  @Getter(AccessLevel.PROTECTED)
+  private Document document;
 
-  public XMLCommand() {
-    creator = new XMLCreator();
-  }
+  /**
+   *
+   * errors list.
+   */
+  private final List<ErrorNode> errorList = new ArrayList<>(4);
 
   /**
    * sets response headers for XML response.
    *
+   * @param request
    * @param response response
-   * @param sc servlet context
    */
   @Override
-  public void setResponseHeader(HttpServletResponse response, ServletContext sc) {
+  public void setResponseHeader(HttpServletRequest request, HttpServletResponse response) {
     response.setContentType("text/xml");
     response.setHeader("Cache-Control", "no-cache");
     response.setCharacterEncoding("utf-8");
@@ -50,14 +57,14 @@ public abstract class XMLCommand extends Command {
    * executes XML command. Creates XML response and writes it to response output
    * stream.
    *
-   * @param out response output stream
    * @throws ConnectorException to handle in error handler.
    */
   @Override
-  public void execute(OutputStream out) throws ConnectorException {
-    try {
+  @SuppressWarnings("FinalMethod")
+  protected final void execute(HttpServletResponse response) throws ConnectorException {
+    try (PrintWriter out = response.getWriter()) {
       createXMLResponse(getDataForXml());
-      out.write(getCreator().getDocumentAsText().getBytes("UTF-8"));
+      XMLCreator.INSTANCE.writeTo(document, out);
     } catch (ConnectorException e) {
       throw e;
     } catch (IOException e) {
@@ -72,16 +79,16 @@ public abstract class XMLCommand extends Command {
    * @throws ConnectorException to handle in error handler.
    */
   private void createXMLResponse(int errorNum) throws ConnectorException, IOException {
-    Element rootElement = getCreator().getDocument().createElement("Connector");
+    Element rootElement = document.createElement("Connector");
     if (getType() != null && !getType().isEmpty()) {
       rootElement.setAttribute("resourceType", getType());
     }
     if (mustAddCurrentFolderNode()) {
       createCurrentFolderNode(rootElement);
     }
-    getCreator().addErrorCommandToRoot(rootElement, errorNum, getErrorMsg(errorNum));
+    XMLCreator.INSTANCE.addErrorCommandToRoot(document, rootElement, errorNum, getErrorMsg(errorNum));
     createXMLChildNodes(errorNum, rootElement);
-    getCreator().getDocument().appendChild(rootElement);
+    document.appendChild(rootElement);
   }
 
   /**
@@ -120,8 +127,8 @@ public abstract class XMLCommand extends Command {
    *
    * @param rootElement XML root node.
    */
-  protected void createCurrentFolderNode(Element rootElement) {
-    Element element = getCreator().getDocument().createElement("CurrentFolder");
+  protected final void createCurrentFolderNode(Element rootElement) {
+    Element element = document.createElement("CurrentFolder");
     element.setAttribute("path", getCurrentFolder());
     element.setAttribute("url", getConfiguration().getTypes().get(getType()).getUrl()
             + getCurrentFolder());
@@ -130,10 +137,11 @@ public abstract class XMLCommand extends Command {
   }
 
   @Override
-  protected void initParams(HttpServletRequest request, IConfiguration configuration)
+  protected void initParams(HttpServletRequest request,
+          IConfiguration configuration)
           throws ConnectorException {
     super.initParams(request, configuration);
-    getCreator().createDocument();
+    document = XMLCreator.INSTANCE.createDocument();
   }
 
   /**
@@ -146,8 +154,42 @@ public abstract class XMLCommand extends Command {
     return getType() != null && getCurrentFolder() != null;
   }
 
-  protected XMLCreator getCreator() {
-    return creator;
+  /**
+   * save errors node to list.
+   *
+   * @param errorCode error code
+   * @param name file name
+   * @param path current folder
+   * @param type resource type
+   */
+  protected final void appendErrorNodeChild(int errorCode, String name,
+          String path, String type) {
+    errorList.add(ErrorNode.builder().type(type).name(name).folder(path).errorCode(errorCode).build());
+  }
+
+  /**
+   * checks if error list contains errors.
+   *
+   * @return true if there are any errors.
+   */
+  protected final boolean hasErrors() {
+    return !errorList.isEmpty();
+  }
+
+  /**
+   * add all error nodes from saved list to xml.
+   *
+   * @param errorsNode XML errors node
+   */
+  protected final void addErrors(Element errorsNode) {
+    for (ErrorNode item : errorList) {
+      Element childElem = document.createElement("Error");
+      childElem.setAttribute("code", String.valueOf(item.getErrorCode()));
+      childElem.setAttribute("name", item.getName());
+      childElem.setAttribute("type", item.getType());
+      childElem.setAttribute("folder", item.getFolder());
+      errorsNode.appendChild(childElem);
+    }
   }
 
 }

@@ -12,53 +12,48 @@
 package com.github.zhanhb.ckfinder.connector.configuration;
 
 import com.github.zhanhb.ckfinder.connector.data.AfterFileUploadEventArgs;
-import com.github.zhanhb.ckfinder.connector.data.AfterFileUploadEventHandler;
 import com.github.zhanhb.ckfinder.connector.data.BeforeExecuteCommandEventArgs;
-import com.github.zhanhb.ckfinder.connector.data.BeforeExecuteCommandEventHandler;
 import com.github.zhanhb.ckfinder.connector.data.EventArgs;
-import com.github.zhanhb.ckfinder.connector.data.EventCommandData;
 import com.github.zhanhb.ckfinder.connector.data.IEventHandler;
 import com.github.zhanhb.ckfinder.connector.data.InitCommandEventArgs;
-import com.github.zhanhb.ckfinder.connector.data.InitCommandEventHandler;
 import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
+import lombok.Builder;
+import lombok.Singular;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Provides support for event handlers.
  */
+@Builder(builderClassName = "Builder")
+@Slf4j
 public class Events {
 
-  private final List<EventCommandData<BeforeExecuteCommandEventArgs>> beforeExecuteCommandEventHandlers;
-  private final List<EventCommandData<AfterFileUploadEventArgs>> afterFileUploadEventHandlers;
-  private final List<EventCommandData<InitCommandEventArgs>> initCommandEventHandlers;
-
-  /**
-   * default constructor.
-   */
-  public Events() {
-    this.beforeExecuteCommandEventHandlers = new ArrayList<>(6);
-    this.afterFileUploadEventHandlers = new ArrayList<>(6);
-    this.initCommandEventHandlers = new ArrayList<>(6);
+  @SuppressWarnings({"BroadCatchBlock", "TooBroadCatch"})
+  private static <T extends EventArgs> boolean run(List<Supplier<? extends IEventHandler<T>>> handlers, T args, IConfiguration configuration) throws ConnectorException {
+    log.trace("{}", handlers);
+    for (Supplier<? extends IEventHandler<T>> eventCommandData : handlers) {
+      try {
+        IEventHandler<T> events = eventCommandData.get();
+        if (!events.runEventHandler(args, configuration)) {
+          return false;
+        }
+      } catch (ConnectorException ex) {
+        throw ex;
+      } catch (Exception e) {
+        throw new ConnectorException(e);
+      }
+    }
+    return true;
   }
 
-  /**
-   * register events handlers for event.
-   *
-   * @param eventHandler event class to register
-   */
-  public void addBeforeExecuteEventHandler(Supplier<? extends BeforeExecuteCommandEventHandler> eventHandler) {
-    beforeExecuteCommandEventHandlers.add(new EventCommandData<>(eventHandler));
-  }
-
-  public void addAfterFileUploadEventHandler(Supplier<? extends AfterFileUploadEventHandler> eventHandler) {
-    afterFileUploadEventHandlers.add(new EventCommandData<>(eventHandler));
-  }
-
-  public void addInitCommandEventHandler(Supplier<? extends InitCommandEventHandler> eventHandler) {
-    initCommandEventHandlers.add(new EventCommandData<>(eventHandler));
-  }
+  @Singular
+  private final List<Supplier<? extends IEventHandler<BeforeExecuteCommandEventArgs>>> beforeExecuteCommandEventHandlers;
+  @Singular
+  private final List<Supplier<? extends IEventHandler<AfterFileUploadEventArgs>>> afterFileUploadEventHandlers;
+  @Singular
+  private final List<Supplier<? extends IEventHandler<InitCommandEventArgs>>> initCommandEventHandlers;
 
   /**
    * run event handlers for selected event.
@@ -85,23 +80,6 @@ public class Events {
       // impossible
       throw new AssertionError(ex);
     }
-  }
-
-  @SuppressWarnings({"BroadCatchBlock", "TooBroadCatch"})
-  private <T extends EventArgs> boolean run(List<EventCommandData<T>> handlers, T args, IConfiguration configuration) throws ConnectorException {
-    for (EventCommandData<T> eventCommandData : handlers) {
-      try {
-        IEventHandler<T> events = eventCommandData.getEventListener().get();
-        if (!events.runEventHandler(args, configuration)) {
-          return false;
-        }
-      } catch (ConnectorException ex) {
-        throw ex;
-      } catch (Exception e) {
-        throw new ConnectorException(e);
-      }
-    }
-    return true;
   }
 
 }

@@ -48,7 +48,7 @@ public class RenameFolderCommand extends XMLCommand implements IPostCommand {
    * @param rootElement XML root element.
    */
   private void createRenamedFolderNode(Element rootElement) {
-    Element element = getCreator().getDocument().createElement("RenamedFolder");
+    Element element = getDocument().createElement("RenamedFolder");
     element.setAttribute("newName", this.newFolderName);
     element.setAttribute("newPath", this.newFolderPath);
     element.setAttribute("newUrl", getConfiguration().getTypes().get(this.getType()).getUrl() + this.newFolderPath);
@@ -60,13 +60,12 @@ public class RenameFolderCommand extends XMLCommand implements IPostCommand {
   protected int getDataForXml() throws IOException {
 
     try {
-      checkParam(newFolderName);
-
+      isRequestPathValid(newFolderName);
     } catch (ConnectorException e) {
       return e.getErrorCode();
     }
 
-    if (!checkIfTypeExists(getType())) {
+    if (!isTypeExists(getType())) {
       this.setType(null);
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE;
     }
@@ -78,12 +77,12 @@ public class RenameFolderCommand extends XMLCommand implements IPostCommand {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_UNAUTHORIZED;
     }
 
-    if (getConfiguration().forceASCII()) {
+    if (getConfiguration().isForceAscii()) {
       this.newFolderName = FileUtils.convertToASCII(this.newFolderName);
     }
 
-    if (FileUtils.checkIfDirIsHidden(this.newFolderName, getConfiguration())
-            || !FileUtils.checkFolderName(this.newFolderName, getConfiguration())) {
+    if (FileUtils.isDirectoryHidden(this.newFolderName, getConfiguration())
+            || !FileUtils.isFolderNameInvalid(this.newFolderName, getConfiguration())) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_NAME;
     }
 

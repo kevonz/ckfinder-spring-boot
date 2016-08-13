@@ -48,7 +48,7 @@ public class RenameFileCommand extends XMLCommand implements IPostCommand {
    * @param rootElement XML root node
    */
   private void createRenamedFileNode(Element rootElement) {
-    Element element = getCreator().getDocument().createElement("RenamedFile");
+    Element element = getDocument().createElement("RenamedFile");
     element.setAttribute("name", this.fileName);
     if (renamed) {
       element.setAttribute("newName", this.newFileName);
@@ -65,7 +65,7 @@ public class RenameFileCommand extends XMLCommand implements IPostCommand {
   @Override
   protected int getDataForXml() throws IOException {
 
-    if (!checkIfTypeExists(getType())) {
+    if (!isTypeExists(getType())) {
       this.setType(null);
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE;
     }
@@ -75,7 +75,7 @@ public class RenameFileCommand extends XMLCommand implements IPostCommand {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_UNAUTHORIZED;
     }
 
-    if (getConfiguration().forceASCII()) {
+    if (getConfiguration().isForceAscii()) {
       this.newFileName = FileUtils.convertToASCII(this.newFileName);
     }
 
@@ -89,17 +89,17 @@ public class RenameFileCommand extends XMLCommand implements IPostCommand {
     if (checkFileExt == 1) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_EXTENSION;
     }
-    if (getConfiguration().ckeckDoubleFileExtensions()) {
+    if (getConfiguration().isCheckDoubleFileExtensions()) {
       this.newFileName = FileUtils.renameFileWithBadExt(this.getConfiguration().getTypes().get(this.getType()), this.newFileName);
     }
 
-    if (!FileUtils.checkFileName(this.fileName)
-            || FileUtils.checkIfFileIsHidden(this.fileName, getConfiguration())) {
+    if (!FileUtils.isFileNameInvalid(this.fileName)
+            || FileUtils.isFileHidden(this.fileName, getConfiguration())) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
     }
 
-    if (!FileUtils.checkFileName(this.newFileName, getConfiguration())
-            || FileUtils.checkIfFileIsHidden(this.newFileName, getConfiguration())) {
+    if (!FileUtils.isFileNameInvalid(this.newFileName, getConfiguration())
+            || FileUtils.isFileHidden(this.newFileName, getConfiguration())) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_NAME;
     }
 
@@ -155,7 +155,6 @@ public class RenameFileCommand extends XMLCommand implements IPostCommand {
             this.newFileName);
 
     Files.move(thumbFile, newThumbFile);
-
   }
 
   @Override

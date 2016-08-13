@@ -2,9 +2,9 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <artifactId>platform-bom</artifactId>
-    <groupId>io.spring.platform</groupId>
-    <version>2.0.7.RELEASE</version>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <groupId>org.springframework.boot</groupId>
+    <version>1.4.0.RELEASE</version>
     <relativePath />
   </parent>
   <groupId>com.github.zhanhb</groupId>
@@ -13,13 +13,24 @@
   <packaging>pom</packaging>
   <name>CKFinder Spring Boot</name>
   <description>Spring Boot Support for CKFinder</description>
-  
+
   <licenses>
     <license>
       <name>LGPL, version 3</name>
       <url>https://www.gnu.org/licenses/lgpl-3.0.txt</url>
     </license>
   </licenses>
+
+  <developers>
+    <developer>
+      <id>zhanhb</id>
+      <name>Huangbin Zhan</name>
+      <email>zhanhb88 at gmail.com</email>
+      <roles>
+        <role>Project lead</role>
+      </roles>
+    </developer>
+  </developers>
 
   <modules>
     <module>ckfinder-spring-boot-starter</module>
@@ -34,14 +45,26 @@
     <url>https://github.com/zhanhb/ckfinder-spring-boot</url>
   </scm>
 
+  <distributionManagement>
+    <repository>
+      <id>ossrh</id>
+      <name>Nexus Release Repository</name>
+      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+    </repository>
+    <snapshotRepository>
+      <id>ossrh</id>
+      <name>Sonatype Nexus Snapshots</name>
+      <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+    </snapshotRepository>
+  </distributionManagement>
+
   <properties>
     <com-junichi11-netbeans-changelf.enable>true</com-junichi11-netbeans-changelf.enable>
     <com-junichi11-netbeans-changelf.lf-kind>LF</com-junichi11-netbeans-changelf.lf-kind>
     <com-junichi11-netbeans-changelf.use-global>false</com-junichi11-netbeans-changelf.use-global>
     <com-junichi11-netbeans-changelf.use-project>true</com-junichi11-netbeans-changelf.use-project>
-    <gson.version>2.7</gson.version>
+    <findbugs-jsr305.version>3.0.1</findbugs-jsr305.version>
     <java.version>1.8</java.version>
-    <lombok.version>1.16.10</lombok.version>
     <netbeans.compile.on.save>none</netbeans.compile.on.save>
     <org-netbeans-modules-editor-indent.CodeStyle.project.indent-shift-width>2</org-netbeans-modules-editor-indent.CodeStyle.project.indent-shift-width>
     <org-netbeans-modules-editor-indent.CodeStyle.project.spaces-per-tab>2</org-netbeans-modules-editor-indent.CodeStyle.project.spaces-per-tab>
@@ -52,6 +75,16 @@
     <org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.importGroupsOrder>*;static *</org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.importGroupsOrder>
     <org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.separateStaticImports>true</org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.separateStaticImports>
   </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>com.google.code.findbugs</groupId>
+        <artifactId>jsr305</artifactId>
+        <version>${findbugs-jsr305.version}</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 
   <build>
     <pluginManagement>

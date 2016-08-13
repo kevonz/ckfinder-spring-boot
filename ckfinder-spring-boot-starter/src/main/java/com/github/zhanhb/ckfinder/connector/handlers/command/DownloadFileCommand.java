@@ -17,14 +17,12 @@ import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
 import com.github.zhanhb.ckfinder.connector.utils.AccessControl;
 import com.github.zhanhb.ckfinder.connector.utils.FileUtils;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import javax.mail.internet.MimeUtility;
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -41,18 +39,16 @@ public class DownloadFileCommand extends Command {
    * filename request param.
    */
   private String fileName;
-  private Object format;
   private String newFileName;
 
   /**
    * executes the download file command. Writes file to response.
    *
-   * @param out output stream
    * @throws ConnectorException when something went wrong during reading file.
    */
   @Override
-  public void execute(OutputStream out) throws ConnectorException {
-    if (!checkIfTypeExists(getType())) {
+  protected void execute(HttpServletResponse response) throws ConnectorException {
+    if (!isTypeExists(getType())) {
       this.setType(null);
       throw new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE, false);
@@ -67,26 +63,26 @@ public class DownloadFileCommand extends Command {
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_UNAUTHORIZED);
     }
 
-    if (!FileUtils.checkFileName(this.fileName)
+    if (!FileUtils.isFileNameInvalid(this.fileName)
             || FileUtils.checkFileExtension(this.fileName,
                     this.getConfiguration().getTypes().get(this.getType())) == 1) {
       throw new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST);
     }
 
-    if (FileUtils.checkIfDirIsHidden(this.getCurrentFolder(), getConfiguration())) {
+    if (FileUtils.isDirectoryHidden(this.getCurrentFolder(), getConfiguration())) {
       throw new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST);
     }
     try {
       if (!Files.exists(file)
               || !Files.isRegularFile(file)
-              || FileUtils.checkIfFileIsHidden(this.fileName, this.getConfiguration())) {
+              || FileUtils.isFileHidden(this.fileName, this.getConfiguration())) {
         throw new ConnectorException(
                 Constants.Errors.CKFINDER_CONNECTOR_ERROR_FILE_NOT_FOUND);
       }
 
-      FileUtils.printFileContentToResponse(file, out);
+      FileUtils.printFileContentToResponse(file, response.getOutputStream());
     } catch (IOException e) {
       throw new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_ACCESS_DENIED, e);
@@ -125,33 +121,28 @@ public class DownloadFileCommand extends Command {
   /**
    * Sets response headers.
    *
+   * @param request request
    * @param response response
-   * @param sc servlet context
    */
   @Override
-  public void setResponseHeader(HttpServletResponse response,
-          ServletContext sc) {
-    String mimetype = sc.getMimeType(fileName);
+  public void setResponseHeader(HttpServletRequest request, HttpServletResponse response) {
+    String mimetype = request.getServletContext().getMimeType(fileName);
     response.setCharacterEncoding("utf-8");
-    if (this.format != null && this.format.equals("text")) {
-      response.setContentType("text/plain; charset=utf-8");
+
+    if (mimetype != null) {
+      response.setContentType(mimetype);
     } else {
-      if (mimetype != null) {
-        response.setContentType(mimetype);
-      } else {
-        response.setContentType("application/octet-stream");
-      }
-      if (file != null) {
-        try {
-          response.setContentLengthLong(Files.size(file));
-        } catch (IOException ex) {
-        }
-      }
-
-      response.setHeader("Content-Disposition", "attachment; filename=\""
-              + this.newFileName + "\"");
-
+      response.setContentType("application/octet-stream");
     }
+    if (file != null) {
+      try {
+        response.setContentLengthLong(Files.size(file));
+      } catch (IOException ex) {
+      }
+    }
+
+    response.setHeader("Content-Disposition", "attachment; filename=\""
+            + this.newFileName + "\"");
 
     response.setHeader("Cache-Control", "cache, must-revalidate");
     response.setHeader("Pragma", "public");

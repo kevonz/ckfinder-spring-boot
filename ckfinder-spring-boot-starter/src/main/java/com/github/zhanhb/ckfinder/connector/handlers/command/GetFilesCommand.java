@@ -83,7 +83,7 @@ public class GetFilesCommand extends XMLCommand {
    */
   @Override
   protected int getDataForXml() throws IOException {
-    if (!checkIfTypeExists(getType())) {
+    if (!isTypeExists(getType())) {
       this.setType(null);
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE;
     }
@@ -118,7 +118,7 @@ public class GetFilesCommand extends XMLCommand {
   private void filterListByHiddenAndNotAllowed() {
     List<String> tmpFiles = this.files.stream()
             .filter(file -> (FileUtils.checkFileExtension(file, this.getConfiguration().getTypes().get(this.getType())) == 0
-                    && !FileUtils.checkIfFileIsHidden(file, getConfiguration())))
+                    && !FileUtils.isFileHidden(file, getConfiguration())))
             .collect(Collectors.toList());
 
     this.files.clear();
@@ -132,7 +132,7 @@ public class GetFilesCommand extends XMLCommand {
    * @param rootElement root element from XML.
    */
   private void createFilesData(Element rootElement) throws IOException {
-    Element element = getCreator().getDocument().createElement("Files");
+    Element element = getDocument().createElement("Files");
     for (String filePath : files) {
       Path file = Paths.get(this.fullCurrentPath, filePath);
       if (Files.exists(file)) {
@@ -146,7 +146,7 @@ public class GetFilesCommand extends XMLCommand {
             elementData.attribute(new XmlAttribute("thumb", attr));
           }
         }
-        elementData.build().addToDocument(getCreator().getDocument(), element);
+        elementData.build().addToDocument(getDocument(), element);
       }
     }
     rootElement.appendChild(element);
@@ -192,8 +192,8 @@ public class GetFilesCommand extends XMLCommand {
    * @return true if show thumbs
    */
   private boolean isAddThumbsAttr() {
-    return getConfiguration().getThumbsEnabled()
-            && (getConfiguration().getThumbsDirectAccess()
+    return getConfiguration().isThumbsEnabled()
+            && (getConfiguration().isThumbsDirectAccess()
             || isShowThumbs());
   }
 

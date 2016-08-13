@@ -40,6 +40,7 @@ public class ImageResizeInfoCommand extends XMLCommand implements BeforeExecuteC
   @Override
   public boolean runEventHandler(BeforeExecuteCommandEventArgs args, IConfiguration configuration)
           throws ConnectorException {
+    log.debug("runEventHandler: {} {}", args, configuration);
     if ("ImageResizeInfo".equals(args.getCommand())) {
       this.runCommand(args.getRequest(), args.getResponse(), configuration);
       return false;
@@ -55,7 +56,7 @@ public class ImageResizeInfoCommand extends XMLCommand implements BeforeExecuteC
   }
 
   private void createImageInfoNode(Element rootElement) {
-    Element element = getCreator().getDocument().createElement("ImageInfo");
+    Element element = getDocument().createElement("ImageInfo");
     element.setAttribute("width", String.valueOf(imageWidth));
     element.setAttribute("height", String.valueOf(imageHeight));
     rootElement.appendChild(element);
@@ -63,7 +64,7 @@ public class ImageResizeInfoCommand extends XMLCommand implements BeforeExecuteC
 
   @Override
   protected int getDataForXml() {
-    if (!checkIfTypeExists(getType())) {
+    if (!isTypeExists(getType())) {
       this.setType(null);
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE;
     }
@@ -74,8 +75,8 @@ public class ImageResizeInfoCommand extends XMLCommand implements BeforeExecuteC
     }
 
     if (fileName == null || fileName.isEmpty()
-            || !FileUtils.checkFileName(this.fileName)
-            || FileUtils.checkIfFileIsHidden(this.fileName, this.getConfiguration())) {
+            || !FileUtils.isFileNameInvalid(this.fileName)
+            || FileUtils.isFileHidden(this.fileName, this.getConfiguration())) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
     }
 

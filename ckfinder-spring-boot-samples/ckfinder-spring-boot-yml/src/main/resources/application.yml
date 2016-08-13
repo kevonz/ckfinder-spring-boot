@@ -22,8 +22,8 @@ ckfinder:
       allowedExtensions: bmp,gif,jpeg,jpg,png
       deniedExtensions:
 #    - name: Flash
-#      url: %BASE_URL%flash/
-#      directory: %BASE_DIR%flash
+#      url: '%BASE_URL%flash/'
+#      directory: '%BASE_DIR%flash'
 #      maxSize: 0
 #      allowedExtensions: swf,flv
 #      deniedExtensions:

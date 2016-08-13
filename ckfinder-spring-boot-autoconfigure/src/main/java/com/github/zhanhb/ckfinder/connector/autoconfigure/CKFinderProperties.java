@@ -15,6 +15,7 @@
  */
 package com.github.zhanhb.ckfinder.connector.autoconfigure;
 
+import java.util.Collections;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
@@ -41,7 +42,7 @@ public class CKFinderProperties {
   private Integer imgHeight;
   private Float imgQuality;
   private String defaultResourceTypes;
-  private List<Type> types;
+  private List<Type> types = Collections.emptyList();
   private Thumbs thumbs = new Thumbs();
   private Boolean disallowUnsafeCharacters;
   private Boolean checkDoubleExtension;
@@ -52,7 +53,6 @@ public class CKFinderProperties {
   private Boolean enableCsrfProtection;
   private String hideFolders;
   private String hideFiles;
-  private String basePathBuilder;
 
   @Getter
   @Setter

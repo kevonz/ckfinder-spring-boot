@@ -15,9 +15,11 @@
  */
 package com.github.zhanhb.ckfinder.connector.autoconfigure;
 
+import com.github.zhanhb.ckfinder.connector.configuration.DefaultPathBuilder;
+import com.github.zhanhb.ckfinder.connector.configuration.IBasePathBuilder;
 import com.github.zhanhb.ckfinder.connector.configuration.IConfiguration;
-import com.google.gson.GsonBuilder;
-import javax.annotation.PostConstruct;
+import com.github.zhanhb.ckfinder.connector.configuration.XmlConfigurationParser;
+import javax.servlet.ServletContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
@@ -25,6 +27,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.ResourceLoader;
 
 /**
  *
@@ -36,12 +39,24 @@ import org.springframework.context.annotation.Configuration;
 @SuppressWarnings("PublicInnerClass")
 public class CKFinderAutoConfiguration {
 
-  @Autowired
-  private CKFinderProperties properties;
+  @ConditionalOnMissingBean(IBasePathBuilder.class)
+  public static class DefaultBasePathBuilderConfiguration {
 
-  @PostConstruct
-  public void init() {
-    System.out.println(new GsonBuilder().setPrettyPrinting().create().toJson(properties));
+    @Autowired
+    private CKFinderProperties properties;
+
+    @Autowired
+    private ApplicationContext applicationContext;
+
+    @Bean
+    public DefaultPathBuilder pathBuilder() {
+      ServletContext servletContext = applicationContext.getBean(ServletContext.class);
+      String baseDir = servletContext.getRealPath(IConfiguration.DEFAULT_BASE_URL);
+      return DefaultPathBuilder.builder()
+              .baseDir(baseDir)
+              .baseUrl(IConfiguration.DEFAULT_BASE_URL)
+              .build();
+    }
   }
 
   @ConditionalOnMissingBean(IConfiguration.class)
@@ -50,14 +65,9 @@ public class CKFinderAutoConfiguration {
     @Autowired
     private CKFinderProperties properties;
 
-    @PostConstruct
-    public void init() {
-      System.out.println(new GsonBuilder().setPrettyPrinting().create().toJson(properties));
-    }
-
     @Bean
-    public com.github.zhanhb.ckfinder.connector.configuration.Configuration configuration(ApplicationContext context) throws Exception {
-      return new com.github.zhanhb.ckfinder.connector.configuration.Configuration(context, "/tt");
+    public IConfiguration configuration(ResourceLoader resourceLoader, IBasePathBuilder basePathBuilder) throws Exception {
+      return XmlConfigurationParser.INSTANCE.parse(resourceLoader, basePathBuilder, "/WEB-INF/config.xml");
     }
 
   }

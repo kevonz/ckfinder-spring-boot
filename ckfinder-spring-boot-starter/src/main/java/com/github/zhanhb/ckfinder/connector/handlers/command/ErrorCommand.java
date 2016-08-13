@@ -18,12 +18,10 @@ import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
 import com.github.zhanhb.ckfinder.connector.utils.FileUtils;
 import com.github.zhanhb.ckfinder.connector.utils.PathUtils;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.regex.Pattern;
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.Setter;
@@ -35,10 +33,9 @@ public class ErrorCommand extends Command implements IErrorCommand {
 
   @Setter
   private ConnectorException connectorException;
-  private HttpServletResponse response;
 
   @Override
-  public void execute(OutputStream out) throws ConnectorException {
+  protected void execute(HttpServletResponse response) throws ConnectorException {
     try {
       response.setHeader("X-CKFinder-Error", String.valueOf(connectorException.getErrorCode()));
       switch (connectorException.getErrorCode()) {
@@ -61,9 +58,8 @@ public class ErrorCommand extends Command implements IErrorCommand {
   }
 
   @Override
-  public void setResponseHeader(HttpServletResponse response, ServletContext sc) {
+  public void setResponseHeader(HttpServletRequest request, HttpServletResponse response) {
     response.reset();
-    this.response = response;
   }
 
   @Override
@@ -82,14 +78,14 @@ public class ErrorCommand extends Command implements IErrorCommand {
    * @throws ConnectorException it should never throw an exception
    */
   @Override
-  protected boolean checkParam(String reqParam) throws ConnectorException {
+  protected boolean isRequestPathValid(String reqParam) throws ConnectorException {
     return reqParam == null || reqParam.isEmpty()
             || !Pattern.compile(Constants.INVALID_PATH_REGEX).matcher(reqParam).find();
   }
 
   @Override
-  protected boolean checkHidden() throws ConnectorException {
-    if (FileUtils.checkIfDirIsHidden(this.getCurrentFolder(), getConfiguration())) {
+  protected boolean isHidden() throws ConnectorException {
+    if (FileUtils.isDirectoryHidden(this.getCurrentFolder(), getConfiguration())) {
       this.connectorException = new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_CONNECTOR_DISABLED);
       return true;
@@ -98,9 +94,9 @@ public class ErrorCommand extends Command implements IErrorCommand {
   }
 
   @Override
-  protected boolean checkConnector(HttpServletRequest request)
+  protected boolean isConnectorEnabled()
           throws ConnectorException {
-    if (!getConfiguration().enabled() || !getConfiguration().checkAuthentication(request)) {
+    if (!getConfiguration().isEnabled()) {
       this.connectorException = new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_CONNECTOR_DISABLED);
       return false;
@@ -109,10 +105,10 @@ public class ErrorCommand extends Command implements IErrorCommand {
   }
 
   @Override
-  protected boolean checkIfCurrFolderExists(HttpServletRequest request)
+  protected boolean isCurrFolderExists(HttpServletRequest request)
           throws ConnectorException {
     String tmpType = request.getParameter("type");
-    if (checkIfTypeExists(tmpType)) {
+    if (isTypeExists(tmpType)) {
       Path currDir = Paths.get(getConfiguration().getTypes().get(tmpType).getPath()
               + this.getCurrentFolder());
       if (Files.exists(currDir) && Files.isDirectory(currDir)) {
@@ -127,7 +123,7 @@ public class ErrorCommand extends Command implements IErrorCommand {
   }
 
   @Override
-  protected boolean checkIfTypeExists(String type) {
+  protected boolean isTypeExists(String type) {
     ResourceType testType = getConfiguration().getTypes().get(type);
     if (testType == null) {
       this.connectorException = new ConnectorException(

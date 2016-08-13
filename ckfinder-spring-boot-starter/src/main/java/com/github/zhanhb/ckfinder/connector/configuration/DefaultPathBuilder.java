@@ -9,20 +9,21 @@
  * modifying or distribute this file or part of its contents. The contents of
  * this file is part of the Source Code of CKFinder.
  */
-package com.github.zhanhb.ckfinder.connector.data;
+package com.github.zhanhb.ckfinder.connector.configuration;
 
-import java.util.function.Supplier;
+import lombok.Builder;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
- *
- * @param <T>
+ * Path builder that creates default values of baseDir and baseURL.
  */
-@RequiredArgsConstructor
+@Builder(builderClassName = "Builder")
 @Getter
-public class EventCommandData<T extends EventArgs> {
+@Slf4j
+public class DefaultPathBuilder implements IBasePathBuilder {
 
-  private final Supplier<? extends IEventHandler<T>> eventListener;
+  private final String baseDir;
+  private final String baseUrl;
 
 }

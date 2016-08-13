@@ -14,14 +14,16 @@ package com.github.zhanhb.ckfinder.connector.data;
 import java.nio.file.Path;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 
 /**
  * Event data for
- * {@link com.github.zhanhb.ckfinder.connector.configuration.Events#addAfterFileUploadEventHandler(java.util.function.Supplier) }
+ * {@link com.github.zhanhb.ckfinder.connector.configuration.Events.Builder#afterFileUploadEventHandler(java.util.function.Supplier) }
  * event.
  */
 @Getter
 @RequiredArgsConstructor
+@ToString
 public class AfterFileUploadEventArgs extends EventArgs {
 
   private final String currentFolder;

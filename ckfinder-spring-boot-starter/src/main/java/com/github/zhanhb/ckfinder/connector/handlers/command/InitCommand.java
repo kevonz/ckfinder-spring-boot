@@ -73,18 +73,15 @@ public class InitCommand extends XMLCommand {
    */
   private void createConnectorData(Element rootElement) {
     // connector info
-    Element element = getCreator().getDocument().createElement("ConnectorInfo");
-    element.setAttribute("enabled", String.valueOf(getConfiguration().enabled()));
+    Element element = getDocument().createElement("ConnectorInfo");
+    element.setAttribute("enabled", String.valueOf(getConfiguration().isEnabled()));
     element.setAttribute("s", getLicenseName());
-    element.setAttribute("c",
-            createLicenseKey(getConfiguration().getLicenseKey()));
-    element.setAttribute("thumbsEnabled", String.valueOf(
-            getConfiguration().getThumbsEnabled()));
-    element.setAttribute("uploadCheckImages", getConfiguration().checkSizeAfterScaling() ? "false" : "true");
-    if (getConfiguration().getThumbsEnabled()) {
+    element.setAttribute("c", createLicenseKey(getConfiguration().getLicenseKey()));
+    element.setAttribute("thumbsEnabled", String.valueOf(getConfiguration().isThumbsEnabled()));
+    element.setAttribute("uploadCheckImages", getConfiguration().isCheckSizeAfterScaling() ? "false" : "true");
+    if (getConfiguration().isThumbsEnabled()) {
       element.setAttribute("thumbsUrl", getConfiguration().getThumbsURL());
-      element.setAttribute("thumbsDirectAccess", String.valueOf(
-              getConfiguration().getThumbsDirectAccess()));
+      element.setAttribute("thumbsDirectAccess", String.valueOf(getConfiguration().isThumbsDirectAccess()));
       element.setAttribute("thumbsWidth", String.valueOf(getConfiguration().getMaxThumbWidth()));
       element.setAttribute("thumbsHeight", String.valueOf(getConfiguration().getMaxThumbHeight()));
     }
@@ -158,10 +155,10 @@ public class InitCommand extends XMLCommand {
    * @param rootElement root element in XML
    */
   public void createPluginsData(Element rootElement) {
-    Element element = getCreator().getDocument().createElement("PluginsInfo");
+    Element element = getDocument().createElement("PluginsInfo");
     rootElement.appendChild(element);
     if (getConfiguration().getEvents() != null) {
-      InitCommandEventArgs args = new InitCommandEventArgs(this.getCreator(), rootElement);
+      InitCommandEventArgs args = new InitCommandEventArgs(getDocument(), rootElement);
       getConfiguration().getEvents().runInitCommand(args, getConfiguration());
     }
   }
@@ -175,7 +172,7 @@ public class InitCommand extends XMLCommand {
   @SuppressWarnings("CollectionWithoutInitialCapacity")
   private void createResouceTypesData(Element rootElement) throws Exception {
     //resurcetypes
-    Element element = getCreator().getDocument().createElement("ResourceTypes");
+    Element element = getDocument().createElement("ResourceTypes");
     rootElement.appendChild(element);
 
     Set<String> types;
@@ -192,7 +189,7 @@ public class InitCommand extends XMLCommand {
               && getConfiguration().getAccessControl().checkFolderACL(key, "/", this.getUserRole(),
                       AccessControl.CKFINDER_CONNECTOR_ACL_FOLDER_VIEW)) {
 
-        Element childElement = getCreator().getDocument().
+        Element childElement = getDocument().
                 createElement("ResourceType");
         childElement.setAttribute("name", resourceType.getName());
         childElement.setAttribute("acl", String.valueOf(getConfiguration().getAccessControl().checkACLForRole(key, "/", this.getUserRole())));
@@ -236,8 +233,7 @@ public class InitCommand extends XMLCommand {
   private String randomHash(String folder) {
     try {
       MessageDigest algorithm = MessageDigest.getInstance("SHA-256");
-      algorithm.update(folder.getBytes("UTF8"));
-      byte[] messageDigest = algorithm.digest();
+      byte[] messageDigest = algorithm.digest(folder.getBytes("UTF8"));
 
       @SuppressWarnings("StringBufferWithoutInitialCapacity")
       StringBuilder hexString = new StringBuilder();
