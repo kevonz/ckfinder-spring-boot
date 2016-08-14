@@ -143,10 +143,10 @@ public class ConnectorServlet extends HttpServlet {
       log.error("", e);
       handleError(new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_COMMAND, false),
-              configuration, request, response, commandName, command);
+              configuration, request, response, command);
     } catch (ConnectorException e) {
       log.error("", e);
-      handleError(e, configuration, request, response, commandName, command);
+      handleError(e, configuration, request, response, command);
     }
   }
 
@@ -198,8 +198,7 @@ public class ConnectorServlet extends HttpServlet {
    * @throws ServletException when error handling fails.
    */
   @SuppressWarnings({"BroadCatchBlock", "TooBroadCatch"})
-  private void handleError(ConnectorException e, IConfiguration configuration, HttpServletRequest request, HttpServletResponse response, String currentCommand, Command command) throws ServletException {
-    log.debug(currentCommand);
+  private void handleError(ConnectorException e, IConfiguration configuration, HttpServletRequest request, HttpServletResponse response, Command command) throws ServletException {
     try {
       if (command == null || command instanceof XMLCommand) {
         XMLErrorCommand xmlErrorCommand = new XMLErrorCommand(e);
