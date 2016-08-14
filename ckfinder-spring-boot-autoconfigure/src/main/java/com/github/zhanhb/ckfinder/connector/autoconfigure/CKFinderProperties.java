@@ -35,7 +35,7 @@ public class CKFinderProperties {
 
   private Boolean enabled;
   private String baseDir;
-  private String baseURL;
+  private String baseUrl;
   private String licenseKey;
   private String licenseName;
   private Integer imgWidth;

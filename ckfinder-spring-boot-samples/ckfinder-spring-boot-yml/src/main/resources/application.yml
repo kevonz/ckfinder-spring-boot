@@ -1,7 +1,7 @@
 ckfinder:
   enabled: true
   baseDir:
-  baseURL:
+  baseUrl:
   licenseKey:
   licenseName:
   imgWidth: 1600
