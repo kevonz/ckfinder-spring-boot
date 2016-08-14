@@ -63,6 +63,7 @@
     <com-junichi11-netbeans-changelf.lf-kind>LF</com-junichi11-netbeans-changelf.lf-kind>
     <com-junichi11-netbeans-changelf.use-global>false</com-junichi11-netbeans-changelf.use-global>
     <com-junichi11-netbeans-changelf.use-project>true</com-junichi11-netbeans-changelf.use-project>
+    <delombok.directory>${project.build.directory}/delombok</delombok.directory>
     <findbugs-jsr305.version>3.0.1</findbugs-jsr305.version>
     <java.version>1.8</java.version>
     <netbeans.compile.on.save>none</netbeans.compile.on.save>
@@ -154,7 +155,7 @@
         <configuration>
           <additionalJOption>-J-Dfile.encoding=${file.encoding}</additionalJOption>
           <excludePackageNames>*.internal.*</excludePackageNames>
-          <sourcepath>${project.build.directory}/generated-sources/delombok</sourcepath>
+          <sourcepath>${delombok.directory}</sourcepath>
           <locale>en_US</locale>
           <links>
             <link>http://docs.spring.io/spring-boot/docs/${spring-boot.version}/api/</link>
@@ -189,6 +190,7 @@
             <configuration>
               <addOutputDirectory>false</addOutputDirectory>
               <sourceDirectory>${project.build.sourceDirectory}</sourceDirectory>
+              <outputDirectory>${delombok.directory}</outputDirectory>
             </configuration>
           </execution>
         </executions>
