@@ -24,18 +24,21 @@ import java.nio.file.Paths;
 import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import lombok.Setter;
 
 /**
  * Class to handle errors via HTTP headers (for non-XML commands).
  */
-public class ErrorCommand extends Command implements IErrorCommand {
+public class ErrorCommand extends Command {
 
-  @Setter
   private ConnectorException connectorException;
 
+  public ErrorCommand(ConnectorException ex) {
+    this.connectorException = ex;
+  }
+
   @Override
-  protected void execute(HttpServletResponse response) throws ConnectorException {
+  @SuppressWarnings("FinalMethod")
+  final void execute(HttpServletResponse response) throws ConnectorException {
     try {
       response.setHeader("X-CKFinder-Error", String.valueOf(connectorException.getErrorCode()));
       switch (connectorException.getErrorCode()) {

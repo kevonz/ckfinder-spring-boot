@@ -47,7 +47,8 @@ public class DownloadFileCommand extends Command {
    * @throws ConnectorException when something went wrong during reading file.
    */
   @Override
-  protected void execute(HttpServletResponse response) throws ConnectorException {
+  @SuppressWarnings("FinalMethod")
+  final void execute(HttpServletResponse response) throws ConnectorException {
     if (!isTypeExists(getType())) {
       this.setType(null);
       throw new ConnectorException(

@@ -61,7 +61,7 @@ public abstract class XMLCommand extends Command {
    */
   @Override
   @SuppressWarnings("FinalMethod")
-  protected final void execute(HttpServletResponse response) throws ConnectorException {
+  final void execute(HttpServletResponse response) throws ConnectorException {
     try (PrintWriter out = response.getWriter()) {
       createXMLResponse(getDataForXml());
       XMLCreator.INSTANCE.writeTo(document, out);

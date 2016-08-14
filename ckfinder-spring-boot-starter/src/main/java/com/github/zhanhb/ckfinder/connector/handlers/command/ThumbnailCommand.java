@@ -158,7 +158,8 @@ public class ThumbnailCommand extends Command {
   }
 
   @Override
-  protected void execute(HttpServletResponse response) throws ConnectorException, IOException {
+  @SuppressWarnings("FinalMethod")
+  final void execute(HttpServletResponse response) throws ConnectorException, IOException {
     validate();
     createThumb();
     if (setResponseHeadersAfterCreatingFile()) {

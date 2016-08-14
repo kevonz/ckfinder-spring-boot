@@ -103,7 +103,8 @@ public class FileUploadCommand extends Command implements IPostCommand {
    * @throws ConnectorException when error occurs.
    */
   @Override
-  protected void execute(HttpServletResponse response) throws ConnectorException {
+  @SuppressWarnings("FinalMethod")
+  final void execute(HttpServletResponse response) throws ConnectorException {
     try {
       String errorMsg = this.getErrorCode() == Constants.Errors.CKFINDER_CONNECTOR_ERROR_NONE ? "" : (this.getErrorCode() == Constants.Errors.CKFINDER_CONNECTOR_ERROR_CUSTOM_ERROR ? this.customErrorMsg
               : ErrorUtils.INSTANCE.getErrorMsgByLangAndCode(this.langCode, this.getErrorCode(), this.getConfiguration()));

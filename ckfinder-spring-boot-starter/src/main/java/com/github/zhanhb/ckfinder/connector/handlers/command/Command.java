@@ -40,9 +40,12 @@ public abstract class Command {
    * Connector configuration.
    */
   private IConfiguration configuration;
+  @Deprecated
   private String userRole;
+  @Deprecated
   @Setter(AccessLevel.PROTECTED)
   private String currentFolder;
+  @Deprecated
   @Setter(AccessLevel.PROTECTED)
   private String type;
 
@@ -167,7 +170,7 @@ public abstract class Command {
    * @throws ConnectorException when error occurs
    * @throws java.io.IOException
    */
-  protected abstract void execute(HttpServletResponse response) throws ConnectorException, IOException;
+  abstract void execute(HttpServletResponse response) throws ConnectorException, IOException;
 
   /**
    * sets header in response.

@@ -22,19 +22,21 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
-import lombok.Setter;
 import org.w3c.dom.Element;
 
 /**
  * Class to handle errors from commands returning XML response.
  */
-public class XMLErrorCommand extends XMLCommand implements IErrorCommand {
+public class XMLErrorCommand extends XMLCommand {
 
   /**
    * exception to handle.
    */
-  @Setter
   private ConnectorException connectorException;
+
+  public XMLErrorCommand(ConnectorException ex) {
+    this.connectorException = ex;
+  }
 
   @Override
   protected void initParams(HttpServletRequest request, IConfiguration configuration)

@@ -26,7 +26,6 @@ import com.github.zhanhb.ckfinder.connector.handlers.command.ErrorCommand;
 import com.github.zhanhb.ckfinder.connector.handlers.command.FileUploadCommand;
 import com.github.zhanhb.ckfinder.connector.handlers.command.GetFilesCommand;
 import com.github.zhanhb.ckfinder.connector.handlers.command.GetFoldersCommand;
-import com.github.zhanhb.ckfinder.connector.handlers.command.IErrorCommand;
 import com.github.zhanhb.ckfinder.connector.handlers.command.IPostCommand;
 import com.github.zhanhb.ckfinder.connector.handlers.command.InitCommand;
 import com.github.zhanhb.ckfinder.connector.handlers.command.MoveFilesCommand;
@@ -55,8 +54,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ConnectorServlet extends HttpServlet {
 
-  /**
-   */
   private static final long serialVersionUID = 2960665641425153638L;
 
   private final IConfiguration configuration;
@@ -75,7 +72,7 @@ public class ConnectorServlet extends HttpServlet {
           IOException {
     request.setCharacterEncoding("UTF-8");
     response.setCharacterEncoding("UTF-8");
-    getResponse(request, response, false);
+    processRequest(request, response, false);
   }
 
   /**
@@ -92,7 +89,7 @@ public class ConnectorServlet extends HttpServlet {
           IOException {
     request.setCharacterEncoding("UTF-8");
     response.setCharacterEncoding("UTF-8");
-    getResponse(request, response, true);
+    processRequest(request, response, true);
   }
 
   /**
@@ -103,60 +100,60 @@ public class ConnectorServlet extends HttpServlet {
    * @param post if it's post command.
    * @throws ServletException when error occurs.
    */
-  private void getResponse(HttpServletRequest request,
+  private void processRequest(HttpServletRequest request,
           HttpServletResponse response, boolean post)
           throws ServletException {
-    String command = request.getParameter("command");
+    String commandName = request.getParameter("command");
+    Command command = null;
+
     try {
-      if (command == null || command.isEmpty()) {
+      if (commandName == null || commandName.isEmpty()) {
         throw new ConnectorException(
                 Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_COMMAND, false);
       }
 
-      BeforeExecuteCommandEventArgs args = new BeforeExecuteCommandEventArgs(command, request, response);
+      BeforeExecuteCommandEventArgs args = new BeforeExecuteCommandEventArgs(commandName, request, response);
 
-      boolean isNativeCommand;
-      if (CommandHandlerEnum.contains(command.toUpperCase())) {
-        isNativeCommand = true;
-        CommandHandlerEnum cmd = CommandHandlerEnum.valueOf(command.toUpperCase());
+      if (CommandSupplierHolder.contains(commandName.toUpperCase())) {
+        CommandSupplierHolder commandHandlerEnum = CommandSupplierHolder.valueOf(commandName.toUpperCase());
+        command = commandHandlerEnum.getCommand();
         // checks if command should go via POST request or it's a post request
         // and it's not upload command
-        if ((cmd.getCommand() instanceof IPostCommand || post)
-                && !CommandHandlerEnum.FILEUPLOAD.equals(cmd)
-                && !CommandHandlerEnum.QUICKUPLOAD.equals(cmd)) {
+        if ((command instanceof IPostCommand || post)
+                && !CommandSupplierHolder.FILEUPLOAD.equals(commandHandlerEnum)
+                && !CommandSupplierHolder.QUICKUPLOAD.equals(commandHandlerEnum)) {
           checkPostRequest(request);
         }
       } else {
+        commandName = null;
         command = null;
-        isNativeCommand = false;
       }
 
       Events events = configuration.getEvents();
-      log.debug("{} {} {}", isNativeCommand, command, events);
+      log.debug("{} {}", commandName, events);
       if (events != null) {
         if (events.runBeforeExecuteCommand(args, configuration)) {
           log.debug("events.runBeforeExecuteCommand(...):true");
-          executeNativeCommand(command, request, response, configuration, isNativeCommand);
+          executeCommand(command, request, response, configuration);
         }
       } else {
-        executeNativeCommand(command, request, response, configuration, isNativeCommand);
+        executeCommand(command, request, response, configuration);
       }
     } catch (IllegalArgumentException e) {
       log.error("", e);
-      handleError(
-              new ConnectorException(
-                      Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_COMMAND, false),
-              configuration, request, response, command);
+      handleError(new ConnectorException(
+              Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_COMMAND, false),
+              configuration, request, response, commandName, command);
     } catch (ConnectorException e) {
       log.error("", e);
-      handleError(e, configuration, request, response, command);
+      handleError(e, configuration, request, response, commandName, command);
     }
   }
 
   /**
    * Executes one of connector's predefined commands specified as parameter.
    *
-   * @param command string representing command name
+   * @param commandName string representing command name
    * @param request current request object
    * @param respose current response object
    * @param configuration CKFinder connector configuration
@@ -167,12 +164,9 @@ public class ConnectorServlet extends HttpServlet {
    * @throws IllegalArgumentException when provided command is not found in
    * enumeration object
    */
-  private void executeNativeCommand(String command, HttpServletRequest request,
-          HttpServletResponse response, IConfiguration configuration,
-          boolean isNativeCommand) throws IllegalArgumentException, ConnectorException {
-    if (isNativeCommand) {
-      CommandHandlerEnum cmd = CommandHandlerEnum.valueOf(command.toUpperCase());
-      cmd.execute(request, response, configuration, null);
+  private void executeCommand(Command command, HttpServletRequest request, HttpServletResponse response, IConfiguration configuration) throws IllegalArgumentException, ConnectorException {
+    if (command != null) {
+      command.runCommand(request, response, configuration);
     } else {
       throw new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_COMMAND, false);
@@ -204,32 +198,22 @@ public class ConnectorServlet extends HttpServlet {
    * @throws ServletException when error handling fails.
    */
   @SuppressWarnings({"BroadCatchBlock", "TooBroadCatch"})
-  private void handleError(ConnectorException e,
-          IConfiguration configuration,
-          HttpServletRequest request, HttpServletResponse response,
-          String currentCommand) throws ServletException {
+  private void handleError(ConnectorException e, IConfiguration configuration, HttpServletRequest request, HttpServletResponse response, String currentCommand, Command command) throws ServletException {
     log.debug(currentCommand);
     try {
-      if (currentCommand != null && !currentCommand.isEmpty()) {
-        Command command = CommandHandlerEnum.valueOf(currentCommand.toUpperCase()).getCommand();
-        if (command instanceof XMLCommand) {
-          CommandHandlerEnum.XMLERROR.execute(request, response, configuration, e);
-        } else {
-          CommandHandlerEnum.ERROR.execute(request, response, configuration, e);
-        }
+      if (command == null || command instanceof XMLCommand) {
+        XMLErrorCommand xmlErrorCommand = new XMLErrorCommand(e);
+        xmlErrorCommand.runCommand(request, response, configuration);
       } else {
-        CommandHandlerEnum.XMLERROR.execute(request, response, configuration, e);
+        ErrorCommand errorCommand = new ErrorCommand(e);
+        errorCommand.runCommand(request, response, configuration);
       }
     } catch (Exception ex) {
       throw new ServletException(ex);
     }
   }
 
-  /**
-   * Enum with all command handles by servlet.
-   *
-   */
-  private static enum CommandHandlerEnum {
+  private static enum CommandSupplierHolder {
 
     /**
      * init command.
@@ -286,15 +270,8 @@ public class ConnectorServlet extends HttpServlet {
     /**
      * quick file upload.
      */
-    QUICKUPLOAD(QuickUploadCommand::new),
-    /**
-     * XML error command.
-     */
-    XMLERROR(XMLErrorCommand::new),
-    /**
-     * error command.
-     */
-    ERROR(ErrorCommand::new);
+    QUICKUPLOAD(QuickUploadCommand::new);
+
     /**
      * command class for enum field.
      */
@@ -302,15 +279,15 @@ public class ConnectorServlet extends HttpServlet {
     /**
      * {@code Set} holding enumeration values,
      */
-    private static final Set<String> enumValues = Arrays.asList(CommandHandlerEnum.values())
-            .stream().map(CommandHandlerEnum::name).collect(Collectors.toSet());
+    private static final Set<String> enumValues = Arrays.asList(CommandSupplierHolder.values())
+            .stream().map(CommandSupplierHolder::name).collect(Collectors.toSet());
 
     /**
      * Enum constructor to set command.
      *
      * @param command1 command name
      */
-    private CommandHandlerEnum(Supplier<? extends Command> supplier) {
+    private CommandSupplierHolder(Supplier<? extends Command> supplier) {
       this.supplier = supplier;
     }
 
@@ -324,27 +301,6 @@ public class ConnectorServlet extends HttpServlet {
      */
     public static boolean contains(String enumValue) {
       return enumValues.contains(enumValue);
-    }
-
-    /**
-     * Executes command.
-     *
-     * @param request request
-     * @param response response
-     * @param configuration connector configuration
-     * @param sc servletContext
-     * @param params params for command.
-     * @throws ConnectorException when error occurs
-     */
-    private void execute(HttpServletRequest request,
-            HttpServletResponse response,
-            IConfiguration configuration,
-            ConnectorException e) throws ConnectorException {
-      Command com = supplier.get();
-      if (com instanceof IErrorCommand) {
-        ((IErrorCommand) com).setConnectorException(e);
-      }
-      com.runCommand(request, response, configuration);
     }
 
     /**
