@@ -49,7 +49,7 @@ public class CKFinderProperties {
   private Boolean checkSizeAfterScaling;
   private Boolean secureImageUploads;
   private String htmlExtensions;
-  private Boolean forceASCII;
+  private Boolean forceAscii;
   private Boolean enableCsrfProtection;
   private String hideFolders;
   private String hideFiles;

@@ -53,7 +53,7 @@ ckfinder:
   checkSizeAfterScaling: true
   secureImageUploads: true
   htmlExtensions: html,htm,xml,js
-  forceASCII: false
+  forceAscii: false
   enableCsrfProtection: false
   hideFolders:
   hideFiles:
