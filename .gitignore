@@ -2,3 +2,8 @@ release.properties
 pom.xml.bak
 target/
 pom.xml.releaseBackup
+*.iml
+.idea/
+.project
+.settings/
+.classpath
