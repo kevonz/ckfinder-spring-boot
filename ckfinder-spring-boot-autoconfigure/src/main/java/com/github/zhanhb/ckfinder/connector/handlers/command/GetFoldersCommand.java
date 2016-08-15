@@ -38,63 +38,64 @@ public class GetFoldersCommand extends XMLCommand<GetFoldersArguments> {
   }
 
   @Override
-  protected void createXMLChildNodes(int errorNum, Element rootElement) throws IOException {
+  protected void createXMLChildNodes(int errorNum, Element rootElement, GetFoldersArguments arguments) throws IOException {
     if (errorNum == Constants.Errors.CKFINDER_CONNECTOR_ERROR_NONE) {
-      createFoldersData(rootElement);
+      createFoldersData(rootElement, arguments);
     }
   }
 
   /**
    * gets data for response.
    *
+   * @param arguments
    * @return 0 if everything went ok or error code otherwise
    * @throws java.io.IOException
    */
   @Override
-  protected int getDataForXml() throws IOException {
-    if (!isTypeExists(getArguments().getType())) {
-      getArguments().setType(null);
+  protected int getDataForXml(GetFoldersArguments arguments) throws IOException {
+    if (!isTypeExists(arguments.getType())) {
+      arguments.setType(null);
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE;
     }
 
-    if (!getConfiguration().getAccessControl().checkFolderACL(getArguments().getType(),
-            getArguments().getCurrentFolder(), getArguments().getUserRole(),
+    if (!getConfiguration().getAccessControl().checkFolderACL(arguments.getType(),
+            arguments.getCurrentFolder(), arguments.getUserRole(),
             AccessControl.CKFINDER_CONNECTOR_ACL_FOLDER_VIEW)) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_UNAUTHORIZED;
     }
-    if (FileUtils.isDirectoryHidden(getArguments().getCurrentFolder(), getConfiguration())) {
+    if (FileUtils.isDirectoryHidden(arguments.getCurrentFolder(), getConfiguration())) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
     }
 
-    Path dir = Paths.get(getConfiguration().getTypes().get(getArguments().getType()).getPath()
-            + getArguments().getCurrentFolder());
+    Path dir = Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath()
+            + arguments.getCurrentFolder());
     try {
       if (!Files.exists(dir)) {
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_FOLDER_NOT_FOUND;
       }
 
-      getArguments().setDirectories(FileUtils.findChildrensList(dir, true));
+      arguments.setDirectories(FileUtils.findChildrensList(dir, true));
     } catch (SecurityException e) {
       log.error("", e);
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_ACCESS_DENIED;
     }
-    filterListByHiddenAndNotAllowed();
-    Collections.sort(getArguments().getDirectories());
+    filterListByHiddenAndNotAllowed(arguments);
+    Collections.sort(arguments.getDirectories());
     return Constants.Errors.CKFINDER_CONNECTOR_ERROR_NONE;
   }
 
   /**
    * filters list and check if every element is not hidden and have correct ACL.
    */
-  private void filterListByHiddenAndNotAllowed() {
-    List<String> tmpDirs = getArguments().getDirectories().stream()
-            .filter(dir -> (getConfiguration().getAccessControl().checkFolderACL(getArguments().getType(), getArguments().getCurrentFolder() + dir, getArguments().getUserRole(),
+  private void filterListByHiddenAndNotAllowed(GetFoldersArguments arguments) {
+    List<String> tmpDirs = arguments.getDirectories().stream()
+            .filter(dir -> (getConfiguration().getAccessControl().checkFolderACL(arguments.getType(), arguments.getCurrentFolder() + dir, arguments.getUserRole(),
                     AccessControl.CKFINDER_CONNECTOR_ACL_FOLDER_VIEW)
                     && !FileUtils.isDirectoryHidden(dir, getConfiguration())))
             .collect(Collectors.toList());
 
-    getArguments().getDirectories().clear();
-    getArguments().getDirectories().addAll(tmpDirs);
+    arguments.getDirectories().clear();
+    arguments.getDirectories().addAll(tmpDirs);
 
   }
 
@@ -103,11 +104,11 @@ public class GetFoldersCommand extends XMLCommand<GetFoldersArguments> {
    *
    * @param rootElement root element in XML document
    */
-  private void createFoldersData(Element rootElement) throws IOException {
-    Element element = getArguments().getDocument().createElement("Folders");
-    for (String dirPath : getArguments().getDirectories()) {
-      Path dir = Paths.get(this.getConfiguration().getTypes().get(getArguments().getType()).getPath()
-              + getArguments().getCurrentFolder()
+  private void createFoldersData(Element rootElement, GetFoldersArguments arguments) throws IOException {
+    Element element = arguments.getDocument().createElement("Folders");
+    for (String dirPath : arguments.getDirectories()) {
+      Path dir = Paths.get(this.getConfiguration().getTypes().get(arguments.getType()).getPath()
+              + arguments.getCurrentFolder()
               + dirPath);
       if (Files.exists(dir)) {
         XmlElementData.Builder xmlElementData = XmlElementData.builder().name("Folder");
@@ -115,14 +116,14 @@ public class GetFoldersCommand extends XMLCommand<GetFoldersArguments> {
 
         xmlElementData.attribute(new XmlAttribute("hasChildren",
                 FileUtils.hasChildren(getConfiguration().getAccessControl(),
-                        getArguments().getCurrentFolder() + dirPath + "/", dir, getConfiguration(),
-                        getArguments().getType(), getArguments().getUserRole()).toString()));
+                        arguments.getCurrentFolder() + dirPath + "/", dir, getConfiguration(),
+                        arguments.getType(), arguments.getUserRole()).toString()));
 
         xmlElementData.attribute(new XmlAttribute("acl",
-                String.valueOf(getConfiguration().getAccessControl().checkACLForRole(getArguments().getType(),
-                        getArguments().getCurrentFolder()
-                        + dirPath, getArguments().getUserRole()))));
-        xmlElementData.build().addToDocument(getArguments().getDocument(), element);
+                String.valueOf(getConfiguration().getAccessControl().checkACLForRole(arguments.getType(),
+                        arguments.getCurrentFolder()
+                        + dirPath, arguments.getUserRole()))));
+        xmlElementData.build().addToDocument(arguments.getDocument(), element);
       }
     }
     rootElement.appendChild(element);

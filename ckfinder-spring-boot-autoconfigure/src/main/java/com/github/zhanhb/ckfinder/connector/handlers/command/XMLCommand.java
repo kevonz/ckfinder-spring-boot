@@ -40,9 +40,10 @@ public abstract class XMLCommand<T extends XMLArguments> extends Command<T> {
    *
    * @param request
    * @param response response
+   * @param arguments
    */
   @Override
-  public void setResponseHeader(HttpServletRequest request, HttpServletResponse response) {
+  public void setResponseHeader(HttpServletRequest request, HttpServletResponse response, T arguments) {
     response.setContentType("text/xml");
     response.setHeader("Cache-Control", "no-cache");
     response.setCharacterEncoding("utf-8");
@@ -56,10 +57,10 @@ public abstract class XMLCommand<T extends XMLArguments> extends Command<T> {
    */
   @Override
   @SuppressWarnings("FinalMethod")
-  final void execute(HttpServletResponse response) throws ConnectorException {
+  final void execute(T arguments, HttpServletResponse response) throws ConnectorException {
     try (PrintWriter out = response.getWriter()) {
-      createXMLResponse(getDataForXml());
-      XMLCreator.INSTANCE.writeTo(getArguments().getDocument(), out);
+      createXMLResponse(arguments, getDataForXml(arguments));
+      XMLCreator.INSTANCE.writeTo(arguments.getDocument(), out);
     } catch (ConnectorException e) {
       throw e;
     } catch (IOException e) {
@@ -73,18 +74,17 @@ public abstract class XMLCommand<T extends XMLArguments> extends Command<T> {
    * @param errorNum error code from method getDataForXml()
    * @throws ConnectorException to handle in error handler.
    */
-  private void createXMLResponse(int errorNum) throws ConnectorException, IOException {
-    Element rootElement = getArguments().getDocument().createElement("Connector");
-    if (getArguments().getType() != null && !getArguments().getType().isEmpty()) {
-      rootElement.setAttribute("resourceType", getArguments().getType()
-      );
+  private void createXMLResponse(T arguments, int errorNum) throws ConnectorException, IOException {
+    Element rootElement = arguments.getDocument().createElement("Connector");
+    if (arguments.getType() != null && !arguments.getType().isEmpty()) {
+      rootElement.setAttribute("resourceType", arguments.getType());
     }
     if (mustAddCurrentFolderNode()) {
-      createCurrentFolderNode(rootElement);
+      createCurrentFolderNode(arguments, rootElement);
     }
-    XMLCreator.INSTANCE.addErrorCommandToRoot(getArguments().getDocument(), rootElement, errorNum, getErrorMsg(errorNum));
-    createXMLChildNodes(errorNum, rootElement);
-    getArguments().getDocument().appendChild(rootElement);
+    XMLCreator.INSTANCE.addErrorCommandToRoot(arguments.getDocument(), rootElement, errorNum, getErrorMsg(errorNum));
+    createXMLChildNodes(errorNum, rootElement, arguments);
+    arguments.getDocument().appendChild(rootElement);
   }
 
   /**
@@ -102,13 +102,15 @@ public abstract class XMLCommand<T extends XMLArguments> extends Command<T> {
    *
    * @param errorNum error code
    * @param rootElement XML root node
+   * @param arguments
    * @throws java.io.IOException
    */
-  protected abstract void createXMLChildNodes(int errorNum, Element rootElement) throws IOException;
+  protected abstract void createXMLChildNodes(int errorNum, Element rootElement, T arguments) throws IOException;
 
   /**
    * gets all necessary data to create XML response.
    *
+   * @param arguments
    * @return error code
    * {@link com.github.zhanhb.ckfinder.connector.configuration.Constants.Errors}
    * or
@@ -116,29 +118,29 @@ public abstract class XMLCommand<T extends XMLArguments> extends Command<T> {
    * if no error occurred.
    * @throws java.io.IOException
    */
-  protected abstract int getDataForXml() throws IOException;
+  protected abstract int getDataForXml(T arguments) throws IOException;
 
   /**
    * creates <code>CurrentFolder</code> element.
    *
+   * @param arguments
    * @param rootElement XML root node.
    */
   @SuppressWarnings("FinalMethod")
-  protected final void createCurrentFolderNode(Element rootElement) {
-    Element element = getArguments().getDocument().createElement("CurrentFolder");
-    element.setAttribute("path", getArguments().getCurrentFolder());
-    element.setAttribute("url", getConfiguration().getTypes().get(getArguments().getType()).getUrl()
-            + getArguments().getCurrentFolder());
-    element.setAttribute("acl", String.valueOf(getConfiguration().getAccessControl().checkACLForRole(getArguments().getType(), getArguments().getCurrentFolder(), getArguments().getUserRole())));
+  protected final void createCurrentFolderNode(T arguments, Element rootElement) {
+    Element element = arguments.getDocument().createElement("CurrentFolder");
+    element.setAttribute("path", arguments.getCurrentFolder());
+    element.setAttribute("url", getConfiguration().getTypes().get(arguments.getType()).getUrl()
+            + arguments.getCurrentFolder());
+    element.setAttribute("acl", String.valueOf(getConfiguration().getAccessControl().checkACLForRole(arguments.getType(), arguments.getCurrentFolder(), arguments.getUserRole())));
     rootElement.appendChild(element);
   }
 
   @Override
-  protected void initParams(HttpServletRequest request,
-          IConfiguration configuration)
+  protected void initParams(T arguments, HttpServletRequest request, IConfiguration configuration)
           throws ConnectorException {
-    super.initParams(request, configuration);
-    getArguments().setDocument(XMLCreator.INSTANCE.createDocument());
+    super.initParams(arguments, request, configuration);
+    arguments.setDocument(XMLCreator.INSTANCE.createDocument());
   }
 
   /**
@@ -160,9 +162,8 @@ public abstract class XMLCommand<T extends XMLArguments> extends Command<T> {
    * @param type resource type
    */
   @SuppressWarnings("FinalMethod")
-  protected final void appendErrorNodeChild(int errorCode, String name,
-          String path, String type) {
-    getArguments().getErrorList().add(ErrorNode.builder().type(type).name(name).folder(path).errorCode(errorCode).build());
+  protected final void appendErrorNodeChild(T arguments, int errorCode, String name, String path, String type) {
+    arguments.getErrorList().add(ErrorNode.builder().type(type).name(name).folder(path).errorCode(errorCode).build());
   }
 
   /**
@@ -171,8 +172,8 @@ public abstract class XMLCommand<T extends XMLArguments> extends Command<T> {
    * @return true if there are any errors.
    */
   @SuppressWarnings("FinalMethod")
-  protected final boolean hasErrors() {
-    return !getArguments().getErrorList().isEmpty();
+  protected final boolean hasErrors(T arguments) {
+    return !arguments.getErrorList().isEmpty();
   }
 
   /**
@@ -181,9 +182,9 @@ public abstract class XMLCommand<T extends XMLArguments> extends Command<T> {
    * @param errorsNode XML errors node
    */
   @SuppressWarnings("FinalMethod")
-  protected final void addErrors(Element errorsNode) {
-    for (ErrorNode item : getArguments().getErrorList()) {
-      Element childElem = getArguments().getDocument().createElement("Error");
+  protected final void addErrors(T arguments, Element errorsNode) {
+    for (ErrorNode item : arguments.getErrorList()) {
+      Element childElem = arguments.getDocument().createElement("Error");
       childElem.setAttribute("code", String.valueOf(item.getErrorCode()));
       childElem.setAttribute("name", item.getName());
       childElem.setAttribute("type", item.getType());

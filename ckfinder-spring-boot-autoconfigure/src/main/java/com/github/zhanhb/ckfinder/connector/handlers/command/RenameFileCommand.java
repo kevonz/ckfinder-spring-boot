@@ -36,9 +36,9 @@ public class RenameFileCommand extends XMLCommand<RenameFileArguments> implement
   }
 
   @Override
-  protected void createXMLChildNodes(int errorNum, Element rootElement) {
-    if (getArguments().isAddRenameNode()) {
-      createRenamedFileNode(rootElement);
+  protected void createXMLChildNodes(int errorNum, Element rootElement, RenameFileArguments arguments) {
+    if (arguments.isAddRenameNode()) {
+      createRenamedFileNode(rootElement, arguments);
     }
   }
 
@@ -47,11 +47,11 @@ public class RenameFileCommand extends XMLCommand<RenameFileArguments> implement
    *
    * @param rootElement XML root node
    */
-  private void createRenamedFileNode(Element rootElement) {
-    Element element = getArguments().getDocument().createElement("RenamedFile");
-    element.setAttribute("name", getArguments().getFileName());
-    if (getArguments().isRenamed()) {
-      element.setAttribute("newName", getArguments().getNewFileName());
+  private void createRenamedFileNode(Element rootElement, RenameFileArguments arguments) {
+    Element element = arguments.getDocument().createElement("RenamedFile");
+    element.setAttribute("name", arguments.getFileName());
+    if (arguments.isRenamed()) {
+      element.setAttribute("newName", arguments.getNewFileName());
     }
     rootElement.appendChild(element);
   }
@@ -59,62 +59,64 @@ public class RenameFileCommand extends XMLCommand<RenameFileArguments> implement
   /**
    * gets data for XML and checks all validation.
    *
+   * @param arguments
    * @return error code or 0 if it's correct.
    * @throws java.io.IOException
    */
   @Override
-  protected int getDataForXml() throws IOException {
+  protected int getDataForXml(RenameFileArguments arguments) throws IOException {
     log.trace("getDataForXml");
-    if (!isTypeExists(getArguments().getType())) {
-      log.info("isTypeExists({}): false", getArguments().getType());
-      getArguments().setType(null);
+    if (!isTypeExists(arguments.getType())) {
+      log.info("isTypeExists({}): false", arguments.getType());
+      arguments.setType(null);
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE;
     }
 
-    if (!getConfiguration().getAccessControl().checkFolderACL(getArguments().getType(),
-            getArguments().getCurrentFolder(), getArguments().getUserRole(),
+    if (!getConfiguration().getAccessControl().checkFolderACL(arguments.getType(),
+            arguments.getCurrentFolder(), arguments.getUserRole(),
             AccessControl.CKFINDER_CONNECTOR_ACL_FILE_RENAME)) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_UNAUTHORIZED;
     }
 
     if (getConfiguration().isForceAscii()) {
-      getArguments().setNewFileName(FileUtils.convertToASCII(getArguments().getNewFileName()));
+      arguments.setNewFileName(FileUtils.convertToASCII(arguments.getNewFileName()));
     }
 
-    if (getArguments().getFileName() != null && !getArguments().getFileName().isEmpty()
-            && getArguments().getNewFileName() != null && !getArguments().getNewFileName().isEmpty()) {
-      getArguments().setAddRenameNode(true);
+    if (arguments.getFileName() != null && !arguments.getFileName().isEmpty()
+            && arguments.getNewFileName() != null && !arguments.getNewFileName().isEmpty()) {
+      arguments.setAddRenameNode(true);
     }
 
-    int checkFileExt = FileUtils.checkFileExtension(getArguments().getNewFileName(),
-            this.getConfiguration().getTypes().get(getArguments().getType()));
+    int checkFileExt = FileUtils.checkFileExtension(arguments.getNewFileName(),
+            this.getConfiguration().getTypes().get(arguments.getType()));
     if (checkFileExt == 1) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_EXTENSION;
     }
     if (getConfiguration().isCheckDoubleFileExtensions()) {
-      getArguments().setNewFileName(FileUtils.renameFileWithBadExt(this.getConfiguration().getTypes().get(getArguments().getType()), getArguments().getNewFileName()));
+      arguments.setNewFileName(FileUtils.renameFileWithBadExt(this.getConfiguration().getTypes().get(arguments.getType()),
+              arguments.getNewFileName()));
     }
 
-    if (!FileUtils.isFileNameInvalid(getArguments().getFileName())
-            || FileUtils.isFileHidden(getArguments().getFileName(), getConfiguration())) {
+    if (!FileUtils.isFileNameInvalid(arguments.getFileName())
+            || FileUtils.isFileHidden(arguments.getFileName(), getConfiguration())) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
     }
 
-    if (!FileUtils.isFileNameInvalid(getArguments().getNewFileName(), getConfiguration())
-            || FileUtils.isFileHidden(getArguments().getNewFileName(), getConfiguration())) {
+    if (!FileUtils.isFileNameInvalid(arguments.getNewFileName(), getConfiguration())
+            || FileUtils.isFileHidden(arguments.getNewFileName(), getConfiguration())) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_NAME;
     }
 
-    if (FileUtils.checkFileExtension(getArguments().getFileName(),
-            this.getConfiguration().getTypes().get(getArguments().getType())) == 1) {
+    if (FileUtils.checkFileExtension(arguments.getFileName(),
+            this.getConfiguration().getTypes().get(arguments.getType())) == 1) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
     }
 
-    String dirPath = getConfiguration().getTypes().get(getArguments().getType()).getPath()
-            + getArguments().getCurrentFolder();
+    String dirPath = getConfiguration().getTypes().get(arguments.getType()).getPath()
+            + arguments.getCurrentFolder();
 
-    Path file = Paths.get(dirPath, getArguments().getFileName());
-    Path newFile = Paths.get(dirPath, getArguments().getNewFileName());
+    Path file = Paths.get(dirPath, arguments.getFileName());
+    Path newFile = Paths.get(dirPath, arguments.getNewFileName());
     Path dir = Paths.get(dirPath);
 
     try {
@@ -132,11 +134,11 @@ public class RenameFileCommand extends XMLCommand<RenameFileArguments> implement
       }
       try {
         Files.move(file, newFile);
-        getArguments().setRenamed(true);
-        renameThumb();
+        arguments.setRenamed(true);
+        renameThumb(arguments);
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_NONE;
       } catch (IOException ex) {
-        getArguments().setRenamed(false);
+        arguments.setRenamed(false);
         log.error("IOException", ex);
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_ACCESS_DENIED;
       }
@@ -150,13 +152,13 @@ public class RenameFileCommand extends XMLCommand<RenameFileArguments> implement
   /**
    * rename thumb file.
    */
-  private void renameThumb() throws IOException {
+  private void renameThumb(RenameFileArguments arguments) throws IOException {
     Path thumbFile = Paths.get(getConfiguration().getThumbsPath(),
-            getArguments().getType() + getArguments().getCurrentFolder(),
-            getArguments().getFileName());
+            arguments.getType() + arguments.getCurrentFolder(),
+            arguments.getFileName());
     Path newThumbFile = Paths.get(getConfiguration().getThumbsPath(),
-            getArguments().getType() + getArguments().getCurrentFolder(),
-            getArguments().getNewFileName());
+            arguments.getType() + arguments.getCurrentFolder(),
+            arguments.getNewFileName());
 
     try {
       Files.move(thumbFile, newThumbFile);
@@ -165,11 +167,11 @@ public class RenameFileCommand extends XMLCommand<RenameFileArguments> implement
   }
 
   @Override
-  protected void initParams(HttpServletRequest request, IConfiguration configuration)
+  protected void initParams(RenameFileArguments arguments, HttpServletRequest request, IConfiguration configuration)
           throws ConnectorException {
-    super.initParams(request, configuration);
-    getArguments().setFileName(request.getParameter("fileName"));
-    getArguments().setNewFileName(request.getParameter("newFileName"));
+    super.initParams(arguments, request, configuration);
+    arguments.setFileName(request.getParameter("fileName"));
+    arguments.setNewFileName(request.getParameter("newFileName"));
   }
 
 }

@@ -50,45 +50,45 @@ public class ImageResizeInfoCommand extends XMLCommand<ImageResizeInfoArguments>
   }
 
   @Override
-  protected void createXMLChildNodes(int errorNum, Element rootElement) {
+  protected void createXMLChildNodes(int errorNum, Element rootElement, ImageResizeInfoArguments arguments) {
     if (errorNum == Constants.Errors.CKFINDER_CONNECTOR_ERROR_NONE) {
-      createImageInfoNode(rootElement);
+      createImageInfoNode(rootElement, arguments);
     }
   }
 
-  private void createImageInfoNode(Element rootElement) {
-    Element element = getArguments().getDocument().createElement("ImageInfo");
-    element.setAttribute("width", String.valueOf(getArguments().getImageWidth()));
-    element.setAttribute("height", String.valueOf(getArguments().getImageHeight()));
+  private void createImageInfoNode(Element rootElement, ImageResizeInfoArguments arguments) {
+    Element element = arguments.getDocument().createElement("ImageInfo");
+    element.setAttribute("width", String.valueOf(arguments.getImageWidth()));
+    element.setAttribute("height", String.valueOf(arguments.getImageHeight()));
     rootElement.appendChild(element);
   }
 
   @Override
-  protected int getDataForXml() {
-    if (!isTypeExists(getArguments().getType())) {
-      getArguments().setType(null);
+  protected int getDataForXml(ImageResizeInfoArguments arguments) {
+    if (!isTypeExists(arguments.getType())) {
+      arguments.setType(null);
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE;
     }
 
-    if (!getConfiguration().getAccessControl().checkFolderACL(getArguments().getType(),
-            getArguments().getCurrentFolder(), getArguments().getUserRole(),
+    if (!getConfiguration().getAccessControl().checkFolderACL(arguments.getType(),
+            arguments.getCurrentFolder(), arguments.getUserRole(),
             AccessControl.CKFINDER_CONNECTOR_ACL_FILE_VIEW)) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_UNAUTHORIZED;
     }
 
-    if (getArguments().getFileName() == null || getArguments().getFileName().isEmpty()
-            || !FileUtils.isFileNameInvalid(getArguments().getFileName())
-            || FileUtils.isFileHidden(getArguments().getFileName(), this.getConfiguration())) {
+    if (arguments.getFileName() == null || arguments.getFileName().isEmpty()
+            || !FileUtils.isFileNameInvalid(arguments.getFileName())
+            || FileUtils.isFileHidden(arguments.getFileName(), this.getConfiguration())) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
     }
 
-    if (FileUtils.checkFileExtension(getArguments().getFileName(), getConfiguration().getTypes().get(getArguments().getType())) == 1) {
+    if (FileUtils.checkFileExtension(arguments.getFileName(), getConfiguration().getTypes().get(arguments.getType())) == 1) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
     }
 
-    Path imageFile = Paths.get(getConfiguration().getTypes().get(getArguments().getType()).getPath()
-            + getArguments().getCurrentFolder(),
-            getArguments().getFileName());
+    Path imageFile = Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath()
+            + arguments.getCurrentFolder(),
+            arguments.getFileName());
 
     try {
       if (!(Files.exists(imageFile) && Files.isRegularFile(imageFile))) {
@@ -99,8 +99,8 @@ public class ImageResizeInfoCommand extends XMLCommand<ImageResizeInfoArguments>
       try (InputStream is = Files.newInputStream(imageFile)) {
         image = ImageIO.read(is);
       }
-      getArguments().setImageWidth(image.getWidth());
-      getArguments().setImageHeight(image.getHeight());
+      arguments.setImageWidth(image.getWidth());
+      arguments.setImageHeight(image.getHeight());
     } catch (SecurityException | IOException e) {
       log.error("", e);
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_ACCESS_DENIED;
@@ -110,14 +110,14 @@ public class ImageResizeInfoCommand extends XMLCommand<ImageResizeInfoArguments>
   }
 
   @Override
-  protected void initParams(HttpServletRequest request, IConfiguration configuration)
+  protected void initParams(ImageResizeInfoArguments arguments, HttpServletRequest request, IConfiguration configuration)
           throws ConnectorException {
-    super.initParams(request, configuration);
-    getArguments().setImageHeight(0);
-    getArguments().setImageWidth(0);
-    getArguments().setCurrentFolder(request.getParameter("currentFolder"));
-    getArguments().setType(request.getParameter("type"));
-    getArguments().setFileName(request.getParameter("fileName"));
+    super.initParams(arguments, request, configuration);
+    arguments.setImageHeight(0);
+    arguments.setImageWidth(0);
+    arguments.setCurrentFolder(request.getParameter("currentFolder"));
+    arguments.setType(request.getParameter("type"));
+    arguments.setFileName(request.getParameter("fileName"));
   }
 
 }

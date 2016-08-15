@@ -41,24 +41,24 @@ public class XMLErrorCommand extends XMLCommand<XMLErrorArguments> {
   }
 
   @Override
-  protected void initParams(HttpServletRequest request, IConfiguration configuration)
+  protected void initParams(XMLErrorArguments arguments, HttpServletRequest request, IConfiguration configuration)
           throws ConnectorException {
-    super.initParams(request, configuration);
-    if (getArguments().getConnectorException().isAddCurrentFolder()) {
+    super.initParams(arguments, request, configuration);
+    if (arguments.getConnectorException().isAddCurrentFolder()) {
       String tmpType = request.getParameter("type");
       if (isTypeExists(tmpType)) {
-        getArguments().setType(tmpType);
+        arguments.setType(tmpType);
       }
     }
   }
 
   @Override
-  protected int getDataForXml() {
-    return getArguments().getConnectorException().getErrorCode();
+  protected int getDataForXml(XMLErrorArguments arguments) {
+    return arguments.getConnectorException().getErrorCode();
   }
 
   @Override
-  protected void createXMLChildNodes(int errorNum, Element rootElement) {
+  protected void createXMLChildNodes(int errorNum, Element rootElement, XMLErrorArguments arguments) {
   }
 
   @Override
@@ -71,18 +71,19 @@ public class XMLErrorCommand extends XMLCommand<XMLErrorArguments> {
    * more exception handlers.
    *
    * @param reqParam request param
+   * @param arguments
    * @return true if validation passed
    * @throws ConnectorException it should never throw an exception
    */
   @Override
-  protected boolean isRequestPathValid(String reqParam)
+  protected boolean isRequestPathValid(String reqParam, XMLErrorArguments arguments)
           throws ConnectorException {
     return reqParam == null || reqParam.isEmpty()
             || !Pattern.compile(Constants.INVALID_PATH_REGEX).matcher(reqParam).find();
   }
 
   @Override
-  protected boolean isConnectorEnabled()
+  protected boolean isConnectorEnabled(XMLErrorArguments arguments)
           throws ConnectorException {
     if (!getConfiguration().isEnabled()) {
       getArguments().setConnectorException(new ConnectorException(
@@ -93,9 +94,9 @@ public class XMLErrorCommand extends XMLCommand<XMLErrorArguments> {
   }
 
   @Override
-  protected boolean isHidden() throws ConnectorException {
-    if (FileUtils.isDirectoryHidden(getArguments().getCurrentFolder(), getConfiguration())) {
-      getArguments().setConnectorException(new ConnectorException(
+  protected boolean isHidden(XMLErrorArguments arguments) throws ConnectorException {
+    if (FileUtils.isDirectoryHidden(arguments.getCurrentFolder(), getConfiguration())) {
+      arguments.setConnectorException(new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_CONNECTOR_DISABLED));
       return true;
     }
@@ -103,16 +104,16 @@ public class XMLErrorCommand extends XMLCommand<XMLErrorArguments> {
   }
 
   @Override
-  protected boolean isCurrFolderExists(HttpServletRequest request)
+  protected boolean isCurrFolderExists(XMLErrorArguments arguments, HttpServletRequest request)
           throws ConnectorException {
     String tmpType = request.getParameter("type");
     if (isTypeExists(tmpType)) {
       Path currDir = Paths.get(getConfiguration().getTypes().get(tmpType).getPath()
-              + getArguments().getCurrentFolder());
+              + arguments.getCurrentFolder());
       if (Files.exists(currDir) && Files.isDirectory(currDir)) {
         return true;
       } else {
-        getArguments().setConnectorException(new ConnectorException(
+        arguments.setConnectorException(new ConnectorException(
                 Constants.Errors.CKFINDER_CONNECTOR_ERROR_FOLDER_NOT_FOUND));
         return false;
       }
@@ -137,10 +138,10 @@ public class XMLErrorCommand extends XMLCommand<XMLErrorArguments> {
   }
 
   @Override
-  protected void getCurrentFolderParam(HttpServletRequest request) {
+  protected void getCurrentFolderParam(HttpServletRequest request, XMLErrorArguments arguments) {
     String currFolder = request.getParameter("currentFolder");
     if (!(currFolder == null || currFolder.isEmpty())) {
-      getArguments().setCurrentFolder(PathUtils.addSlashToBeginning(PathUtils.addSlashToEnd(currFolder)));
+      arguments.setCurrentFolder(PathUtils.addSlashToBeginning(PathUtils.addSlashToEnd(currFolder)));
     }
   }
 

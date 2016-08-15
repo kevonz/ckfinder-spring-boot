@@ -36,9 +36,9 @@ public class CreateFolderCommand extends XMLCommand<CreateFolderArguments> imple
   }
 
   @Override
-  protected void createXMLChildNodes(int errorNum, Element rootElement) {
+  protected void createXMLChildNodes(int errorNum, Element rootElement, CreateFolderArguments arguments) {
     if (errorNum == Constants.Errors.CKFINDER_CONNECTOR_ERROR_NONE) {
-      createNewFolderElement(rootElement);
+      createNewFolderElement(rootElement, arguments);
     }
   }
 
@@ -47,51 +47,53 @@ public class CreateFolderCommand extends XMLCommand<CreateFolderArguments> imple
    *
    * @param rootElement XML root element.
    */
-  private void createNewFolderElement(Element rootElement) {
-    Element element = getArguments().getDocument().createElement("NewFolder");
-    element.setAttribute("name", getArguments().getNewFolderName());
+  private void createNewFolderElement(Element rootElement, CreateFolderArguments arguments) {
+    Element element = arguments.getDocument().createElement("NewFolder");
+    element.setAttribute("name", arguments.getNewFolderName());
     rootElement.appendChild(element);
   }
 
   /**
    * gets data for xml. Not used in this handler.
    *
+   * @param arguments
    * @return always 0
    */
   @Override
-  protected int getDataForXml() {
+  protected int getDataForXml(CreateFolderArguments arguments) {
     try {
-      isRequestPathValid(getArguments().getNewFolderName());
+      isRequestPathValid(arguments.getNewFolderName(), arguments);
     } catch (ConnectorException e) {
       return e.getErrorCode();
     }
 
-    if (!isTypeExists(getArguments().getType())) {
-      getArguments().setType(null);
+    if (!isTypeExists(arguments.getType())) {
+      arguments.setType(null);
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE;
     }
 
-    if (!getConfiguration().getAccessControl().checkFolderACL(getArguments().getType(), getArguments().getCurrentFolder(), getArguments().getUserRole(),
+    if (!getConfiguration().getAccessControl().checkFolderACL(arguments.getType(),
+            arguments.getCurrentFolder(), arguments.getUserRole(),
             AccessControl.CKFINDER_CONNECTOR_ACL_FOLDER_CREATE)) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_UNAUTHORIZED;
     }
 
     if (getConfiguration().isForceAscii()) {
-      getArguments().setNewFolderName(FileUtils.convertToASCII(getArguments().getNewFolderName()));
+      arguments.setNewFolderName(FileUtils.convertToASCII(arguments.getNewFolderName()));
     }
 
-    if (!FileUtils.isFolderNameInvalid(getArguments().getNewFolderName(), getConfiguration())) {
+    if (!FileUtils.isFolderNameInvalid(arguments.getNewFolderName(), getConfiguration())) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_NAME;
     }
-    if (FileUtils.isDirectoryHidden(getArguments().getCurrentFolder(), getConfiguration())) {
+    if (FileUtils.isDirectoryHidden(arguments.getCurrentFolder(), getConfiguration())) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
     }
-    if (FileUtils.isDirectoryHidden(getArguments().getNewFolderName(), getConfiguration())) {
+    if (FileUtils.isDirectoryHidden(arguments.getNewFolderName(), getConfiguration())) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_NAME;
     }
 
     try {
-      if (createFolder()) {
+      if (createFolder(arguments)) {
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_NONE;
       } else {
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_UNAUTHORIZED;
@@ -112,9 +114,9 @@ public class CreateFolderCommand extends XMLCommand<CreateFolderArguments> imple
    * @return true if folder is created correctly
    * @throws ConnectorException when error occurs or dir exists
    */
-  private boolean createFolder() throws ConnectorException {
-    Path dir = Paths.get(getConfiguration().getTypes().get(getArguments().getType()).getPath()
-            + getArguments().getCurrentFolder() + getArguments().getNewFolderName());
+  private boolean createFolder(CreateFolderArguments arguments) throws ConnectorException {
+    Path dir = Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath()
+            + arguments.getCurrentFolder() + arguments.getNewFolderName());
     if (Files.exists(dir)) {
       throw new ConnectorException(Constants.Errors.CKFINDER_CONNECTOR_ERROR_ALREADY_EXIST);
     }
@@ -127,10 +129,10 @@ public class CreateFolderCommand extends XMLCommand<CreateFolderArguments> imple
   }
 
   @Override
-  protected void initParams(HttpServletRequest request, IConfiguration configuration)
+  protected void initParams(CreateFolderArguments arguments, HttpServletRequest request, IConfiguration configuration)
           throws ConnectorException {
-    super.initParams(request, configuration);
-    getArguments().setNewFolderName(request.getParameter("NewFolderName"));
+    super.initParams(arguments, request, configuration);
+    arguments.setNewFolderName(request.getParameter("NewFolderName"));
   }
 
 }

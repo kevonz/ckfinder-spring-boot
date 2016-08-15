@@ -37,9 +37,9 @@ public class RenameFolderCommand extends XMLCommand<RenameFolderArguments> imple
   }
 
   @Override
-  protected void createXMLChildNodes(int errorNum, Element rootElement) {
+  protected void createXMLChildNodes(int errorNum, Element rootElement, RenameFolderArguments arguments) {
     if (errorNum == Constants.Errors.CKFINDER_CONNECTOR_ERROR_NONE) {
-      createRenamedFolderNode(rootElement);
+      createRenamedFolderNode(rootElement, arguments);
     }
 
   }
@@ -49,64 +49,64 @@ public class RenameFolderCommand extends XMLCommand<RenameFolderArguments> imple
    *
    * @param rootElement XML root element.
    */
-  private void createRenamedFolderNode(Element rootElement) {
-    Element element = getArguments().getDocument().createElement("RenamedFolder");
-    element.setAttribute("newName", getArguments().getNewFolderName());
-    element.setAttribute("newPath", getArguments().getNewFolderPath());
-    element.setAttribute("newUrl", getConfiguration().getTypes().get(getArguments().getType()).getUrl() + getArguments().getNewFolderPath());
+  private void createRenamedFolderNode(Element rootElement, RenameFolderArguments arguments) {
+    Element element = arguments.getDocument().createElement("RenamedFolder");
+    element.setAttribute("newName", arguments.getNewFolderName());
+    element.setAttribute("newPath", arguments.getNewFolderPath());
+    element.setAttribute("newUrl", getConfiguration().getTypes().get(arguments.getType()).getUrl() + arguments.getNewFolderPath());
     rootElement.appendChild(element);
 
   }
 
   @Override
-  protected int getDataForXml() throws IOException {
+  protected int getDataForXml(RenameFolderArguments arguments) throws IOException {
 
     try {
-      isRequestPathValid(getArguments().getNewFolderName());
+      isRequestPathValid(arguments.getNewFolderName(), arguments);
     } catch (ConnectorException e) {
       return e.getErrorCode();
     }
 
-    if (!isTypeExists(getArguments().getType())) {
-      getArguments().setType(null);
+    if (!isTypeExists(arguments.getType())) {
+      arguments.setType(null);
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE;
     }
 
-    if (!getConfiguration().getAccessControl().checkFolderACL(getArguments().getType(),
-            getArguments().getCurrentFolder(),
-            getArguments().getUserRole(),
+    if (!getConfiguration().getAccessControl().checkFolderACL(arguments.getType(),
+            arguments.getCurrentFolder(),
+            arguments.getUserRole(),
             AccessControl.CKFINDER_CONNECTOR_ACL_FOLDER_RENAME)) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_UNAUTHORIZED;
     }
 
     if (getConfiguration().isForceAscii()) {
-      getArguments().setNewFolderName(FileUtils.convertToASCII(getArguments().getNewFolderName()));
+      arguments.setNewFolderName(FileUtils.convertToASCII(arguments.getNewFolderName()));
     }
 
-    if (FileUtils.isDirectoryHidden(getArguments().getNewFolderName(), getConfiguration())
-            || !FileUtils.isFolderNameInvalid(getArguments().getNewFolderName(), getConfiguration())) {
+    if (FileUtils.isDirectoryHidden(arguments.getNewFolderName(), getConfiguration())
+            || !FileUtils.isFolderNameInvalid(arguments.getNewFolderName(), getConfiguration())) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_NAME;
     }
 
-    if (getArguments().getCurrentFolder().equals("/")) {
+    if (arguments.getCurrentFolder().equals("/")) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
     }
 
-    Path dir = Paths.get(getConfiguration().getTypes().get(getArguments().getType()).getPath()
-            + getArguments().getCurrentFolder());
+    Path dir = Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath()
+            + arguments.getCurrentFolder());
     try {
       if (!Files.isDirectory(dir)) {
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
       }
-      setNewFolder();
-      Path newDir = Paths.get(getConfiguration().getTypes().get(getArguments().getType()).getPath()
-              + getArguments().getNewFolderPath());
+      setNewFolder(arguments);
+      Path newDir = Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath()
+              + arguments.getNewFolderPath());
       if (Files.exists(newDir)) {
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_ALREADY_EXIST;
       }
       try {
         Files.move(dir, newDir);
-        renameThumb();
+        renameThumb(arguments);
       } catch (IOException ex) {
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_ACCESS_DENIED;
       }
@@ -121,13 +121,13 @@ public class RenameFolderCommand extends XMLCommand<RenameFolderArguments> imple
   /**
    * renames thumb folder.
    */
-  private void renameThumb() throws IOException {
+  private void renameThumb(RenameFolderArguments arguments) throws IOException {
     Path thumbDir = Paths.get(getConfiguration().getThumbsPath(),
-            getArguments().getType()
-            + getArguments().getCurrentFolder());
+            arguments.getType()
+            + arguments.getCurrentFolder());
     Path newThumbDir = Paths.get(getConfiguration().getThumbsPath(),
-            getArguments().getType()
-            + getArguments().getNewFolderPath());
+            arguments.getType()
+            + arguments.getNewFolderPath());
     try {
       Files.move(thumbDir, newThumbDir);
     } catch (IOException ex) {
@@ -137,23 +137,24 @@ public class RenameFolderCommand extends XMLCommand<RenameFolderArguments> imple
   /**
    * sets new folder name.
    */
-  private void setNewFolder() {
-    String tmp1 = getArguments().getCurrentFolder().substring(0,
-            getArguments().getCurrentFolder().lastIndexOf('/'));
-    getArguments().setNewFolderPath(tmp1.substring(0,
-            tmp1.lastIndexOf('/') + 1).concat(getArguments().getNewFolderName()));
-    getArguments().setNewFolderPath(PathUtils.addSlashToEnd(getArguments().getNewFolderPath()));
+  private void setNewFolder(RenameFolderArguments arguments) {
+    String tmp1 = arguments.getCurrentFolder().substring(0,
+            arguments.getCurrentFolder().lastIndexOf('/'));
+    arguments.setNewFolderPath(tmp1.substring(0,
+            tmp1.lastIndexOf('/') + 1).concat(arguments.getNewFolderName()));
+    arguments.setNewFolderPath(PathUtils.addSlashToEnd(arguments.getNewFolderPath()));
   }
 
   /**
+   * @param arguments
    * @param request request
    * @param configuration connector conf
    * @throws ConnectorException when error occurs.
    */
   @Override
-  protected void initParams(HttpServletRequest request, IConfiguration configuration) throws ConnectorException {
-    super.initParams(request, configuration);
-    getArguments().setNewFolderName(request.getParameter("NewFolderName"));
+  protected void initParams(RenameFolderArguments arguments, HttpServletRequest request, IConfiguration configuration) throws ConnectorException {
+    super.initParams(arguments, request, configuration);
+    arguments.setNewFolderName(request.getParameter("NewFolderName"));
   }
 
 }

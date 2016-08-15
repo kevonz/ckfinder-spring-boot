@@ -64,10 +64,11 @@ public abstract class Command<T extends Arguments> {
    */
   public void runCommand(HttpServletRequest request, HttpServletResponse response,
           IConfiguration configuration) throws ConnectorException {
-    this.initParams(request, configuration);
+    T args = getArguments();
+    this.initParams(args, request, configuration);
     try {
-      setResponseHeader(request, response);
-      execute(response);
+      setResponseHeader(request, response, args);
+      execute(args, response);
     } catch (IOException e) {
       throw new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_ACCESS_DENIED, e);
@@ -77,26 +78,27 @@ public abstract class Command<T extends Arguments> {
   /**
    * initialize params for command handler.
    *
+   * @param arguments
    * @param request request
    * @param configuration connector configuration
    * @throws ConnectorException to handle in error handler.
    */
-  protected void initParams(HttpServletRequest request, IConfiguration configuration)
+  protected void initParams(T arguments, HttpServletRequest request, IConfiguration configuration)
           throws ConnectorException {
     if (configuration != null) {
       this.configuration = configuration;
       HttpSession session = request.getSession(false);
       String userRole = session == null ? null : (String) session.getAttribute(configuration.getUserRoleName());
-      getArguments().setUserRole(userRole);
+      arguments.setUserRole(userRole);
 
-      getCurrentFolderParam(request);
+      getCurrentFolderParam(request, arguments);
 
-      if (isConnectorEnabled() && isRequestPathValid(getArguments().getCurrentFolder())) {
-        getArguments().setCurrentFolder(PathUtils.escape(getArguments().getCurrentFolder()));
-        if (!isHidden()) {
-          if ((getArguments().getCurrentFolder() == null || getArguments().getCurrentFolder().isEmpty())
-                  || isCurrFolderExists(request)) {
-            getArguments().setType(request.getParameter("type"));
+      if (isConnectorEnabled(arguments) && isRequestPathValid(arguments.getCurrentFolder(), arguments)) {
+        arguments.setCurrentFolder(PathUtils.escape(arguments.getCurrentFolder()));
+        if (!isHidden(arguments)) {
+          if ((arguments.getCurrentFolder() == null || arguments.getCurrentFolder().isEmpty())
+                  || isCurrFolderExists(arguments, request)) {
+            arguments.setType(request.getParameter("type"));
           }
         }
       }
@@ -109,7 +111,7 @@ public abstract class Command<T extends Arguments> {
    * @return true if connector is enabled and user is authenticated
    * @throws ConnectorException when connector is disabled
    */
-  protected boolean isConnectorEnabled() throws ConnectorException {
+  protected boolean isConnectorEnabled(T arguments) throws ConnectorException {
     if (!getConfiguration().isEnabled()) {
       throw new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_CONNECTOR_DISABLED, false);
@@ -120,16 +122,17 @@ public abstract class Command<T extends Arguments> {
   /**
    * Checks if current folder exists.
    *
+   * @param arguments
    * @param request current request object
    * @return {@code true} if current folder exists
    * @throws ConnectorException if current folder doesn't exist
    */
-  protected boolean isCurrFolderExists(HttpServletRequest request)
+  protected boolean isCurrFolderExists(T arguments, HttpServletRequest request)
           throws ConnectorException {
     String tmpType = request.getParameter("type");
     if (tmpType != null) {
       if (isTypeExists(tmpType)) {
-        Path currDir = Paths.get(getConfiguration().getTypes().get(tmpType).getPath() + getArguments().getCurrentFolder());
+        Path currDir = Paths.get(getConfiguration().getTypes().get(tmpType).getPath() + arguments.getCurrentFolder());
         if (!Files.exists(currDir) || !Files.isDirectory(currDir)) {
           throw new ConnectorException(
                   Constants.Errors.CKFINDER_CONNECTOR_ERROR_FOLDER_NOT_FOUND,
@@ -157,11 +160,12 @@ public abstract class Command<T extends Arguments> {
   /**
    * checks if current folder is hidden.
    *
+   * @param arguments
    * @return false if isn't.
    * @throws ConnectorException when is hidden
    */
-  protected boolean isHidden() throws ConnectorException {
-    if (FileUtils.isDirectoryHidden(getArguments().getCurrentFolder(), getConfiguration())) {
+  protected boolean isHidden(T arguments) throws ConnectorException {
+    if (FileUtils.isDirectoryHidden(arguments.getCurrentFolder(), getConfiguration())) {
       throw new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST,
               false);
@@ -176,24 +180,26 @@ public abstract class Command<T extends Arguments> {
    * @throws ConnectorException when error occurs
    * @throws java.io.IOException
    */
-  abstract void execute(HttpServletResponse response) throws ConnectorException, IOException;
+  abstract void execute(T arguments, HttpServletResponse response) throws ConnectorException, IOException;
 
   /**
    * sets header in response.
    *
    * @param request servlet request
    * @param response servlet response
+   * @param arguments
    */
-  public abstract void setResponseHeader(HttpServletRequest request, HttpServletResponse response);
+  public abstract void setResponseHeader(HttpServletRequest request, HttpServletResponse response, T arguments);
 
   /**
    * check request for security issue.
    *
    * @param reqParam request param
+   * @param arguments
    * @return true if validation passed
    * @throws ConnectorException if validation error occurs.
    */
-  protected boolean isRequestPathValid(String reqParam) throws ConnectorException {
+  protected boolean isRequestPathValid(String reqParam, T arguments) throws ConnectorException {
     if (reqParam == null || reqParam.isEmpty()) {
       return true;
     }
@@ -211,12 +217,12 @@ public abstract class Command<T extends Arguments> {
    *
    * @param request request
    */
-  protected void getCurrentFolderParam(HttpServletRequest request) {
+  protected void getCurrentFolderParam(HttpServletRequest request, T arguments) {
     String currFolder = request.getParameter("currentFolder");
     if (currFolder == null || currFolder.isEmpty()) {
-      getArguments().setCurrentFolder("/");
+      arguments.setCurrentFolder("/");
     } else {
-      getArguments().setCurrentFolder(PathUtils.addSlashToBeginning(PathUtils.addSlashToEnd(currFolder)));
+      arguments.setCurrentFolder(PathUtils.addSlashToBeginning(PathUtils.addSlashToEnd(currFolder)));
     }
   }
 

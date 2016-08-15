@@ -49,59 +49,61 @@ public class GetFilesCommand extends XMLCommand<GetFilesArguments> {
   /**
    * initializing parameters for command handler.
    *
+   * @param arguments
    * @param request request
    * @param configuration connector configuration
    * @throws ConnectorException when error occurs
    */
   @Override
-  protected void initParams(HttpServletRequest request, IConfiguration configuration)
+  protected void initParams(GetFilesArguments arguments, HttpServletRequest request, IConfiguration configuration)
           throws ConnectorException {
-    super.initParams(request, configuration);
+    super.initParams(arguments, request, configuration);
 
-    getArguments().setShowThumbs(request.getParameter("showThumbs"));
+    arguments.setShowThumbs(request.getParameter("showThumbs"));
   }
 
   @Override
-  protected void createXMLChildNodes(int errorNum, Element rootElement) throws IOException {
+  protected void createXMLChildNodes(int errorNum, Element rootElement, GetFilesArguments arguments) throws IOException {
     if (errorNum == Constants.Errors.CKFINDER_CONNECTOR_ERROR_NONE) {
-      createFilesData(rootElement);
+      createFilesData(rootElement, arguments);
     }
   }
 
   /**
    * gets data to XML response.
    *
+   * @param arguments
    * @return 0 if ok, otherwise error code
    * @throws java.io.IOException
    */
   @Override
-  protected int getDataForXml() throws IOException {
-    if (!isTypeExists(getArguments().getType())) {
-      getArguments().setType(null);
+  protected int getDataForXml(GetFilesArguments arguments) throws IOException {
+    if (!isTypeExists(arguments.getType())) {
+      arguments.setType(null);
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE;
     }
 
-    getArguments().setFullCurrentPath(getConfiguration().getTypes().get(getArguments().getType()).getPath()
-            + getArguments().getCurrentFolder());
+    arguments.setFullCurrentPath(getConfiguration().getTypes().get(arguments.getType()).getPath()
+            + arguments.getCurrentFolder());
 
-    if (!getConfiguration().getAccessControl().checkFolderACL(getArguments().getType(),
-            getArguments().getCurrentFolder(), getArguments().getUserRole(),
+    if (!getConfiguration().getAccessControl().checkFolderACL(arguments.getType(),
+            arguments.getCurrentFolder(), arguments.getUserRole(),
             AccessControl.CKFINDER_CONNECTOR_ACL_FILE_VIEW)) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_UNAUTHORIZED;
     }
 
-    Path dir = Paths.get(getArguments().getFullCurrentPath());
+    Path dir = Paths.get(arguments.getFullCurrentPath());
     try {
       if (!Files.exists(dir)) {
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_FOLDER_NOT_FOUND;
       }
-      getArguments().setFiles(FileUtils.findChildrensList(dir, false));
+      arguments.setFiles(FileUtils.findChildrensList(dir, false));
     } catch (SecurityException e) {
       log.error("", e);
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_ACCESS_DENIED;
     }
-    filterListByHiddenAndNotAllowed();
-    Collections.sort(getArguments().getFiles());
+    filterListByHiddenAndNotAllowed(arguments);
+    Collections.sort(arguments.getFiles());
     return Constants.Errors.CKFINDER_CONNECTOR_ERROR_NONE;
   }
 
@@ -109,14 +111,14 @@ public class GetFilesCommand extends XMLCommand<GetFilesArguments> {
    *
    *
    */
-  private void filterListByHiddenAndNotAllowed() {
-    List<String> tmpFiles = getArguments().getFiles().stream()
-            .filter(file -> (FileUtils.checkFileExtension(file, getConfiguration().getTypes().get(getArguments().getType())) == 0
+  private void filterListByHiddenAndNotAllowed(GetFilesArguments arguments) {
+    List<String> tmpFiles = arguments.getFiles().stream()
+            .filter(file -> (FileUtils.checkFileExtension(file, getConfiguration().getTypes().get(arguments.getType())) == 0
                     && !FileUtils.isFileHidden(file, getConfiguration())))
             .collect(Collectors.toList());
 
-    getArguments().getFiles().clear();
-    getArguments().getFiles().addAll(tmpFiles);
+    arguments.getFiles().clear();
+    arguments.getFiles().addAll(tmpFiles);
 
   }
 
@@ -125,22 +127,22 @@ public class GetFilesCommand extends XMLCommand<GetFilesArguments> {
    *
    * @param rootElement root element from XML.
    */
-  private void createFilesData(Element rootElement) throws IOException {
-    Element element = getArguments().getDocument().createElement("Files");
-    for (String filePath : getArguments().getFiles()) {
-      Path file = Paths.get(getArguments().getFullCurrentPath(), filePath);
+  private void createFilesData(Element rootElement, GetFilesArguments arguments) throws IOException {
+    Element element = arguments.getDocument().createElement("Files");
+    for (String filePath : arguments.getFiles()) {
+      Path file = Paths.get(arguments.getFullCurrentPath(), filePath);
       if (Files.exists(file)) {
         XmlElementData.Builder elementData = XmlElementData.builder().name("File");
         elementData.attribute(new XmlAttribute("name", filePath))
                 .attribute(new XmlAttribute("date", FileUtils.parseLastModifDate(file)))
                 .attribute(new XmlAttribute("size", getSize(file)));
-        if (ImageUtils.isImageExtension(file) && isAddThumbsAttr()) {
-          String attr = createThumbAttr(file);
+        if (ImageUtils.isImageExtension(file) && isAddThumbsAttr(arguments)) {
+          String attr = createThumbAttr(file, arguments);
           if (!attr.isEmpty()) {
             elementData.attribute(new XmlAttribute("thumb", attr));
           }
         }
-        elementData.build().addToDocument(getArguments().getDocument(), element);
+        elementData.build().addToDocument(arguments.getDocument(), element);
       }
     }
     rootElement.appendChild(element);
@@ -152,13 +154,13 @@ public class GetFilesCommand extends XMLCommand<GetFilesArguments> {
    * @param file file to check if has thumb.
    * @return thumb attribute values
    */
-  private String createThumbAttr(Path file) {
+  private String createThumbAttr(Path file, GetFilesArguments arguments) {
     Path thumbFile = Paths.get(getConfiguration().getThumbsPath(),
-            getArguments().getType() + getArguments().getCurrentFolder(),
+            arguments.getType() + arguments.getCurrentFolder(),
             file.getFileName().toString());
     if (Files.exists(thumbFile)) {
       return file.getFileName().toString();
-    } else if (isShowThumbs()) {
+    } else if (isShowThumbs(arguments)) {
       return "?".concat(file.getFileName().toString());
     } else {
       return "";
@@ -185,10 +187,10 @@ public class GetFilesCommand extends XMLCommand<GetFilesArguments> {
    *
    * @return true if show thumbs
    */
-  private boolean isAddThumbsAttr() {
+  private boolean isAddThumbsAttr(GetFilesArguments arguments) {
     return getConfiguration().isThumbsEnabled()
             && (getConfiguration().isThumbsDirectAccess()
-            || isShowThumbs());
+            || isShowThumbs(arguments));
   }
 
   /**
@@ -196,8 +198,8 @@ public class GetFilesCommand extends XMLCommand<GetFilesArguments> {
    *
    * @return true if is set.
    */
-  private boolean isShowThumbs() {
-    return (getArguments().getShowThumbs() != null && getArguments().getShowThumbs().equals("1"));
+  private boolean isShowThumbs(GetFilesArguments arguments) {
+    return (arguments.getShowThumbs() != null && arguments.getShowThumbs().equals("1"));
   }
 
 }

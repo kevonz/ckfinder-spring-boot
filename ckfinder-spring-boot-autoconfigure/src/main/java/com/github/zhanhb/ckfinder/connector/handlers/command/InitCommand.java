@@ -49,23 +49,24 @@ public class InitCommand extends XMLCommand<XMLArguments> {
   /**
    * method from super class - not used in this command.
    *
+   * @param arguments
    * @return 0
    */
   @Override
-  protected int getDataForXml() {
+  protected int getDataForXml(XMLArguments arguments) {
     return Constants.Errors.CKFINDER_CONNECTOR_ERROR_NONE;
   }
 
   @Override
-  protected void createXMLChildNodes(int errorNum, Element rootElement) {
+  protected void createXMLChildNodes(int errorNum, Element rootElement, XMLArguments arguments) {
     if (errorNum == Constants.Errors.CKFINDER_CONNECTOR_ERROR_NONE) {
-      createConnectorData(rootElement);
+      createConnectorData(rootElement, arguments);
       try {
-        createResouceTypesData(rootElement);
+        createResouceTypesData(rootElement, arguments);
       } catch (Exception e) {
         log.error("", e);
       }
-      createPluginsData(rootElement);
+      createPluginsData(rootElement, arguments);
     }
   }
 
@@ -74,9 +75,9 @@ public class InitCommand extends XMLCommand<XMLArguments> {
    *
    * @param rootElement root element in XML
    */
-  private void createConnectorData(Element rootElement) {
+  private void createConnectorData(Element rootElement, XMLArguments arguments) {
     // connector info
-    Element element = getArguments().getDocument().createElement("ConnectorInfo");
+    Element element = arguments.getDocument().createElement("ConnectorInfo");
     element.setAttribute("enabled", String.valueOf(getConfiguration().isEnabled()));
     element.setAttribute("s", getLicenseName());
     element.setAttribute("c", createLicenseKey(getConfiguration().getLicenseKey()));
@@ -157,11 +158,11 @@ public class InitCommand extends XMLCommand<XMLArguments> {
    *
    * @param rootElement root element in XML
    */
-  public void createPluginsData(Element rootElement) {
-    Element element = getArguments().getDocument().createElement("PluginsInfo");
+  private void createPluginsData(Element rootElement, XMLArguments arguments) {
+    Element element = arguments.getDocument().createElement("PluginsInfo");
     rootElement.appendChild(element);
     if (getConfiguration().getEvents() != null) {
-      InitCommandEventArgs args = new InitCommandEventArgs(getArguments().getDocument(), rootElement);
+      InitCommandEventArgs args = new InitCommandEventArgs(arguments.getDocument(), rootElement);
       getConfiguration().getEvents().runInitCommand(args, getConfiguration());
     }
   }
@@ -173,29 +174,29 @@ public class InitCommand extends XMLCommand<XMLArguments> {
    * @throws Exception when error occurs
    */
   @SuppressWarnings("CollectionWithoutInitialCapacity")
-  private void createResouceTypesData(Element rootElement) throws Exception {
+  private void createResouceTypesData(Element rootElement, XMLArguments arguments) throws Exception {
     //resurcetypes
-    Element element = getArguments().getDocument().createElement("ResourceTypes");
+    Element element = arguments.getDocument().createElement("ResourceTypes");
     rootElement.appendChild(element);
 
     Set<String> types;
-    if (getArguments().getType() != null && !getArguments().getType().isEmpty()) {
+    if (arguments.getType() != null && !arguments.getType().isEmpty()) {
       types = new LinkedHashSet<>();
-      types.add(getArguments().getType());
+      types.add(arguments.getType());
     } else {
       types = getTypes();
     }
 
     for (String key : types) {
       ResourceType resourceType = getConfiguration().getTypes().get(key);
-      if (((getArguments().getType() == null || getArguments().getType().equals(key)) && resourceType != null)
-              && getConfiguration().getAccessControl().checkFolderACL(key, "/", getArguments().getUserRole(),
+      if (((arguments.getType() == null || arguments.getType().equals(key)) && resourceType != null)
+              && getConfiguration().getAccessControl().checkFolderACL(key, "/", arguments.getUserRole(),
                       AccessControl.CKFINDER_CONNECTOR_ACL_FOLDER_VIEW)) {
 
-        Element childElement = getArguments().getDocument().
+        Element childElement = arguments.getDocument().
                 createElement("ResourceType");
         childElement.setAttribute("name", resourceType.getName());
-        childElement.setAttribute("acl", String.valueOf(getConfiguration().getAccessControl().checkACLForRole(key, "/", getArguments().getUserRole())));
+        childElement.setAttribute("acl", String.valueOf(getConfiguration().getAccessControl().checkACLForRole(key, "/", arguments.getUserRole())));
         childElement.setAttribute("hash", randomHash(
                 resourceType.getPath()));
         childElement.setAttribute(
@@ -208,7 +209,7 @@ public class InitCommand extends XMLCommand<XMLArguments> {
         long maxSize = resourceType.getMaxSize();
         childElement.setAttribute("maxSize", maxSize > 0 ? Long.toString(maxSize) : "0");
         childElement.setAttribute("hasChildren",
-                FileUtils.hasChildren(getConfiguration().getAccessControl(), "/", Paths.get(PathUtils.escape(resourceType.getPath())), getConfiguration(), resourceType.getName(), getArguments().getUserRole()).toString());
+                FileUtils.hasChildren(getConfiguration().getAccessControl(), "/", Paths.get(PathUtils.escape(resourceType.getPath())), getConfiguration(), resourceType.getName(), arguments.getUserRole()).toString());
         element.appendChild(childElement);
       }
     }
@@ -259,8 +260,8 @@ public class InitCommand extends XMLCommand<XMLArguments> {
   }
 
   @Override
-  protected void getCurrentFolderParam(HttpServletRequest request) {
-    getArguments().setCurrentFolder(null);
+  protected void getCurrentFolderParam(HttpServletRequest request, XMLArguments arguments) {
+    arguments.setCurrentFolder(null);
   }
 
 }

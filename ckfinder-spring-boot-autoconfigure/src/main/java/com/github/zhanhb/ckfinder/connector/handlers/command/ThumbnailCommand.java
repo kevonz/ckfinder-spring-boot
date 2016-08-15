@@ -99,13 +99,13 @@ public class ThumbnailCommand extends Command<ThumbnailArguments> {
   }
 
   @Override
-  public void setResponseHeader(HttpServletRequest request, HttpServletResponse response) {
+  public void setResponseHeader(HttpServletRequest request, HttpServletResponse response, ThumbnailArguments arguments) {
     response.setHeader("Cache-Control", "public");
-    String mimetype = getMimeTypeOfImage(request.getServletContext(), response);
+    String mimetype = getMimeTypeOfImage(request.getServletContext(), response, arguments);
     if (mimetype != null) {
       response.setContentType(mimetype);
     }
-    response.addHeader("Content-Disposition", "attachment; filename=\"" + getArguments().getFileName() + "\"");
+    response.addHeader("Content-Disposition", "attachment; filename=\"" + arguments.getFileName() + "\"");
   }
 
   /**
@@ -115,17 +115,17 @@ public class ThumbnailCommand extends Command<ThumbnailArguments> {
    * @param response currect response object
    * @return mime type of the image.
    */
-  private String getMimeTypeOfImage(ServletContext sc, HttpServletResponse response) {
-    if (getArguments().getFileName() == null || getArguments().getFileName().length() == 0) {
+  private String getMimeTypeOfImage(ServletContext sc, HttpServletResponse response, ThumbnailArguments arguments) {
+    if (arguments.getFileName() == null || arguments.getFileName().length() == 0) {
       response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
       return null;
     }
-    String tempFileName = getArguments().getFileName().substring(0,
-            getArguments().getFileName().lastIndexOf('.') + 1).concat(
-            FileUtils.getFileExtension(getArguments().getFileName()).toLowerCase());
+    String tempFileName = arguments.getFileName().substring(0,
+            arguments.getFileName().lastIndexOf('.') + 1).concat(
+            FileUtils.getFileExtension(arguments.getFileName()).toLowerCase());
     String mimeType = sc.getMimeType(tempFileName);
     if (mimeType == null || mimeType.length() == 0) {
-      mimeType = ThumbnailCommand.imgMimeTypeMap.get(getArguments().getFileName().toLowerCase().substring(getArguments().getFileName().lastIndexOf('.')));
+      mimeType = ThumbnailCommand.imgMimeTypeMap.get(arguments.getFileName().toLowerCase().substring(arguments.getFileName().lastIndexOf('.')));
     }
 
     if (mimeType == null) {
@@ -137,12 +137,12 @@ public class ThumbnailCommand extends Command<ThumbnailArguments> {
 
   @Override
   @SuppressWarnings("FinalMethod")
-  final void execute(HttpServletResponse response) throws ConnectorException, IOException {
-    validate();
-    createThumb();
-    if (setResponseHeadersAfterCreatingFile(response)) {
+  final void execute(ThumbnailArguments arguments, HttpServletResponse response) throws ConnectorException, IOException {
+    validate(arguments);
+    createThumb(arguments);
+    if (setResponseHeadersAfterCreatingFile(response, arguments)) {
       try (ServletOutputStream out = response.getOutputStream()) {
-        FileUtils.printFileContentToResponse(getArguments().getThumbFile(), out);
+        FileUtils.printFileContentToResponse(arguments.getThumbFile(), out);
       } catch (IOException e) {
         log.error("", e);
         try {
@@ -162,16 +162,16 @@ public class ThumbnailCommand extends Command<ThumbnailArguments> {
   }
 
   @Override
-  protected void initParams(HttpServletRequest request, IConfiguration configuration)
+  protected void initParams(ThumbnailArguments arguments, HttpServletRequest request, IConfiguration configuration)
           throws ConnectorException {
-    super.initParams(request, configuration);
-    getArguments().setFileName(request.getParameter("FileName"));
+    super.initParams(arguments, request, configuration);
+    arguments.setFileName(request.getParameter("FileName"));
     try {
-      getArguments().setIfModifiedSince(request.getDateHeader("If-Modified-Since"));
+      arguments.setIfModifiedSince(request.getDateHeader("If-Modified-Since"));
     } catch (IllegalArgumentException e) {
-      getArguments().setIfModifiedSince(0);
+      arguments.setIfModifiedSince(0);
     }
-    getArguments().setIfNoneMatch(request.getHeader("If-None-Match"));
+    arguments.setIfNoneMatch(request.getHeader("If-None-Match"));
   }
 
   /**
@@ -179,39 +179,39 @@ public class ThumbnailCommand extends Command<ThumbnailArguments> {
    *
    * @throws ConnectorException when validation fails.
    */
-  private void validate() throws ConnectorException, IOException {
+  private void validate(ThumbnailArguments arguments) throws ConnectorException, IOException {
     if (!this.getConfiguration().isThumbsEnabled()) {
       throw new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_THUMBNAILS_DISABLED);
     }
-    if (!isTypeExists(getArguments().getType())) {
-      getArguments().setType(null);
+    if (!isTypeExists(arguments.getType())) {
+      arguments.setType(null);
       throw new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE, false);
     }
 
-    if (!getConfiguration().getAccessControl().checkFolderACL(getArguments().getType(),
-            getArguments().getCurrentFolder(), getArguments().getUserRole(),
+    if (!getConfiguration().getAccessControl().checkFolderACL(arguments.getType(),
+            arguments.getCurrentFolder(), arguments.getUserRole(),
             AccessControl.CKFINDER_CONNECTOR_ACL_FILE_VIEW)) {
       throw new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_UNAUTHORIZED);
     }
 
-    if (!FileUtils.isFileNameInvalid(getArguments().getFileName())) {
+    if (!FileUtils.isFileNameInvalid(arguments.getFileName())) {
       throw new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST);
     }
 
-    if (FileUtils.isFileHidden(getArguments().getFileName(), this.getConfiguration())) {
+    if (FileUtils.isFileHidden(arguments.getFileName(), this.getConfiguration())) {
       throw new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_FILE_NOT_FOUND);
     }
 
-    Path typeThumbDir = Paths.get(getConfiguration().getThumbsPath(), getArguments().getType());
+    Path typeThumbDir = Paths.get(getConfiguration().getThumbsPath(), arguments.getType());
 
     try {
-      getArguments().setFullCurrentPath(typeThumbDir.toAbsolutePath().toString()
-              + getArguments().getCurrentFolder());
+      arguments.setFullCurrentPath(typeThumbDir.toAbsolutePath().toString()
+              + arguments.getCurrentFolder());
       if (!Files.exists(typeThumbDir)) {
         Files.createDirectories(typeThumbDir);
       }
@@ -229,21 +229,21 @@ public class ThumbnailCommand extends Command<ThumbnailArguments> {
    * @throws ConnectorException when thumbnail creation fails.
    */
   @SuppressWarnings({"BroadCatchBlock", "TooBroadCatch"})
-  private void createThumb() throws ConnectorException {
-    getArguments().setThumbFile(Paths.get(getArguments().getFullCurrentPath(), getArguments().getFileName()));
+  private void createThumb(ThumbnailArguments arguments) throws ConnectorException {
+    arguments.setThumbFile(Paths.get(arguments.getFullCurrentPath(), arguments.getFileName()));
     try {
-      if (!Files.exists(getArguments().getThumbFile())) {
-        Path orginFile = Paths.get(getConfiguration().getTypes().get(getArguments().getType()).getPath()
-                + getArguments().getCurrentFolder(), getArguments().getFileName());
+      if (!Files.exists(arguments.getThumbFile())) {
+        Path orginFile = Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath()
+                + arguments.getCurrentFolder(), arguments.getFileName());
         if (!Files.exists(orginFile)) {
           throw new ConnectorException(
                   Constants.Errors.CKFINDER_CONNECTOR_ERROR_FILE_NOT_FOUND);
         }
         try {
-          ImageUtils.createThumb(orginFile, getArguments().getThumbFile(), getConfiguration());
+          ImageUtils.createThumb(orginFile, arguments.getThumbFile(), getConfiguration());
         } catch (Exception e) {
           try {
-            Files.deleteIfExists(getArguments().getThumbFile());
+            Files.deleteIfExists(arguments.getThumbFile());
           } catch (IOException ex) {
             e.addSuppressed(ex);
           }
@@ -266,19 +266,20 @@ public class ThumbnailCommand extends Command<ThumbnailArguments> {
    * response code.
    * @throws ConnectorException when access is denied.
    */
-  private boolean setResponseHeadersAfterCreatingFile(HttpServletResponse response) throws ConnectorException, IOException {
+  private boolean setResponseHeadersAfterCreatingFile(HttpServletResponse response,
+          ThumbnailArguments arguments) throws ConnectorException, IOException {
     // Set content size
-    Path file = Paths.get(getArguments().getFullCurrentPath(), getArguments().getFileName());
+    Path file = Paths.get(arguments.getFullCurrentPath(), arguments.getFileName());
     try {
       FileTime lastModifiedTime = Files.getLastModifiedTime(file);
       String etag = "W/\"" + Long.toHexString(lastModifiedTime.toMillis()) + "-" + Long.toHexString(Files.size(file)) + '"';
-      if (etag.equals(getArguments().getIfNoneMatch())) {
+      if (etag.equals(arguments.getIfNoneMatch())) {
         return false;
       } else {
         response.setHeader("Etag", etag);
       }
 
-      if (lastModifiedTime.toMillis() <= getArguments().getIfModifiedSince()) {
+      if (lastModifiedTime.toMillis() <= arguments.getIfModifiedSince()) {
         return false;
       } else {
         Instant instant = lastModifiedTime.toInstant();

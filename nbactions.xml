@@ -10,4 +10,14 @@
       <goal>javadoc:javadoc</goal>
     </goals>
   </action>
+  <action>
+    <actionName>CUSTOM-dependency:purge-local-repository</actionName>
+    <displayName>dependency:purge-local-repository</displayName>
+    <goals>
+      <goal>dependency:purge-local-repository</goal>
+    </goals>
+    <properties>
+      <reResolve>false</reResolve>
+    </properties>
+  </action>
 </actions>

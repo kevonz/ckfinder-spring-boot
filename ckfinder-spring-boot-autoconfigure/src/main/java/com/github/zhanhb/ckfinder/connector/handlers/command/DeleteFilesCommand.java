@@ -38,15 +38,15 @@ public class DeleteFilesCommand extends XMLCommand<DeleteFilesArguments> impleme
   }
 
   @Override
-  protected void createXMLChildNodes(int errorNum, Element rootElement) {
-    if (hasErrors()) {
-      Element errorsNode = getArguments().getDocument().createElement("Errors");
-      addErrors(errorsNode);
+  protected void createXMLChildNodes(int errorNum, Element rootElement, DeleteFilesArguments arguments) {
+    if (hasErrors(arguments)) {
+      Element errorsNode = arguments.getDocument().createElement("Errors");
+      addErrors(arguments, errorsNode);
       rootElement.appendChild(errorsNode);
     }
 
-    if (getArguments().isAddDeleteNode()) {
-      createDeleteFielsNode(rootElement);
+    if (arguments.isAddDeleteNode()) {
+      createDeleteFielsNode(rootElement, arguments);
     }
   }
 
@@ -55,30 +55,31 @@ public class DeleteFilesCommand extends XMLCommand<DeleteFilesArguments> impleme
    *
    * @param rootElement root element in XML response
    */
-  private void createDeleteFielsNode(Element rootElement) {
-    Element element = getArguments().getDocument().createElement("DeleteFiles");
-    element.setAttribute("deleted", String.valueOf(getArguments().getFilesDeleted()));
+  private void createDeleteFielsNode(Element rootElement, DeleteFilesArguments arguments) {
+    Element element = arguments.getDocument().createElement("DeleteFiles");
+    element.setAttribute("deleted", String.valueOf(arguments.getFilesDeleted()));
     rootElement.appendChild(element);
   }
 
   /**
    * Prepares data for XML response.
    *
+   * @param arguments
    * @return error code or 0 if action ended with success.
    */
   @Override
-  protected int getDataForXml() {
+  protected int getDataForXml(DeleteFilesArguments arguments) {
 
-    getArguments().setFilesDeleted(0);
+    arguments.setFilesDeleted(0);
 
-    getArguments().setAddDeleteNode(false);
+    arguments.setAddDeleteNode(false);
 
-    if (!isTypeExists(getArguments().getType())) {
-      getArguments().setType(null);
+    if (!isTypeExists(arguments.getType())) {
+      arguments.setType(null);
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE;
     }
 
-    for (FilePostParam fileItem : getArguments().getFiles()) {
+    for (FilePostParam fileItem : arguments.getFiles()) {
       if (!FileUtils.isFileNameInvalid(fileItem.getName())) {
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
       }
@@ -106,7 +107,7 @@ public class DeleteFilesCommand extends XMLCommand<DeleteFilesArguments> impleme
 
       }
 
-      if (!getConfiguration().getAccessControl().checkFolderACL(fileItem.getType(), fileItem.getFolder(), getArguments().getUserRole(),
+      if (!getConfiguration().getAccessControl().checkFolderACL(fileItem.getType(), fileItem.getFolder(), arguments.getUserRole(),
               AccessControl.CKFINDER_CONNECTOR_ACL_FILE_DELETE)) {
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_UNAUTHORIZED;
       }
@@ -114,18 +115,17 @@ public class DeleteFilesCommand extends XMLCommand<DeleteFilesArguments> impleme
       Path file = Paths.get(getConfiguration().getTypes().get(fileItem.getType()).getPath() + fileItem.getFolder(), fileItem.getName());
 
       try {
-        getArguments().setAddDeleteNode(true);
+        arguments.setAddDeleteNode(true);
         if (!Files.exists(file)) {
-          appendErrorNodeChild(
-                  Constants.Errors.CKFINDER_CONNECTOR_ERROR_FILE_NOT_FOUND,
+          appendErrorNodeChild(arguments, Constants.Errors.CKFINDER_CONNECTOR_ERROR_FILE_NOT_FOUND,
                   fileItem.getName(), fileItem.getFolder(), fileItem.getType());
           continue;
         }
 
         if (FileUtils.delete(file)) {
           Path thumbFile = Paths.get(getConfiguration().getThumbsPath(),
-                  fileItem.getType() + getArguments().getCurrentFolder(), fileItem.getName());
-          getArguments().filesDeletedPlus();
+                  fileItem.getType() + arguments.getCurrentFolder(), fileItem.getName());
+          arguments.filesDeletedPlus();
 
           try {
             FileUtils.delete(thumbFile);
@@ -133,8 +133,7 @@ public class DeleteFilesCommand extends XMLCommand<DeleteFilesArguments> impleme
             // No errors if we are not able to delete the thumb.
           }
         } else { //If access is denied, report error and try to delete rest of files.
-          appendErrorNodeChild(
-                  Constants.Errors.CKFINDER_CONNECTOR_ERROR_ACCESS_DENIED,
+          appendErrorNodeChild(arguments, Constants.Errors.CKFINDER_CONNECTOR_ERROR_ACCESS_DENIED,
                   fileItem.getName(), fileItem.getFolder(), fileItem.getType());
         }
       } catch (SecurityException e) {
@@ -143,7 +142,7 @@ public class DeleteFilesCommand extends XMLCommand<DeleteFilesArguments> impleme
 
       }
     }
-    if (hasErrors()) {
+    if (hasErrors(arguments)) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_DELETE_FAILED;
     } else {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_NONE;
@@ -153,6 +152,7 @@ public class DeleteFilesCommand extends XMLCommand<DeleteFilesArguments> impleme
   /**
    * Initializes parameters for command handler.
    *
+   * @param arguments
    * @param request current response object
    * @param configuration connector configuration object
    * @throws ConnectorException when initialization parameters can't be loaded
@@ -160,10 +160,10 @@ public class DeleteFilesCommand extends XMLCommand<DeleteFilesArguments> impleme
    */
   @Override
   @SuppressWarnings("CollectionWithoutInitialCapacity")
-  protected void initParams(HttpServletRequest request, IConfiguration configuration) throws ConnectorException {
-    super.initParams(request, configuration);
-    getArguments().setFiles(new ArrayList<>());
-    getFilesListFromRequest(request);
+  protected void initParams(DeleteFilesArguments arguments, HttpServletRequest request, IConfiguration configuration) throws ConnectorException {
+    super.initParams(arguments, request, configuration);
+    arguments.setFiles(new ArrayList<>());
+    getFilesListFromRequest(request, arguments);
   }
 
   /**
@@ -172,7 +172,7 @@ public class DeleteFilesCommand extends XMLCommand<DeleteFilesArguments> impleme
    * @param request current request object
    */
   @SuppressWarnings("ValueOfIncrementOrDecrementUsed")
-  private void getFilesListFromRequest(HttpServletRequest request) {
+  private void getFilesListFromRequest(HttpServletRequest request, DeleteFilesArguments arguments) {
     int i = 0;
     String paramName = "files[" + i + "][name]";
     while (request.getParameter(paramName) != null) {
@@ -180,7 +180,7 @@ public class DeleteFilesCommand extends XMLCommand<DeleteFilesArguments> impleme
       String folder = request.getParameter("files[" + i + "][folder]");
       String options = request.getParameter("files[" + i + "][options]");
       String type = request.getParameter("files[" + i + "][type]");
-      getArguments().getFiles().add(FilePostParam.builder().name(name).folder(folder).options(options).type(type).build());
+      arguments.getFiles().add(FilePostParam.builder().name(name).folder(folder).options(options).type(type).build());
       paramName = "files[" + (++i) + "][name]";
     }
   }

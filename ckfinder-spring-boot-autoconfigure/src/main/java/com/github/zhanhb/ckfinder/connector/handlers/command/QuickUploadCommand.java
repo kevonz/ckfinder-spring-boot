@@ -11,6 +11,7 @@
  */
 package com.github.zhanhb.ckfinder.connector.handlers.command;
 
+import com.github.zhanhb.ckfinder.connector.handlers.arguments.FileUploadArguments;
 import com.github.zhanhb.ckfinder.connector.utils.FileUtils;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -27,20 +28,19 @@ import javax.servlet.http.HttpServletResponse;
 public class QuickUploadCommand extends FileUploadCommand {
 
   @Override
-  protected void handleOnUploadCompleteResponse(Writer writer,
-          String errorMsg) throws IOException {
-    if (getArguments().getResponseType() != null && getArguments().getResponseType().equalsIgnoreCase("json")) {
-      handleJSONResponse(writer, errorMsg, null);
+  protected void handleOnUploadCompleteResponse(Writer writer, String errorMsg, FileUploadArguments arguments) throws IOException {
+    if (arguments.getResponseType() != null && arguments.getResponseType().equalsIgnoreCase("json")) {
+      handleJSONResponse(writer, errorMsg, null, arguments);
     } else {
       writer.write("<script type=\"text/javascript\">");
       writer.write("window.parent.OnUploadCompleted(");
-      writer.write("" + this.getErrorCode() + ", ");
-      if (isUploaded()) {
-        writer.write("'" + getConfiguration().getTypes().get(getArguments().getType()).getUrl()
-                + getArguments().getCurrentFolder()
-                + FileUtils.backupWithBackSlash(FileUtils.encodeURIComponent(this.getNewFileName()), "'")
+      writer.write("" + arguments.getErrorCode() + ", ");
+      if (arguments.isUploaded()) {
+        writer.write("'" + getConfiguration().getTypes().get(arguments.getType()).getUrl()
+                + arguments.getCurrentFolder()
+                + FileUtils.backupWithBackSlash(FileUtils.encodeURIComponent(arguments.getNewFileName()), "'")
                 + "', ");
-        writer.write("'" + FileUtils.backupWithBackSlash(this.getNewFileName(), "'")
+        writer.write("'" + FileUtils.backupWithBackSlash(arguments.getNewFileName(), "'")
                 + "', ");
       } else {
         writer.write("'', '', ");
@@ -52,31 +52,30 @@ public class QuickUploadCommand extends FileUploadCommand {
   }
 
   @Override
-  protected void handleOnUploadCompleteCallFuncResponse(Writer writer,
-          String errorMsg, String path) throws IOException {
-    if (getArguments().getResponseType() != null && getArguments().getResponseType().equalsIgnoreCase("json")) {
-      handleJSONResponse(writer, errorMsg, path);
+  protected void handleOnUploadCompleteCallFuncResponse(Writer writer, String errorMsg, String path, FileUploadArguments arguments) throws IOException {
+    if (arguments.getResponseType() != null && arguments.getResponseType().equalsIgnoreCase("json")) {
+      handleJSONResponse(writer, errorMsg, path, arguments);
     } else {
       writer.write("<script type=\"text/javascript\">");
-      this.setCkEditorFuncNum(this.getCkEditorFuncNum().replaceAll("[^\\d]", ""));
+      arguments.setCkEditorFuncNum(arguments.getCkEditorFuncNum().replaceAll("[^\\d]", ""));
       writer.write(("window.parent.CKEDITOR.tools.callFunction("
-              + this.getCkEditorFuncNum() + ", '"
+              + arguments.getCkEditorFuncNum() + ", '"
               + path
-              + FileUtils.backupWithBackSlash(FileUtils.encodeURIComponent(this.getNewFileName()), "'")
+              + FileUtils.backupWithBackSlash(FileUtils.encodeURIComponent(arguments.getNewFileName()), "'")
               + "', '" + errorMsg + "');"));
       writer.write("</script>");
     }
   }
 
   @Override
-  protected boolean checkFuncNum() {
-    return this.getCkEditorFuncNum() != null;
+  protected boolean checkFuncNum(FileUploadArguments arguments) {
+    return arguments.getCkEditorFuncNum() != null;
   }
 
   @Override
-  public void setResponseHeader(HttpServletRequest request, HttpServletResponse response) {
+  public void setResponseHeader(HttpServletRequest request, HttpServletResponse response, FileUploadArguments arguments) {
     response.setCharacterEncoding("utf-8");
-    if (getArguments().getResponseType() != null && getArguments().getResponseType().equalsIgnoreCase("json")) {
+    if (arguments.getResponseType() != null && arguments.getResponseType().equalsIgnoreCase("json")) {
       response.setContentType("application/json");
     } else {
       response.setContentType("text/html");
@@ -92,33 +91,32 @@ public class QuickUploadCommand extends FileUploadCommand {
    * there was an error during upload or uploaded file was renamed
    * @param path path to uploaded file
    */
-  private void handleJSONResponse(Writer writer,
-          String errorMsg, String path) throws IOException {
+  private void handleJSONResponse(Writer writer, String errorMsg, String path,
+          FileUploadArguments arguments) throws IOException {
 
     Gson gson = new GsonBuilder().serializeNulls().create();
     @SuppressWarnings("CollectionWithoutInitialCapacity")
     Map<String, Object> jsonObj = new HashMap<>();
 
-    jsonObj.put("fileName", this.getNewFileName());
-    jsonObj.put("uploaded", this.isUploaded() ? 1 : 0);
+    jsonObj.put("fileName", arguments.getNewFileName());
+    jsonObj.put("uploaded", arguments.isUploaded() ? 1 : 0);
 
-    if (isUploaded()) {
+    if (arguments.isUploaded()) {
       if (path != null && !path.isEmpty()) {
-        jsonObj.put("url", path + FileUtils.backupWithBackSlash(FileUtils.encodeURIComponent(this.getNewFileName()), "'"));
+        jsonObj.put("url", path + FileUtils.backupWithBackSlash(FileUtils.encodeURIComponent(arguments.getNewFileName()), "'"));
       } else {
-        jsonObj.put(
-                "url",
-                getConfiguration().getTypes().get(getArguments().getType()).getUrl()
-                + getArguments().getCurrentFolder()
+        jsonObj.put("url",
+                getConfiguration().getTypes().get(arguments.getType()).getUrl()
+                + arguments.getCurrentFolder()
                 + FileUtils.backupWithBackSlash(FileUtils
-                        .encodeURIComponent(this.getNewFileName()),
+                        .encodeURIComponent(arguments.getNewFileName()),
                         "'"));
       }
     }
 
     if (errorMsg != null && !errorMsg.isEmpty()) {
       Map<String, Object> jsonErrObj = new HashMap<>(3);
-      jsonErrObj.put("number", this.getErrorCode());
+      jsonErrObj.put("number", arguments.getErrorCode());
       jsonErrObj.put("message", errorMsg);
       jsonObj.put("error", jsonErrObj);
     }

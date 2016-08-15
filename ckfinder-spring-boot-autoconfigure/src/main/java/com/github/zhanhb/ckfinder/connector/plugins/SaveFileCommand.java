@@ -37,46 +37,47 @@ public class SaveFileCommand extends XMLCommand<SaveFileArguments> implements Be
   }
 
   @Override
-  protected void createXMLChildNodes(int arg0, Element arg1) {
+  protected void createXMLChildNodes(int arg0, Element arg1, SaveFileArguments arguments) {
   }
 
   @Override
-  protected int getDataForXml() {
+  protected int getDataForXml(SaveFileArguments arguments) {
 
-    if (!isTypeExists(getArguments().getType())) {
-      getArguments().setType(null);
+    if (!isTypeExists(arguments.getType())) {
+      arguments.setType(null);
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE;
     }
 
-    if (!getConfiguration().getAccessControl().checkFolderACL(getArguments().getType(), getArguments().getCurrentFolder(), getArguments().getUserRole(),
+    if (!getConfiguration().getAccessControl().checkFolderACL(arguments.getType(),
+            arguments.getCurrentFolder(), arguments.getUserRole(),
             AccessControl.CKFINDER_CONNECTOR_ACL_FILE_DELETE)) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_UNAUTHORIZED;
     }
 
-    if (getArguments().getFileName() == null || getArguments().getFileName().isEmpty()) {
+    if (arguments.getFileName() == null || arguments.getFileName().isEmpty()) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_NAME;
     }
 
-    if (getArguments().getFileContent() == null || getArguments().getFileContent().isEmpty()) {
+    if (arguments.getFileContent() == null || arguments.getFileContent().isEmpty()) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
     }
 
-    if (FileUtils.checkFileExtension(getArguments().getFileName(), getConfiguration().getTypes().get(getArguments().getType())) == 1) {
+    if (FileUtils.checkFileExtension(arguments.getFileName(), getConfiguration().getTypes().get(arguments.getType())) == 1) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_EXTENSION;
     }
 
-    if (!FileUtils.isFileNameInvalid(getArguments().getFileName())) {
+    if (!FileUtils.isFileNameInvalid(arguments.getFileName())) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
     }
 
-    Path sourceFile = Paths.get(getConfiguration().getTypes().get(getArguments().getType()).getPath()
-            + getArguments().getCurrentFolder(), getArguments().getFileName());
+    Path sourceFile = Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath()
+            + arguments.getCurrentFolder(), arguments.getFileName());
 
     try {
       if (!(Files.exists(sourceFile) && Files.isRegularFile(sourceFile))) {
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_FILE_NOT_FOUND;
       }
-      Files.write(sourceFile, getArguments().getFileContent().getBytes("UTF-8"));
+      Files.write(sourceFile, arguments.getFileContent().getBytes("UTF-8"));
     } catch (FileNotFoundException e) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_FILE_NOT_FOUND;
     } catch (SecurityException | IOException e) {
@@ -98,13 +99,13 @@ public class SaveFileCommand extends XMLCommand<SaveFileArguments> implements Be
   }
 
   @Override
-  protected void initParams(HttpServletRequest request, IConfiguration configuration)
+  protected void initParams(SaveFileArguments arguments, HttpServletRequest request, IConfiguration configuration)
           throws ConnectorException {
-    super.initParams(request, configuration);
-    getArguments().setCurrentFolder(request.getParameter("currentFolder"));
-    getArguments().setType(request.getParameter("type"));
-    getArguments().setFileContent(request.getParameter("content"));
-    getArguments().setFileName(request.getParameter("fileName"));
+    super.initParams(arguments, request, configuration);
+    arguments.setCurrentFolder(request.getParameter("currentFolder"));
+    arguments.setType(request.getParameter("type"));
+    arguments.setFileContent(request.getParameter("content"));
+    arguments.setFileName(request.getParameter("fileName"));
   }
 
 }

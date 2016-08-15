@@ -39,15 +39,15 @@ public class MoveFilesCommand extends XMLCommand<MoveFilesArguments> implements 
   }
 
   @Override
-  protected void createXMLChildNodes(int errorNum, Element rootElement) {
-    if (hasErrors()) {
-      Element errorsNode = getArguments().getDocument().createElement("Errors");
-      addErrors(errorsNode);
+  protected void createXMLChildNodes(int errorNum, Element rootElement, MoveFilesArguments arguments) {
+    if (hasErrors(arguments)) {
+      Element errorsNode = arguments.getDocument().createElement("Errors");
+      addErrors(arguments, errorsNode);
       rootElement.appendChild(errorsNode);
     }
 
-    if (getArguments().isAddMoveNode()) {
-      createMoveFielsNode(rootElement);
+    if (arguments.isAddMoveNode()) {
+      createMoveFielsNode(rootElement, arguments);
     }
   }
 
@@ -56,24 +56,24 @@ public class MoveFilesCommand extends XMLCommand<MoveFilesArguments> implements 
    *
    * @param rootElement XML root element.
    */
-  private void createMoveFielsNode(Element rootElement) {
-    Element element = getArguments().getDocument().createElement("MoveFiles");
-    element.setAttribute("moved", String.valueOf(getArguments().getFilesMoved()));
+  private void createMoveFielsNode(Element rootElement, MoveFilesArguments arguments) {
+    Element element = arguments.getDocument().createElement("MoveFiles");
+    element.setAttribute("moved", String.valueOf(arguments.getFilesMoved()));
     element.setAttribute("movedTotal",
-            String.valueOf(getArguments().getMovedAll() + getArguments().getFilesMoved()));
+            String.valueOf(arguments.getMovedAll() + arguments.getFilesMoved()));
     rootElement.appendChild(element);
   }
 
   @Override
-  protected int getDataForXml() {
-    if (!isTypeExists(getArguments().getType())) {
-      getArguments().setType(null);
+  protected int getDataForXml(MoveFilesArguments arguments) {
+    if (!isTypeExists(arguments.getType())) {
+      arguments.setType(null);
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE;
     }
 
-    if (!getConfiguration().getAccessControl().checkFolderACL(getArguments().getType(),
-            getArguments().getCurrentFolder(),
-            getArguments().getUserRole(),
+    if (!getConfiguration().getAccessControl().checkFolderACL(arguments.getType(),
+            arguments.getCurrentFolder(),
+            arguments.getUserRole(),
             AccessControl.CKFINDER_CONNECTOR_ACL_FILE_RENAME
             | AccessControl.CKFINDER_CONNECTOR_ACL_FILE_DELETE
             | AccessControl.CKFINDER_CONNECTOR_ACL_FILE_UPLOAD)) {
@@ -81,7 +81,7 @@ public class MoveFilesCommand extends XMLCommand<MoveFilesArguments> implements 
     }
 
     try {
-      return moveFiles();
+      return moveFiles(arguments);
     } catch (Exception e) {
       log.error("", e);
     }
@@ -95,10 +95,10 @@ public class MoveFilesCommand extends XMLCommand<MoveFilesArguments> implements 
    *
    * @return error code.
    */
-  private int moveFiles() {
-    getArguments().setFilesMoved(0);
-    getArguments().setAddMoveNode(false);
-    for (FilePostParam file : getArguments().getFiles()) {
+  private int moveFiles(MoveFilesArguments arguments) {
+    arguments.setFilesMoved(0);
+    arguments.setAddMoveNode(false);
+    for (FilePostParam file : arguments.getFiles()) {
 
       if (!FileUtils.isFileNameInvalid(file.getName())) {
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
@@ -116,18 +116,16 @@ public class MoveFilesCommand extends XMLCommand<MoveFilesArguments> implements 
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
       }
       if (FileUtils.checkFileExtension(file.getName(),
-              this.getConfiguration().getTypes().get(getArguments().getType())) == 1) {
-        appendErrorNodeChild(
-                Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_EXTENSION,
+              this.getConfiguration().getTypes().get(arguments.getType())) == 1) {
+        appendErrorNodeChild(arguments, Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_EXTENSION,
                 file.getName(), file.getFolder(), file.getType());
         continue;
       }
 
-      if (!getArguments().getType().equals(file.getType())) {
+      if (!arguments.getType().equals(file.getType())) {
         if (FileUtils.checkFileExtension(file.getName(),
                 this.getConfiguration().getTypes().get(file.getType())) == 1) {
-          appendErrorNodeChild(
-                  Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_EXTENSION,
+          appendErrorNodeChild(arguments, Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_EXTENSION,
                   file.getName(), file.getFolder(), file.getType());
           continue;
         }
@@ -142,80 +140,73 @@ public class MoveFilesCommand extends XMLCommand<MoveFilesArguments> implements 
       }
 
       if (!getConfiguration().getAccessControl().checkFolderACL(file.getType(), file.getFolder(),
-              getArguments().getUserRole(),
+              arguments.getUserRole(),
               AccessControl.CKFINDER_CONNECTOR_ACL_FILE_VIEW)) {
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_UNAUTHORIZED;
       }
       Path sourceFile = Paths.get(getConfiguration().getTypes().get(file.getType()).getPath()
               + file.getFolder(), file.getName());
-      Path destFile = Paths.get(getConfiguration().getTypes().get(getArguments().getType()).getPath()
-              + getArguments().getCurrentFolder(), file.getName());
+      Path destFile = Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath()
+              + arguments.getCurrentFolder(), file.getName());
 
       Path sourceThumb = Paths.get(getConfiguration().getThumbsPath(), file.getType()
               + file.getFolder() + file.getName());
       try {
         if (!Files.exists(sourceFile) || !Files.isRegularFile(sourceFile)) {
-          appendErrorNodeChild(
-                  Constants.Errors.CKFINDER_CONNECTOR_ERROR_FILE_NOT_FOUND,
+          appendErrorNodeChild(arguments, Constants.Errors.CKFINDER_CONNECTOR_ERROR_FILE_NOT_FOUND,
                   file.getName(), file.getFolder(), file.getType());
           continue;
         }
-        if (!getArguments().getType().equals(file.getType())) {
-          long maxSize = getConfiguration().getTypes().get(getArguments().getType()).getMaxSize();
+        if (!arguments.getType().equals(file.getType())) {
+          long maxSize = getConfiguration().getTypes().get(arguments.getType()).getMaxSize();
           if (maxSize != 0 && maxSize < Files.size(sourceFile)) {
-            appendErrorNodeChild(
-                    Constants.Errors.CKFINDER_CONNECTOR_ERROR_UPLOADED_TOO_BIG,
+            appendErrorNodeChild(arguments, Constants.Errors.CKFINDER_CONNECTOR_ERROR_UPLOADED_TOO_BIG,
                     file.getName(), file.getFolder(), file.getType());
             continue;
           }
         }
         if (sourceFile.equals(destFile)) {
-          appendErrorNodeChild(
-                  Constants.Errors.CKFINDER_CONNECTOR_ERROR_SOURCE_AND_TARGET_PATH_EQUAL,
+          appendErrorNodeChild(arguments, Constants.Errors.CKFINDER_CONNECTOR_ERROR_SOURCE_AND_TARGET_PATH_EQUAL,
                   file.getName(), file.getFolder(), file.getType());
         } else if (Files.exists(destFile)) {
           if (file.getOptions() != null
                   && file.getOptions().contains("overwrite")) {
             if (!handleOverwrite(sourceFile, destFile)) {
-              appendErrorNodeChild(
-                      Constants.Errors.CKFINDER_CONNECTOR_ERROR_ACCESS_DENIED,
+              appendErrorNodeChild(arguments, Constants.Errors.CKFINDER_CONNECTOR_ERROR_ACCESS_DENIED,
                       file.getName(), file.getFolder(),
                       file.getType());
             } else {
-              getArguments().filesMovedPlus();
+              arguments.filesMovedPlus();
               FileUtils.delete(sourceThumb);
             }
           } else if (file.getOptions() != null
                   && file.getOptions().contains("autorename")) {
             if (!handleAutoRename(sourceFile, destFile)) {
-              appendErrorNodeChild(
-                      Constants.Errors.CKFINDER_CONNECTOR_ERROR_ACCESS_DENIED,
+              appendErrorNodeChild(arguments, Constants.Errors.CKFINDER_CONNECTOR_ERROR_ACCESS_DENIED,
                       file.getName(), file.getFolder(),
                       file.getType());
             } else {
-              getArguments().filesMovedPlus();
+              arguments.filesMovedPlus();
               FileUtils.delete(sourceThumb);
             }
           } else {
-            appendErrorNodeChild(
-                    Constants.Errors.CKFINDER_CONNECTOR_ERROR_ALREADY_EXIST,
+            appendErrorNodeChild(arguments, Constants.Errors.CKFINDER_CONNECTOR_ERROR_ALREADY_EXIST,
                     file.getName(), file.getFolder(), file.getType());
           }
         } else if (FileUtils.copyFromSourceToDestFile(sourceFile, destFile,
                 true, getConfiguration())) {
-          getArguments().filesMovedPlus();
-          moveThumb(file);
+          arguments.filesMovedPlus();
+          moveThumb(file, arguments);
         }
       } catch (SecurityException | IOException e) {
         log.error("", e);
-        appendErrorNodeChild(
-                Constants.Errors.CKFINDER_CONNECTOR_ERROR_ACCESS_DENIED,
+        appendErrorNodeChild(arguments, Constants.Errors.CKFINDER_CONNECTOR_ERROR_ACCESS_DENIED,
                 file.getName(), file.getFolder(), file.getType());
       }
 
     }
-    getArguments().setAddMoveNode(true);
-    if (hasErrors()) {
+    arguments.setAddMoveNode(true);
+    if (hasErrors(arguments)) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_MOVE_FAILED;
     } else {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_NONE;
@@ -272,13 +263,13 @@ public class MoveFilesCommand extends XMLCommand<MoveFilesArguments> implements 
    * @param file file to move.
    * @throws IOException when ioerror occurs
    */
-  private void moveThumb(FilePostParam file) throws IOException {
+  private void moveThumb(FilePostParam file, MoveFilesArguments arguments) throws IOException {
     Path sourceThumbFile = Paths.get(getConfiguration().getThumbsPath(),
             file.getType()
             + file.getFolder() + file.getName());
     Path destThumbFile = Paths.get(getConfiguration().getThumbsPath(),
-            getArguments().getType()
-            + getArguments().getCurrentFolder()
+            arguments.getType()
+            + arguments.getCurrentFolder()
             + file.getName()
     );
 
@@ -289,12 +280,12 @@ public class MoveFilesCommand extends XMLCommand<MoveFilesArguments> implements 
 
   @Override
   @SuppressWarnings("CollectionWithoutInitialCapacity")
-  protected void initParams(HttpServletRequest request, IConfiguration configuration)
+  protected void initParams(MoveFilesArguments arguments, HttpServletRequest request, IConfiguration configuration)
           throws ConnectorException {
-    super.initParams(request, configuration);
-    getArguments().setFiles(new ArrayList<>());
-    getArguments().setMovedAll(request.getParameter("moved") != null ? Integer.parseInt(request.getParameter("moved")) : 0);
-    getFilesListFromRequest(request);
+    super.initParams(arguments, request, configuration);
+    arguments.setFiles(new ArrayList<>());
+    arguments.setMovedAll(request.getParameter("moved") != null ? Integer.parseInt(request.getParameter("moved")) : 0);
+    getFilesListFromRequest(request, arguments);
   }
 
   /**
@@ -302,7 +293,7 @@ public class MoveFilesCommand extends XMLCommand<MoveFilesArguments> implements 
    *
    * @param request request
    */
-  private void getFilesListFromRequest(HttpServletRequest request) {
+  private void getFilesListFromRequest(HttpServletRequest request, MoveFilesArguments arguments) {
     int i = 0;
     while (true) {
       String paramName = "files[" + i + "][name]";
@@ -311,7 +302,7 @@ public class MoveFilesCommand extends XMLCommand<MoveFilesArguments> implements 
         String folder = request.getParameter("files[" + i + "][folder]");
         String options = request.getParameter("files[" + i + "][options]");
         String type = request.getParameter("files[" + i + "][type]");
-        getArguments().getFiles().add(FilePostParam.builder().name(name).folder(folder).options(options).type(type).build());
+        arguments.getFiles().add(FilePostParam.builder().name(name).folder(folder).options(options).type(type).build());
       } else {
         break;
       }
