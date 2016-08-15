@@ -16,6 +16,7 @@ import com.github.zhanhb.ckfinder.connector.configuration.IConfiguration;
 import com.github.zhanhb.ckfinder.connector.data.BeforeExecuteCommandEventArgs;
 import com.github.zhanhb.ckfinder.connector.data.BeforeExecuteCommandEventHandler;
 import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
+import com.github.zhanhb.ckfinder.connector.handlers.arguments.SaveFileArguments;
 import com.github.zhanhb.ckfinder.connector.handlers.command.XMLCommand;
 import com.github.zhanhb.ckfinder.connector.utils.AccessControl;
 import com.github.zhanhb.ckfinder.connector.utils.FileUtils;
@@ -29,10 +30,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.w3c.dom.Element;
 
 @Slf4j
-public class SaveFileCommand extends XMLCommand implements BeforeExecuteCommandEventHandler {
+public class SaveFileCommand extends XMLCommand<SaveFileArguments> implements BeforeExecuteCommandEventHandler {
 
-  private String fileName;
-  private String fileContent;
+  public SaveFileCommand() {
+    super(SaveFileArguments::new);
+  }
 
   @Override
   protected void createXMLChildNodes(int arg0, Element arg1) {
@@ -41,40 +43,40 @@ public class SaveFileCommand extends XMLCommand implements BeforeExecuteCommandE
   @Override
   protected int getDataForXml() {
 
-    if (!isTypeExists(getType())) {
-      this.setType(null);
+    if (!isTypeExists(getArguments().getType())) {
+      getArguments().setType(null);
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE;
     }
 
-    if (!getConfiguration().getAccessControl().checkFolderACL(getType(), getCurrentFolder(), getUserRole(),
+    if (!getConfiguration().getAccessControl().checkFolderACL(getArguments().getType(), getArguments().getCurrentFolder(), getArguments().getUserRole(),
             AccessControl.CKFINDER_CONNECTOR_ACL_FILE_DELETE)) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_UNAUTHORIZED;
     }
 
-    if (this.fileName == null || this.fileName.isEmpty()) {
+    if (getArguments().getFileName() == null || getArguments().getFileName().isEmpty()) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_NAME;
     }
 
-    if (this.fileContent == null || this.fileContent.isEmpty()) {
+    if (getArguments().getFileContent() == null || getArguments().getFileContent().isEmpty()) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
     }
 
-    if (FileUtils.checkFileExtension(fileName, getConfiguration().getTypes().get(getType())) == 1) {
+    if (FileUtils.checkFileExtension(getArguments().getFileName(), getConfiguration().getTypes().get(getArguments().getType())) == 1) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_EXTENSION;
     }
 
-    if (!FileUtils.isFileNameInvalid(fileName)) {
+    if (!FileUtils.isFileNameInvalid(getArguments().getFileName())) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
     }
 
-    Path sourceFile = Paths.get(getConfiguration().getTypes().get(this.getType()).getPath()
-            + this.getCurrentFolder(), this.fileName);
+    Path sourceFile = Paths.get(getConfiguration().getTypes().get(getArguments().getType()).getPath()
+            + getArguments().getCurrentFolder(), getArguments().getFileName());
 
     try {
       if (!(Files.exists(sourceFile) && Files.isRegularFile(sourceFile))) {
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_FILE_NOT_FOUND;
       }
-      Files.write(sourceFile, this.fileContent.getBytes("UTF-8"));
+      Files.write(sourceFile, getArguments().getFileContent().getBytes("UTF-8"));
     } catch (FileNotFoundException e) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_FILE_NOT_FOUND;
     } catch (SecurityException | IOException e) {
@@ -86,10 +88,10 @@ public class SaveFileCommand extends XMLCommand implements BeforeExecuteCommandE
   }
 
   @Override
-  public boolean runEventHandler(BeforeExecuteCommandEventArgs args, IConfiguration configuration1)
+  public boolean runEventHandler(BeforeExecuteCommandEventArgs args, IConfiguration configuration)
           throws ConnectorException {
     if ("SaveFile".equals(args.getCommand())) {
-      this.runCommand(args.getRequest(), args.getResponse(), configuration1);
+      this.runCommand(args.getRequest(), args.getResponse(), configuration);
       return false;
     }
     return true;
@@ -99,10 +101,10 @@ public class SaveFileCommand extends XMLCommand implements BeforeExecuteCommandE
   protected void initParams(HttpServletRequest request, IConfiguration configuration)
           throws ConnectorException {
     super.initParams(request, configuration);
-    this.setCurrentFolder(request.getParameter("currentFolder"));
-    this.setType(request.getParameter("type"));
-    this.fileContent = request.getParameter("content");
-    this.fileName = request.getParameter("fileName");
+    getArguments().setCurrentFolder(request.getParameter("currentFolder"));
+    getArguments().setType(request.getParameter("type"));
+    getArguments().setFileContent(request.getParameter("content"));
+    getArguments().setFileName(request.getParameter("fileName"));
   }
 
 }

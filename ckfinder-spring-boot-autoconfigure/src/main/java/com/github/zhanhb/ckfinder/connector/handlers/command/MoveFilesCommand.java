@@ -15,6 +15,7 @@ import com.github.zhanhb.ckfinder.connector.configuration.Constants;
 import com.github.zhanhb.ckfinder.connector.configuration.IConfiguration;
 import com.github.zhanhb.ckfinder.connector.data.FilePostParam;
 import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
+import com.github.zhanhb.ckfinder.connector.handlers.arguments.MoveFilesArguments;
 import com.github.zhanhb.ckfinder.connector.utils.AccessControl;
 import com.github.zhanhb.ckfinder.connector.utils.FileUtils;
 import java.io.IOException;
@@ -22,7 +23,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -32,22 +32,21 @@ import org.w3c.dom.Element;
  * Class to handle <code>MoveFiles</code> command.
  */
 @Slf4j
-public class MoveFilesCommand extends XMLCommand implements IPostCommand {
+public class MoveFilesCommand extends XMLCommand<MoveFilesArguments> implements IPostCommand {
 
-  private List<FilePostParam> files;
-  private int filesMoved;
-  private int movedAll;
-  private boolean addMoveNode;
+  public MoveFilesCommand() {
+    super(MoveFilesArguments::new);
+  }
 
   @Override
   protected void createXMLChildNodes(int errorNum, Element rootElement) {
     if (hasErrors()) {
-      Element errorsNode = getDocument().createElement("Errors");
+      Element errorsNode = getArguments().getDocument().createElement("Errors");
       addErrors(errorsNode);
       rootElement.appendChild(errorsNode);
     }
 
-    if (addMoveNode) {
+    if (getArguments().isAddMoveNode()) {
       createMoveFielsNode(rootElement);
     }
   }
@@ -58,23 +57,23 @@ public class MoveFilesCommand extends XMLCommand implements IPostCommand {
    * @param rootElement XML root element.
    */
   private void createMoveFielsNode(Element rootElement) {
-    Element element = getDocument().createElement("MoveFiles");
-    element.setAttribute("moved", String.valueOf(this.filesMoved));
+    Element element = getArguments().getDocument().createElement("MoveFiles");
+    element.setAttribute("moved", String.valueOf(getArguments().getFilesMoved()));
     element.setAttribute("movedTotal",
-            String.valueOf(this.movedAll + this.filesMoved));
+            String.valueOf(getArguments().getMovedAll() + getArguments().getFilesMoved()));
     rootElement.appendChild(element);
   }
 
   @Override
   protected int getDataForXml() {
-    if (!isTypeExists(getType())) {
-      this.setType(null);
+    if (!isTypeExists(getArguments().getType())) {
+      getArguments().setType(null);
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE;
     }
 
-    if (!getConfiguration().getAccessControl().checkFolderACL(getType(),
-            getCurrentFolder(),
-            getUserRole(),
+    if (!getConfiguration().getAccessControl().checkFolderACL(getArguments().getType(),
+            getArguments().getCurrentFolder(),
+            getArguments().getUserRole(),
             AccessControl.CKFINDER_CONNECTOR_ACL_FILE_RENAME
             | AccessControl.CKFINDER_CONNECTOR_ACL_FILE_DELETE
             | AccessControl.CKFINDER_CONNECTOR_ACL_FILE_UPLOAD)) {
@@ -97,9 +96,9 @@ public class MoveFilesCommand extends XMLCommand implements IPostCommand {
    * @return error code.
    */
   private int moveFiles() {
-    this.filesMoved = 0;
-    this.addMoveNode = false;
-    for (FilePostParam file : files) {
+    getArguments().setFilesMoved(0);
+    getArguments().setAddMoveNode(false);
+    for (FilePostParam file : getArguments().getFiles()) {
 
       if (!FileUtils.isFileNameInvalid(file.getName())) {
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
@@ -117,14 +116,14 @@ public class MoveFilesCommand extends XMLCommand implements IPostCommand {
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
       }
       if (FileUtils.checkFileExtension(file.getName(),
-              this.getConfiguration().getTypes().get(this.getType())) == 1) {
+              this.getConfiguration().getTypes().get(getArguments().getType())) == 1) {
         appendErrorNodeChild(
                 Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_EXTENSION,
                 file.getName(), file.getFolder(), file.getType());
         continue;
       }
 
-      if (!getType().equals(file.getType())) {
+      if (!getArguments().getType().equals(file.getType())) {
         if (FileUtils.checkFileExtension(file.getName(),
                 this.getConfiguration().getTypes().get(file.getType())) == 1) {
           appendErrorNodeChild(
@@ -142,14 +141,15 @@ public class MoveFilesCommand extends XMLCommand implements IPostCommand {
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
       }
 
-      if (!getConfiguration().getAccessControl().checkFolderACL(file.getType(), file.getFolder(), getUserRole(),
+      if (!getConfiguration().getAccessControl().checkFolderACL(file.getType(), file.getFolder(),
+              getArguments().getUserRole(),
               AccessControl.CKFINDER_CONNECTOR_ACL_FILE_VIEW)) {
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_UNAUTHORIZED;
       }
       Path sourceFile = Paths.get(getConfiguration().getTypes().get(file.getType()).getPath()
               + file.getFolder(), file.getName());
-      Path destFile = Paths.get(getConfiguration().getTypes().get(this.getType()).getPath()
-              + this.getCurrentFolder(), file.getName());
+      Path destFile = Paths.get(getConfiguration().getTypes().get(getArguments().getType()).getPath()
+              + getArguments().getCurrentFolder(), file.getName());
 
       Path sourceThumb = Paths.get(getConfiguration().getThumbsPath(), file.getType()
               + file.getFolder() + file.getName());
@@ -160,8 +160,8 @@ public class MoveFilesCommand extends XMLCommand implements IPostCommand {
                   file.getName(), file.getFolder(), file.getType());
           continue;
         }
-        if (!getType().equals(file.getType())) {
-          long maxSize = getConfiguration().getTypes().get(this.getType()).getMaxSize();
+        if (!getArguments().getType().equals(file.getType())) {
+          long maxSize = getConfiguration().getTypes().get(getArguments().getType()).getMaxSize();
           if (maxSize != 0 && maxSize < Files.size(sourceFile)) {
             appendErrorNodeChild(
                     Constants.Errors.CKFINDER_CONNECTOR_ERROR_UPLOADED_TOO_BIG,
@@ -182,7 +182,7 @@ public class MoveFilesCommand extends XMLCommand implements IPostCommand {
                       file.getName(), file.getFolder(),
                       file.getType());
             } else {
-              this.filesMoved++;
+              getArguments().filesMovedPlus();
               FileUtils.delete(sourceThumb);
             }
           } else if (file.getOptions() != null
@@ -193,7 +193,7 @@ public class MoveFilesCommand extends XMLCommand implements IPostCommand {
                       file.getName(), file.getFolder(),
                       file.getType());
             } else {
-              this.filesMoved++;
+              getArguments().filesMovedPlus();
               FileUtils.delete(sourceThumb);
             }
           } else {
@@ -203,7 +203,7 @@ public class MoveFilesCommand extends XMLCommand implements IPostCommand {
           }
         } else if (FileUtils.copyFromSourceToDestFile(sourceFile, destFile,
                 true, getConfiguration())) {
-          this.filesMoved++;
+          getArguments().filesMovedPlus();
           moveThumb(file);
         }
       } catch (SecurityException | IOException e) {
@@ -214,7 +214,7 @@ public class MoveFilesCommand extends XMLCommand implements IPostCommand {
       }
 
     }
-    this.addMoveNode = true;
+    getArguments().setAddMoveNode(true);
     if (hasErrors()) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_MOVE_FAILED;
     } else {
@@ -277,9 +277,10 @@ public class MoveFilesCommand extends XMLCommand implements IPostCommand {
             file.getType()
             + file.getFolder() + file.getName());
     Path destThumbFile = Paths.get(getConfiguration().getThumbsPath(),
-            this.getType()
-            + this.getCurrentFolder()
-            + file.getName());
+            getArguments().getType()
+            + getArguments().getCurrentFolder()
+            + file.getName()
+    );
 
     FileUtils.copyFromSourceToDestFile(sourceThumbFile, destThumbFile,
             true, getConfiguration());
@@ -291,8 +292,8 @@ public class MoveFilesCommand extends XMLCommand implements IPostCommand {
   protected void initParams(HttpServletRequest request, IConfiguration configuration)
           throws ConnectorException {
     super.initParams(request, configuration);
-    this.files = new ArrayList<>();
-    this.movedAll = (request.getParameter("moved") != null) ? Integer.parseInt(request.getParameter("moved")) : 0;
+    getArguments().setFiles(new ArrayList<>());
+    getArguments().setMovedAll(request.getParameter("moved") != null ? Integer.parseInt(request.getParameter("moved")) : 0);
     getFilesListFromRequest(request);
   }
 
@@ -310,7 +311,7 @@ public class MoveFilesCommand extends XMLCommand implements IPostCommand {
         String folder = request.getParameter("files[" + i + "][folder]");
         String options = request.getParameter("files[" + i + "][options]");
         String type = request.getParameter("files[" + i + "][type]");
-        files.add(FilePostParam.builder().name(name).folder(folder).options(options).type(type).build());
+        getArguments().getFiles().add(FilePostParam.builder().name(name).folder(folder).options(options).type(type).build());
       } else {
         break;
       }

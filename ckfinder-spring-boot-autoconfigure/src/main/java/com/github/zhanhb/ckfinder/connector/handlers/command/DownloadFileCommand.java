@@ -14,13 +14,13 @@ package com.github.zhanhb.ckfinder.connector.handlers.command;
 import com.github.zhanhb.ckfinder.connector.configuration.Constants;
 import com.github.zhanhb.ckfinder.connector.configuration.IConfiguration;
 import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
+import com.github.zhanhb.ckfinder.connector.handlers.arguments.DownloadFileArguments;
 import com.github.zhanhb.ckfinder.connector.utils.AccessControl;
 import com.github.zhanhb.ckfinder.connector.utils.FileUtils;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import javax.mail.internet.MimeUtility;
 import javax.servlet.http.HttpServletRequest;
@@ -29,17 +29,11 @@ import javax.servlet.http.HttpServletResponse;
 /**
  * Class to handle <code>DownloadFile</code> command.
  */
-public class DownloadFileCommand extends Command {
+public class DownloadFileCommand extends Command<DownloadFileArguments> {
 
-  /**
-   * File to download.
-   */
-  private Path file;
-  /**
-   * filename request param.
-   */
-  private String fileName;
-  private String newFileName;
+  public DownloadFileCommand() {
+    super(DownloadFileArguments::new);
+  }
 
   /**
    * executes the download file command. Writes file to response.
@@ -49,41 +43,42 @@ public class DownloadFileCommand extends Command {
   @Override
   @SuppressWarnings("FinalMethod")
   final void execute(HttpServletResponse response) throws ConnectorException {
-    if (!isTypeExists(getType())) {
-      this.setType(null);
+    if (!isTypeExists(getArguments().getType())) {
+      getArguments().setType(null);
       throw new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE, false);
     }
 
-    this.file = Paths.get(getConfiguration().getTypes().get(this.getType()).getPath()
-            + getCurrentFolder(), fileName);
+    getArguments().setFile(Paths.get(getConfiguration().getTypes().get(getArguments().getType()).getPath()
+            + getArguments().getCurrentFolder(), getArguments().getFileName()));
 
-    if (!getConfiguration().getAccessControl().checkFolderACL(getType(), getCurrentFolder(), getUserRole(),
+    if (!getConfiguration().getAccessControl().checkFolderACL(getArguments().getType(),
+            getArguments().getCurrentFolder(), getArguments().getUserRole(),
             AccessControl.CKFINDER_CONNECTOR_ACL_FILE_VIEW)) {
       throw new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_UNAUTHORIZED);
     }
 
-    if (!FileUtils.isFileNameInvalid(this.fileName)
-            || FileUtils.checkFileExtension(this.fileName,
-                    this.getConfiguration().getTypes().get(this.getType())) == 1) {
+    if (!FileUtils.isFileNameInvalid(getArguments().getFileName())
+            || FileUtils.checkFileExtension(getArguments().getFileName(),
+                    this.getConfiguration().getTypes().get(getArguments().getType())) == 1) {
       throw new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST);
     }
 
-    if (FileUtils.isDirectoryHidden(this.getCurrentFolder(), getConfiguration())) {
+    if (FileUtils.isDirectoryHidden(getArguments().getCurrentFolder(), getConfiguration())) {
       throw new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST);
     }
     try {
-      if (!Files.exists(file)
-              || !Files.isRegularFile(file)
-              || FileUtils.isFileHidden(this.fileName, this.getConfiguration())) {
+      if (!Files.exists(getArguments().getFile())
+              || !Files.isRegularFile(getArguments().getFile())
+              || FileUtils.isFileHidden(getArguments().getFileName(), this.getConfiguration())) {
         throw new ConnectorException(
                 Constants.Errors.CKFINDER_CONNECTOR_ERROR_FILE_NOT_FOUND);
       }
 
-      FileUtils.printFileContentToResponse(file, response.getOutputStream());
+      FileUtils.printFileContentToResponse(getArguments().getFile(), response.getOutputStream());
     } catch (IOException e) {
       throw new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_ACCESS_DENIED, e);
@@ -104,14 +99,14 @@ public class DownloadFileCommand extends Command {
 
     super.initParams(request, configuration);
     // problem with showing filename when dialog window appear
-    this.newFileName = request.getParameter("FileName").replace("\"", "\\\"");
-    this.fileName = request.getParameter("FileName");
+    getArguments().setNewFileName(request.getParameter("FileName").replace("\"", "\\\""));
+    getArguments().setFileName(request.getParameter("FileName"));
     try {
       if (request.getHeader("User-Agent").contains("MSIE")) {
-        this.newFileName = URLEncoder.encode(this.newFileName, "UTF-8");
-        this.newFileName = this.newFileName.replace("+", " ").replace("%2E", ".");
+        getArguments().setNewFileName(URLEncoder.encode(getArguments().getNewFileName(), "UTF-8"));
+        getArguments().setNewFileName(getArguments().getNewFileName().replace("+", " ").replace("%2E", "."));
       } else {
-        this.newFileName = MimeUtility.encodeWord(this.newFileName, "utf-8", "Q");
+        getArguments().setNewFileName(MimeUtility.encodeWord(getArguments().getNewFileName(), "utf-8", "Q"));
       }
     } catch (UnsupportedEncodingException ex) {
       throw new AssertionError(ex);
@@ -127,7 +122,7 @@ public class DownloadFileCommand extends Command {
    */
   @Override
   public void setResponseHeader(HttpServletRequest request, HttpServletResponse response) {
-    String mimetype = request.getServletContext().getMimeType(fileName);
+    String mimetype = request.getServletContext().getMimeType(getArguments().getFileName());
     response.setCharacterEncoding("utf-8");
 
     if (mimetype != null) {
@@ -135,15 +130,15 @@ public class DownloadFileCommand extends Command {
     } else {
       response.setContentType("application/octet-stream");
     }
-    if (file != null) {
+    if (getArguments().getFile() != null) {
       try {
-        response.setContentLengthLong(Files.size(file));
+        response.setContentLengthLong(Files.size(getArguments().getFile()));
       } catch (IOException ex) {
       }
     }
 
     response.setHeader("Content-Disposition", "attachment; filename=\""
-            + this.newFileName + "\"");
+            + getArguments().getNewFileName() + "\"");
 
     response.setHeader("Cache-Control", "cache, must-revalidate");
     response.setHeader("Pragma", "public");

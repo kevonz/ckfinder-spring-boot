@@ -29,15 +29,15 @@ public class QuickUploadCommand extends FileUploadCommand {
   @Override
   protected void handleOnUploadCompleteResponse(Writer writer,
           String errorMsg) throws IOException {
-    if (this.getResponseType() != null && this.getResponseType().equalsIgnoreCase("json")) {
+    if (getArguments().getResponseType() != null && getArguments().getResponseType().equalsIgnoreCase("json")) {
       handleJSONResponse(writer, errorMsg, null);
     } else {
       writer.write("<script type=\"text/javascript\">");
       writer.write("window.parent.OnUploadCompleted(");
       writer.write("" + this.getErrorCode() + ", ");
       if (isUploaded()) {
-        writer.write("'" + getConfiguration().getTypes().get(this.getType()).getUrl()
-                + this.getCurrentFolder()
+        writer.write("'" + getConfiguration().getTypes().get(getArguments().getType()).getUrl()
+                + getArguments().getCurrentFolder()
                 + FileUtils.backupWithBackSlash(FileUtils.encodeURIComponent(this.getNewFileName()), "'")
                 + "', ");
         writer.write("'" + FileUtils.backupWithBackSlash(this.getNewFileName(), "'")
@@ -54,7 +54,7 @@ public class QuickUploadCommand extends FileUploadCommand {
   @Override
   protected void handleOnUploadCompleteCallFuncResponse(Writer writer,
           String errorMsg, String path) throws IOException {
-    if (this.getResponseType() != null && this.getResponseType().equalsIgnoreCase("json")) {
+    if (getArguments().getResponseType() != null && getArguments().getResponseType().equalsIgnoreCase("json")) {
       handleJSONResponse(writer, errorMsg, path);
     } else {
       writer.write("<script type=\"text/javascript\">");
@@ -76,7 +76,7 @@ public class QuickUploadCommand extends FileUploadCommand {
   @Override
   public void setResponseHeader(HttpServletRequest request, HttpServletResponse response) {
     response.setCharacterEncoding("utf-8");
-    if (this.getResponseType() != null && this.getResponseType().equalsIgnoreCase("json")) {
+    if (getArguments().getResponseType() != null && getArguments().getResponseType().equalsIgnoreCase("json")) {
       response.setContentType("application/json");
     } else {
       response.setContentType("text/html");
@@ -108,8 +108,8 @@ public class QuickUploadCommand extends FileUploadCommand {
       } else {
         jsonObj.put(
                 "url",
-                getConfiguration().getTypes().get(this.getType()).getUrl()
-                + this.getCurrentFolder()
+                getConfiguration().getTypes().get(getArguments().getType()).getUrl()
+                + getArguments().getCurrentFolder()
                 + FileUtils.backupWithBackSlash(FileUtils
                         .encodeURIComponent(this.getNewFileName()),
                         "'"));

@@ -16,6 +16,7 @@ import com.github.zhanhb.ckfinder.connector.configuration.IConfiguration;
 import com.github.zhanhb.ckfinder.connector.data.BeforeExecuteCommandEventArgs;
 import com.github.zhanhb.ckfinder.connector.data.BeforeExecuteCommandEventHandler;
 import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
+import com.github.zhanhb.ckfinder.connector.handlers.arguments.ImageResizeInfoArguments;
 import com.github.zhanhb.ckfinder.connector.handlers.command.XMLCommand;
 import com.github.zhanhb.ckfinder.connector.utils.AccessControl;
 import com.github.zhanhb.ckfinder.connector.utils.FileUtils;
@@ -31,11 +32,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.w3c.dom.Element;
 
 @Slf4j
-public class ImageResizeInfoCommand extends XMLCommand implements BeforeExecuteCommandEventHandler {
+public class ImageResizeInfoCommand extends XMLCommand<ImageResizeInfoArguments> implements BeforeExecuteCommandEventHandler {
 
-  private int imageWidth;
-  private int imageHeight;
-  private String fileName;
+  public ImageResizeInfoCommand() {
+    super(ImageResizeInfoArguments::new);
+  }
 
   @Override
   public boolean runEventHandler(BeforeExecuteCommandEventArgs args, IConfiguration configuration)
@@ -56,37 +57,38 @@ public class ImageResizeInfoCommand extends XMLCommand implements BeforeExecuteC
   }
 
   private void createImageInfoNode(Element rootElement) {
-    Element element = getDocument().createElement("ImageInfo");
-    element.setAttribute("width", String.valueOf(imageWidth));
-    element.setAttribute("height", String.valueOf(imageHeight));
+    Element element = getArguments().getDocument().createElement("ImageInfo");
+    element.setAttribute("width", String.valueOf(getArguments().getImageWidth()));
+    element.setAttribute("height", String.valueOf(getArguments().getImageHeight()));
     rootElement.appendChild(element);
   }
 
   @Override
   protected int getDataForXml() {
-    if (!isTypeExists(getType())) {
-      this.setType(null);
+    if (!isTypeExists(getArguments().getType())) {
+      getArguments().setType(null);
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE;
     }
 
-    if (!getConfiguration().getAccessControl().checkFolderACL(getType(), getCurrentFolder(),
-            getUserRole(), AccessControl.CKFINDER_CONNECTOR_ACL_FILE_VIEW)) {
+    if (!getConfiguration().getAccessControl().checkFolderACL(getArguments().getType(),
+            getArguments().getCurrentFolder(), getArguments().getUserRole(),
+            AccessControl.CKFINDER_CONNECTOR_ACL_FILE_VIEW)) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_UNAUTHORIZED;
     }
 
-    if (fileName == null || fileName.isEmpty()
-            || !FileUtils.isFileNameInvalid(this.fileName)
-            || FileUtils.isFileHidden(this.fileName, this.getConfiguration())) {
+    if (getArguments().getFileName() == null || getArguments().getFileName().isEmpty()
+            || !FileUtils.isFileNameInvalid(getArguments().getFileName())
+            || FileUtils.isFileHidden(getArguments().getFileName(), this.getConfiguration())) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
     }
 
-    if (FileUtils.checkFileExtension(fileName, getConfiguration().getTypes().get(getType())) == 1) {
+    if (FileUtils.checkFileExtension(getArguments().getFileName(), getConfiguration().getTypes().get(getArguments().getType())) == 1) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
     }
 
-    Path imageFile = Paths.get(getConfiguration().getTypes().get(this.getType()).getPath()
-            + this.getCurrentFolder(),
-            this.fileName);
+    Path imageFile = Paths.get(getConfiguration().getTypes().get(getArguments().getType()).getPath()
+            + getArguments().getCurrentFolder(),
+            getArguments().getFileName());
 
     try {
       if (!(Files.exists(imageFile) && Files.isRegularFile(imageFile))) {
@@ -97,8 +99,8 @@ public class ImageResizeInfoCommand extends XMLCommand implements BeforeExecuteC
       try (InputStream is = Files.newInputStream(imageFile)) {
         image = ImageIO.read(is);
       }
-      this.imageWidth = image.getWidth();
-      this.imageHeight = image.getHeight();
+      getArguments().setImageWidth(image.getWidth());
+      getArguments().setImageHeight(image.getHeight());
     } catch (SecurityException | IOException e) {
       log.error("", e);
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_ACCESS_DENIED;
@@ -111,11 +113,11 @@ public class ImageResizeInfoCommand extends XMLCommand implements BeforeExecuteC
   protected void initParams(HttpServletRequest request, IConfiguration configuration)
           throws ConnectorException {
     super.initParams(request, configuration);
-    this.imageHeight = 0;
-    this.imageWidth = 0;
-    this.setCurrentFolder(request.getParameter("currentFolder"));
-    this.setType(request.getParameter("type"));
-    this.fileName = request.getParameter("fileName");
+    getArguments().setImageHeight(0);
+    getArguments().setImageWidth(0);
+    getArguments().setCurrentFolder(request.getParameter("currentFolder"));
+    getArguments().setType(request.getParameter("type"));
+    getArguments().setFileName(request.getParameter("fileName"));
   }
 
 }

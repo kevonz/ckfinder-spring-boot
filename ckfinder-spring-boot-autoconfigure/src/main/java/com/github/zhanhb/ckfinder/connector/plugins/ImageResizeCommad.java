@@ -18,6 +18,7 @@ import com.github.zhanhb.ckfinder.connector.data.BeforeExecuteCommandEventHandle
 import com.github.zhanhb.ckfinder.connector.data.PluginInfo;
 import com.github.zhanhb.ckfinder.connector.data.PluginParam;
 import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
+import com.github.zhanhb.ckfinder.connector.handlers.arguments.ImageResizeArguments;
 import com.github.zhanhb.ckfinder.connector.handlers.command.XMLCommand;
 import com.github.zhanhb.ckfinder.connector.utils.AccessControl;
 import com.github.zhanhb.ckfinder.connector.utils.FileUtils;
@@ -27,32 +28,23 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.w3c.dom.Element;
 
-@RequiredArgsConstructor
 @Slf4j
-public class ImageResizeCommad extends XMLCommand implements BeforeExecuteCommandEventHandler {
+public class ImageResizeCommad extends XMLCommand<ImageResizeArguments> implements BeforeExecuteCommandEventHandler {
 
   private static final String[] SIZES = {"small", "medium", "large"};
 
   private final PluginInfo pluginInfo;
 
-  /**
-   * file name
-   */
-  private String fileName;
-  private String newFileName;
-  private String overwrite;
-  private Integer width;
-  private Integer height;
-  private boolean wrongReqSizesParams;
-  private Map<String, String> sizesFromReq;
+  public ImageResizeCommad(PluginInfo pluginInfo) {
+    super(ImageResizeArguments::new);
+    this.pluginInfo = pluginInfo;
+  }
 
   @Override
   public boolean runEventHandler(BeforeExecuteCommandEventArgs args, IConfiguration configuration)
@@ -70,72 +62,73 @@ public class ImageResizeCommad extends XMLCommand implements BeforeExecuteComman
 
   @Override
   protected int getDataForXml() {
-    if (!isTypeExists(getType())) {
-      this.setType(null);
+    if (!isTypeExists(getArguments().getType())) {
+      getArguments().setType(null);
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE;
     }
 
-    if (!getConfiguration().getAccessControl().checkFolderACL(getType(), getCurrentFolder(), getUserRole(),
+    if (!getConfiguration().getAccessControl().checkFolderACL(getArguments().getType(),
+            getArguments().getCurrentFolder(), getArguments().getUserRole(),
             AccessControl.CKFINDER_CONNECTOR_ACL_FILE_DELETE
             | AccessControl.CKFINDER_CONNECTOR_ACL_FILE_UPLOAD)) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_UNAUTHORIZED;
     }
 
-    if (this.fileName == null || this.fileName.isEmpty()) {
+    if (getArguments().getFileName() == null || getArguments().getFileName().isEmpty()) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_NAME;
     }
 
-    if (!FileUtils.isFileNameInvalid(fileName)
-            || FileUtils.isFileHidden(fileName, getConfiguration())) {
+    if (!FileUtils.isFileNameInvalid(getArguments().getFileName())
+            || FileUtils.isFileHidden(getArguments().getFileName(), getConfiguration())) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
     }
 
-    if (FileUtils.checkFileExtension(fileName, getConfiguration().getTypes().get(getType())) == 1) {
+    if (FileUtils.checkFileExtension(getArguments().getFileName(), getConfiguration().getTypes().get(getArguments().getType())) == 1) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
     }
 
-    Path file = Paths.get(getConfiguration().getTypes().get(getType()).getPath() + this.getCurrentFolder(),
-            fileName);
+    Path file = Paths.get(getConfiguration().getTypes().get(getArguments().getType()).getPath() + getArguments().getCurrentFolder(),
+            getArguments().getFileName());
     try {
       if (!(Files.exists(file) && Files.isRegularFile(file))) {
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_FILE_NOT_FOUND;
       }
 
-      if (this.wrongReqSizesParams) {
+      if (getArguments().isWrongReqSizesParams()) {
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
       }
 
-      if (this.width != null && this.height != null) {
+      if (getArguments().getWidth() != null && getArguments().getHeight() != null) {
 
-        if (!FileUtils.isFileNameInvalid(this.newFileName)
-                && FileUtils.isFileHidden(this.newFileName, getConfiguration())) {
+        if (!FileUtils.isFileNameInvalid(getArguments().getNewFileName())
+                && FileUtils.isFileHidden(getArguments().getNewFileName(), getConfiguration())) {
           return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_NAME;
         }
 
-        if (FileUtils.checkFileExtension(this.newFileName,
-                getConfiguration().getTypes().get(this.getType())) == 1) {
+        if (FileUtils.checkFileExtension(getArguments().getNewFileName(),
+                getConfiguration().getTypes().get(getArguments().getType())) == 1) {
           return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_EXTENSION;
         }
 
-        Path thumbFile = Paths.get(getConfiguration().getTypes().get(getType()).getPath() + this.getCurrentFolder(),
-                this.newFileName);
+        Path thumbFile = Paths.get(getConfiguration().getTypes().get(getArguments().getType()).getPath() + getArguments().getCurrentFolder(),
+                getArguments().getNewFileName());
 
         if (Files.exists(thumbFile) && !Files.isWritable(thumbFile)) {
           return Constants.Errors.CKFINDER_CONNECTOR_ERROR_ACCESS_DENIED;
         }
-        if (!"1".equals(this.overwrite) && Files.exists(thumbFile)) {
+        if (!"1".equals(getArguments().getOverwrite()) && Files.exists(thumbFile)) {
           return Constants.Errors.CKFINDER_CONNECTOR_ERROR_ALREADY_EXIST;
         }
         int maxImageHeight = getConfiguration().getImgHeight();
         int maxImageWidth = getConfiguration().getImgWidth();
-        if ((maxImageWidth > 0 && this.width > maxImageWidth)
-                || (maxImageHeight > 0 && this.height > maxImageHeight)) {
+        if ((maxImageWidth > 0 && getArguments().getWidth() > maxImageWidth)
+                || (maxImageHeight > 0 && getArguments().getHeight() > maxImageHeight)) {
           return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
         }
 
         try {
           ImageUtils.createResizedImage(file, thumbFile,
-                  this.width, this.height, getConfiguration().getImgQuality());
+                  getArguments().getWidth(), getArguments().getHeight(), getConfiguration().getImgQuality());
 
         } catch (IOException e) {
           log.error("", e);
@@ -143,13 +136,13 @@ public class ImageResizeCommad extends XMLCommand implements BeforeExecuteComman
         }
       }
 
-      String fileNameWithoutExt = FileUtils.getFileNameWithoutExtension(fileName);
-      String fileExt = FileUtils.getFileExtension(fileName);
+      String fileNameWithoutExt = FileUtils.getFileNameWithoutExtension(getArguments().getFileName());
+      String fileExt = FileUtils.getFileExtension(getArguments().getFileName());
       for (String size : SIZES) {
-        if (sizesFromReq.get(size) != null
-                && sizesFromReq.get(size).equals("1")) {
+        if (getArguments().getSizesFromReq().get(size) != null
+                && getArguments().getSizesFromReq().get(size).equals("1")) {
           String thumbName = fileNameWithoutExt.concat("_").concat(size).concat(".").concat(fileExt);
-          Path thumbFile = Paths.get(getConfiguration().getTypes().get(this.getType()).getPath().concat(this.getCurrentFolder()).concat(thumbName));
+          Path thumbFile = Paths.get(getConfiguration().getTypes().get(getArguments().getType()).getPath().concat(getArguments().getCurrentFolder()).concat(thumbName));
           for (PluginParam param : pluginInfo.getParams()) {
             if (size.concat("Thumb").equals(param.getName())) {
               if (checkParamSize(param.getValue())) {
@@ -189,35 +182,35 @@ public class ImageResizeCommad extends XMLCommand implements BeforeExecuteComman
           throws ConnectorException {
     super.initParams(request, configuration1);
 
-    this.sizesFromReq = new HashMap<>();
-    this.fileName = request.getParameter("fileName");
-    this.newFileName = request.getParameter("newFileName");
-    this.overwrite = request.getParameter("overwrite");
+    getArguments().setSizesFromReq(new HashMap<>());
+    getArguments().setFileName(request.getParameter("fileName"));
+    getArguments().setNewFileName(request.getParameter("newFileName"));
+    getArguments().setOverwrite(request.getParameter("overwrite"));
     String reqWidth = request.getParameter("width");
     String reqHeight = request.getParameter("height");
-    this.wrongReqSizesParams = false;
+    getArguments().setWrongReqSizesParams(false);
     try {
       if (reqWidth != null && !reqWidth.isEmpty()) {
-        this.width = Integer.valueOf(reqWidth);
+        getArguments().setWidth(Integer.valueOf(reqWidth));
       } else {
-        this.width = null;
+        getArguments().setWidth(null);
       }
     } catch (NumberFormatException e) {
-      this.width = null;
-      this.wrongReqSizesParams = true;
+      getArguments().setWidth(null);
+      getArguments().setWrongReqSizesParams(true);
     }
     try {
       if (reqHeight != null && !reqHeight.isEmpty()) {
-        this.height = Integer.valueOf(reqHeight);
+        getArguments().setHeight(Integer.valueOf(reqHeight));
       } else {
-        this.height = null;
+        getArguments().setHeight(null);
       }
     } catch (NumberFormatException e) {
-      this.height = null;
-      this.wrongReqSizesParams = true;
+      getArguments().setHeight(null);
+      getArguments().setWrongReqSizesParams(true);
     }
     for (String size : SIZES) {
-      sizesFromReq.put(size, request.getParameter(size));
+      getArguments().getSizesFromReq().put(size, request.getParameter(size));
     }
 
   }

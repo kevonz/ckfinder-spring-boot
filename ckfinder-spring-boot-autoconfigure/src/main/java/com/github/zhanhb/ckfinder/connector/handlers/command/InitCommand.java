@@ -14,6 +14,7 @@ package com.github.zhanhb.ckfinder.connector.handlers.command;
 import com.github.zhanhb.ckfinder.connector.configuration.Constants;
 import com.github.zhanhb.ckfinder.connector.data.InitCommandEventArgs;
 import com.github.zhanhb.ckfinder.connector.data.ResourceType;
+import com.github.zhanhb.ckfinder.connector.handlers.arguments.XMLArguments;
 import com.github.zhanhb.ckfinder.connector.utils.AccessControl;
 import com.github.zhanhb.ckfinder.connector.utils.FileUtils;
 import com.github.zhanhb.ckfinder.connector.utils.PathUtils;
@@ -32,7 +33,7 @@ import org.w3c.dom.Element;
  * Class to handle <code>Init</code> command.
  */
 @Slf4j
-public class InitCommand extends XMLCommand {
+public class InitCommand extends XMLCommand<XMLArguments> {
 
   /**
    * chars taken to license key.
@@ -40,8 +41,10 @@ public class InitCommand extends XMLCommand {
   private static final int[] LICENSE_CHARS = {11, 0, 8, 12, 26, 2, 3, 25, 1};
   private static final int LICENSE_CHAR_NR = 5;
   private static final int LICENSE_KEY_LENGTH = 34;
-  @SuppressWarnings("FieldNameHidesFieldInSuperclass")
-  private String type;
+
+  public InitCommand() {
+    super(XMLArguments::new);
+  }
 
   /**
    * method from super class - not used in this command.
@@ -73,7 +76,7 @@ public class InitCommand extends XMLCommand {
    */
   private void createConnectorData(Element rootElement) {
     // connector info
-    Element element = getDocument().createElement("ConnectorInfo");
+    Element element = getArguments().getDocument().createElement("ConnectorInfo");
     element.setAttribute("enabled", String.valueOf(getConfiguration().isEnabled()));
     element.setAttribute("s", getLicenseName());
     element.setAttribute("c", createLicenseKey(getConfiguration().getLicenseKey()));
@@ -155,10 +158,10 @@ public class InitCommand extends XMLCommand {
    * @param rootElement root element in XML
    */
   public void createPluginsData(Element rootElement) {
-    Element element = getDocument().createElement("PluginsInfo");
+    Element element = getArguments().getDocument().createElement("PluginsInfo");
     rootElement.appendChild(element);
     if (getConfiguration().getEvents() != null) {
-      InitCommandEventArgs args = new InitCommandEventArgs(getDocument(), rootElement);
+      InitCommandEventArgs args = new InitCommandEventArgs(getArguments().getDocument(), rootElement);
       getConfiguration().getEvents().runInitCommand(args, getConfiguration());
     }
   }
@@ -172,27 +175,27 @@ public class InitCommand extends XMLCommand {
   @SuppressWarnings("CollectionWithoutInitialCapacity")
   private void createResouceTypesData(Element rootElement) throws Exception {
     //resurcetypes
-    Element element = getDocument().createElement("ResourceTypes");
+    Element element = getArguments().getDocument().createElement("ResourceTypes");
     rootElement.appendChild(element);
 
     Set<String> types;
-    if (getType() != null && !super.getType().isEmpty()) {
+    if (getArguments().getType() != null && !getArguments().getType().isEmpty()) {
       types = new LinkedHashSet<>();
-      types.add(super.getType());
+      types.add(getArguments().getType());
     } else {
       types = getTypes();
     }
 
     for (String key : types) {
       ResourceType resourceType = getConfiguration().getTypes().get(key);
-      if (((this.type == null || this.type.equals(key)) && resourceType != null)
-              && getConfiguration().getAccessControl().checkFolderACL(key, "/", this.getUserRole(),
+      if (((getArguments().getType() == null || getArguments().getType().equals(key)) && resourceType != null)
+              && getConfiguration().getAccessControl().checkFolderACL(key, "/", getArguments().getUserRole(),
                       AccessControl.CKFINDER_CONNECTOR_ACL_FOLDER_VIEW)) {
 
-        Element childElement = getDocument().
+        Element childElement = getArguments().getDocument().
                 createElement("ResourceType");
         childElement.setAttribute("name", resourceType.getName());
-        childElement.setAttribute("acl", String.valueOf(getConfiguration().getAccessControl().checkACLForRole(key, "/", this.getUserRole())));
+        childElement.setAttribute("acl", String.valueOf(getConfiguration().getAccessControl().checkACLForRole(key, "/", getArguments().getUserRole())));
         childElement.setAttribute("hash", randomHash(
                 resourceType.getPath()));
         childElement.setAttribute(
@@ -205,7 +208,7 @@ public class InitCommand extends XMLCommand {
         long maxSize = resourceType.getMaxSize();
         childElement.setAttribute("maxSize", maxSize > 0 ? Long.toString(maxSize) : "0");
         childElement.setAttribute("hasChildren",
-                FileUtils.hasChildren(getConfiguration().getAccessControl(), "/", Paths.get(PathUtils.escape(resourceType.getPath())), getConfiguration(), resourceType.getName(), this.getUserRole()).toString());
+                FileUtils.hasChildren(getConfiguration().getAccessControl(), "/", Paths.get(PathUtils.escape(resourceType.getPath())), getConfiguration(), resourceType.getName(), getArguments().getUserRole()).toString());
         element.appendChild(childElement);
       }
     }
@@ -257,7 +260,7 @@ public class InitCommand extends XMLCommand {
 
   @Override
   protected void getCurrentFolderParam(HttpServletRequest request) {
-    this.setCurrentFolder(null);
+    getArguments().setCurrentFolder(null);
   }
 
 }

@@ -15,13 +15,13 @@ import com.github.zhanhb.ckfinder.connector.configuration.Constants;
 import com.github.zhanhb.ckfinder.connector.configuration.IConfiguration;
 import com.github.zhanhb.ckfinder.connector.data.FilePostParam;
 import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
+import com.github.zhanhb.ckfinder.connector.handlers.arguments.DeleteFilesArguments;
 import com.github.zhanhb.ckfinder.connector.utils.AccessControl;
 import com.github.zhanhb.ckfinder.connector.utils.FileUtils;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -31,21 +31,21 @@ import org.w3c.dom.Element;
  * Class used to handle <code>DeleteFiles</code> command.
  */
 @Slf4j
-public class DeleteFilesCommand extends XMLCommand implements IPostCommand {
+public class DeleteFilesCommand extends XMLCommand<DeleteFilesArguments> implements IPostCommand {
 
-  private List<FilePostParam> files;
-  private int filesDeleted;
-  private boolean addDeleteNode;
+  public DeleteFilesCommand() {
+    super(DeleteFilesArguments::new);
+  }
 
   @Override
   protected void createXMLChildNodes(int errorNum, Element rootElement) {
     if (hasErrors()) {
-      Element errorsNode = getDocument().createElement("Errors");
+      Element errorsNode = getArguments().getDocument().createElement("Errors");
       addErrors(errorsNode);
       rootElement.appendChild(errorsNode);
     }
 
-    if (this.addDeleteNode) {
+    if (getArguments().isAddDeleteNode()) {
       createDeleteFielsNode(rootElement);
     }
   }
@@ -56,8 +56,8 @@ public class DeleteFilesCommand extends XMLCommand implements IPostCommand {
    * @param rootElement root element in XML response
    */
   private void createDeleteFielsNode(Element rootElement) {
-    Element element = getDocument().createElement("DeleteFiles");
-    element.setAttribute("deleted", String.valueOf(this.filesDeleted));
+    Element element = getArguments().getDocument().createElement("DeleteFiles");
+    element.setAttribute("deleted", String.valueOf(getArguments().getFilesDeleted()));
     rootElement.appendChild(element);
   }
 
@@ -69,16 +69,16 @@ public class DeleteFilesCommand extends XMLCommand implements IPostCommand {
   @Override
   protected int getDataForXml() {
 
-    this.filesDeleted = 0;
+    getArguments().setFilesDeleted(0);
 
-    this.addDeleteNode = false;
+    getArguments().setAddDeleteNode(false);
 
-    if (!isTypeExists(getType())) {
-      this.setType(null);
+    if (!isTypeExists(getArguments().getType())) {
+      getArguments().setType(null);
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE;
     }
 
-    for (FilePostParam fileItem : this.files) {
+    for (FilePostParam fileItem : getArguments().getFiles()) {
       if (!FileUtils.isFileNameInvalid(fileItem.getName())) {
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
       }
@@ -106,7 +106,7 @@ public class DeleteFilesCommand extends XMLCommand implements IPostCommand {
 
       }
 
-      if (!getConfiguration().getAccessControl().checkFolderACL(fileItem.getType(), fileItem.getFolder(), getUserRole(),
+      if (!getConfiguration().getAccessControl().checkFolderACL(fileItem.getType(), fileItem.getFolder(), getArguments().getUserRole(),
               AccessControl.CKFINDER_CONNECTOR_ACL_FILE_DELETE)) {
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_UNAUTHORIZED;
       }
@@ -114,7 +114,7 @@ public class DeleteFilesCommand extends XMLCommand implements IPostCommand {
       Path file = Paths.get(getConfiguration().getTypes().get(fileItem.getType()).getPath() + fileItem.getFolder(), fileItem.getName());
 
       try {
-        this.addDeleteNode = true;
+        getArguments().setAddDeleteNode(true);
         if (!Files.exists(file)) {
           appendErrorNodeChild(
                   Constants.Errors.CKFINDER_CONNECTOR_ERROR_FILE_NOT_FOUND,
@@ -124,8 +124,8 @@ public class DeleteFilesCommand extends XMLCommand implements IPostCommand {
 
         if (FileUtils.delete(file)) {
           Path thumbFile = Paths.get(getConfiguration().getThumbsPath(),
-                  fileItem.getType() + this.getCurrentFolder(), fileItem.getName());
-          this.filesDeleted++;
+                  fileItem.getType() + getArguments().getCurrentFolder(), fileItem.getName());
+          getArguments().filesDeletedPlus();
 
           try {
             FileUtils.delete(thumbFile);
@@ -162,7 +162,7 @@ public class DeleteFilesCommand extends XMLCommand implements IPostCommand {
   @SuppressWarnings("CollectionWithoutInitialCapacity")
   protected void initParams(HttpServletRequest request, IConfiguration configuration) throws ConnectorException {
     super.initParams(request, configuration);
-    this.files = new ArrayList<>();
+    getArguments().setFiles(new ArrayList<>());
     getFilesListFromRequest(request);
   }
 
@@ -180,7 +180,7 @@ public class DeleteFilesCommand extends XMLCommand implements IPostCommand {
       String folder = request.getParameter("files[" + i + "][folder]");
       String options = request.getParameter("files[" + i + "][options]");
       String type = request.getParameter("files[" + i + "][type]");
-      this.files.add(FilePostParam.builder().name(name).folder(folder).options(options).type(type).build());
+      getArguments().getFiles().add(FilePostParam.builder().name(name).folder(folder).options(options).type(type).build());
       paramName = "files[" + (++i) + "][name]";
     }
   }

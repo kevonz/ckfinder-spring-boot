@@ -18,7 +18,6 @@ import com.github.zhanhb.ckfinder.connector.data.IEventHandler;
 import com.github.zhanhb.ckfinder.connector.data.InitCommandEventArgs;
 import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
 import java.util.List;
-import java.util.function.Supplier;
 import lombok.Builder;
 import lombok.Singular;
 import lombok.extern.slf4j.Slf4j;
@@ -31,12 +30,11 @@ import lombok.extern.slf4j.Slf4j;
 public class Events {
 
   @SuppressWarnings({"BroadCatchBlock", "TooBroadCatch"})
-  private static <T extends EventArgs> boolean run(List<Supplier<? extends IEventHandler<T>>> handlers, T args, IConfiguration configuration) throws ConnectorException {
+  private static <T extends EventArgs> boolean run(List<IEventHandler<T>> handlers, T args, IConfiguration configuration) throws ConnectorException {
     log.trace("{}", handlers);
-    for (Supplier<? extends IEventHandler<T>> eventCommandData : handlers) {
+    for (IEventHandler<T> eventHandler : handlers) {
       try {
-        IEventHandler<T> events = eventCommandData.get();
-        if (!events.runEventHandler(args, configuration)) {
+        if (!eventHandler.runEventHandler(args, configuration)) {
           return false;
         }
       } catch (ConnectorException ex) {
@@ -49,11 +47,11 @@ public class Events {
   }
 
   @Singular
-  private final List<Supplier<? extends IEventHandler<BeforeExecuteCommandEventArgs>>> beforeExecuteCommandEventHandlers;
+  private final List<IEventHandler<BeforeExecuteCommandEventArgs>> beforeExecuteCommandEventHandlers;
   @Singular
-  private final List<Supplier<? extends IEventHandler<AfterFileUploadEventArgs>>> afterFileUploadEventHandlers;
+  private final List<IEventHandler<AfterFileUploadEventArgs>> afterFileUploadEventHandlers;
   @Singular
-  private final List<Supplier<? extends IEventHandler<InitCommandEventArgs>>> initCommandEventHandlers;
+  private final List<IEventHandler<InitCommandEventArgs>> initCommandEventHandlers;
 
   /**
    * run event handlers for selected event.

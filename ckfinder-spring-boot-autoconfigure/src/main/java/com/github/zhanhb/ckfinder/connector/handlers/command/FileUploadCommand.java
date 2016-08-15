@@ -17,6 +17,7 @@ import com.github.zhanhb.ckfinder.connector.data.AfterFileUploadEventArgs;
 import com.github.zhanhb.ckfinder.connector.data.ResourceType;
 import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
 import com.github.zhanhb.ckfinder.connector.errors.ErrorUtils;
+import com.github.zhanhb.ckfinder.connector.handlers.arguments.FileUploadArguments;
 import com.github.zhanhb.ckfinder.connector.utils.AccessControl;
 import com.github.zhanhb.ckfinder.connector.utils.FileUtils;
 import com.github.zhanhb.ckfinder.connector.utils.ImageUtils;
@@ -32,16 +33,15 @@ import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.Part;
-import lombok.AccessLevel;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * Class to handle <code>FileUpload</code> command.
+ *
  */
 @Slf4j
 @SuppressWarnings("ProtectedField")
-public class FileUploadCommand extends Command implements IPostCommand {
+public class FileUploadCommand extends Command<FileUploadArguments> implements IPostCommand {
 
   /**
    * Array containing unsafe characters which can't be used in file name.
@@ -49,52 +49,10 @@ public class FileUploadCommand extends Command implements IPostCommand {
   private static final Pattern UNSAFE_FILE_NAME_PATTERN = Pattern.compile("[:*?|/]");
 
   /**
-   * Uploading file name request.
-   */
-  private String fileName;
-  /**
-   * File name after rename.
-   */
-  private String newFileName;
-  /**
-   * Function number to call after file upload is completed.
-   */
-  private String ckEditorFuncNum;
-  /**
-   * The selected response type to be used after file upload is completed.
-   */
-  @Getter(AccessLevel.PROTECTED)
-  private String responseType;
-  /**
-   * Function number to call after file upload is completed.
-   */
-  private String ckFinderFuncNum;
-  /**
-   * Language (locale) code.
-   */
-  private String langCode;
-  /**
-   * Flag informing if file was uploaded correctly.
-   */
-  private boolean uploaded;
-  /**
-   * Error code number.
-   */
-  private int errorCode;
-  /**
-   * Custom error message.
-   */
-  private String customErrorMsg;
-
-  /**
    * default constructor.
    */
   public FileUploadCommand() {
-    this.errorCode = 0;
-    this.fileName = "";
-    this.newFileName = "";
-    setType("");
-    this.uploaded = false;
+    super(FileUploadArguments::new);
   }
 
   /**
@@ -106,20 +64,20 @@ public class FileUploadCommand extends Command implements IPostCommand {
   @SuppressWarnings("FinalMethod")
   final void execute(HttpServletResponse response) throws ConnectorException {
     try {
-      String errorMsg = this.getErrorCode() == Constants.Errors.CKFINDER_CONNECTOR_ERROR_NONE ? "" : (this.getErrorCode() == Constants.Errors.CKFINDER_CONNECTOR_ERROR_CUSTOM_ERROR ? this.customErrorMsg
-              : ErrorUtils.INSTANCE.getErrorMsgByLangAndCode(this.langCode, this.getErrorCode(), this.getConfiguration()));
+      String errorMsg = this.getErrorCode() == Constants.Errors.CKFINDER_CONNECTOR_ERROR_NONE ? "" : (this.getErrorCode() == Constants.Errors.CKFINDER_CONNECTOR_ERROR_CUSTOM_ERROR ? getArguments().getCustomErrorMsg()
+              : ErrorUtils.INSTANCE.getErrorMsgByLangAndCode(getArguments().getLangCode(), this.getErrorCode(), this.getConfiguration()));
       errorMsg = errorMsg.replace("%1", this.getNewFileName());
       String path = "";
 
       if (!isUploaded()) {
-        newFileName = "";
-        this.setCurrentFolder("");
+        getArguments().setNewFileName("");
+        getArguments().setCurrentFolder("");
       } else {
-        path = getConfiguration().getTypes().get(this.getType()).getUrl()
-                + this.getCurrentFolder();
+        path = getConfiguration().getTypes().get(getArguments().getType()).getUrl()
+                + getArguments().getCurrentFolder();
       }
       PrintWriter writer = response.getWriter();
-      if (this.getResponseType() != null && this.getResponseType().equals("txt")) {
+      if (getArguments().getResponseType() != null && getArguments().getResponseType().equals("txt")) {
         writer.write(this.getNewFileName() + "|" + errorMsg);
       } else if (checkFuncNum()) {
         handleOnUploadCompleteCallFuncResponse(writer, errorMsg, path);
@@ -139,7 +97,7 @@ public class FileUploadCommand extends Command implements IPostCommand {
    * @return true if is.
    */
   protected boolean checkFuncNum() {
-    return this.ckFinderFuncNum != null;
+    return getArguments().getCkFinderFuncNum() != null;
   }
 
   /**
@@ -154,11 +112,11 @@ public class FileUploadCommand extends Command implements IPostCommand {
           String errorMsg,
           String path)
           throws IOException {
-    this.ckFinderFuncNum = this.ckFinderFuncNum.replaceAll(
-            "[^\\d]", "");
+    getArguments().setCkFinderFuncNum(getArguments().getCkFinderFuncNum().replaceAll(
+            "[^\\d]", ""));
     out.write("<script type=\"text/javascript\">");
     out.write("window.parent.CKFinder.tools.callFunction("
-            + this.ckFinderFuncNum + ", '"
+            + getArguments().getCkFinderFuncNum() + ", '"
             + path
             + FileUtils.backupWithBackSlash(this.getNewFileName(), "'")
             + "', '" + errorMsg + "');");
@@ -195,10 +153,10 @@ public class FileUploadCommand extends Command implements IPostCommand {
   protected void initParams(HttpServletRequest request, IConfiguration configuration)
           throws ConnectorException {
     super.initParams(request, configuration);
-    this.ckFinderFuncNum = request.getParameter("CKFinderFuncNum");
+    getArguments().setCkFinderFuncNum(request.getParameter("CKFinderFuncNum"));
     this.setCkEditorFuncNum(request.getParameter("CKEditorFuncNum"));
-    this.responseType = request.getParameter("response_type") != null ? request.getParameter("response_type") : request.getParameter("responseType");
-    this.langCode = request.getParameter("langCode");
+    getArguments().setResponseType(request.getParameter("response_type") != null ? request.getParameter("response_type") : request.getParameter("responseType"));
+    getArguments().setLangCode(request.getParameter("langCode"));
 
     if (this.getErrorCode() == Constants.Errors.CKFINDER_CONNECTOR_ERROR_NONE) {
       this.setUploaded(uploadFile(request));
@@ -213,7 +171,8 @@ public class FileUploadCommand extends Command implements IPostCommand {
    * @return true if uploaded correctly.
    */
   private boolean uploadFile(HttpServletRequest request) {
-    if (!getConfiguration().getAccessControl().checkFolderACL(getType(), this.getCurrentFolder(), getUserRole(),
+    if (!getConfiguration().getAccessControl().checkFolderACL(getArguments().getType(),
+            getArguments().getCurrentFolder(), getArguments().getUserRole(),
             AccessControl.CKFINDER_CONNECTOR_ACL_FILE_UPLOAD)) {
       this.setErrorCode(Constants.Errors.CKFINDER_CONNECTOR_ERROR_UNAUTHORIZED);
       return false;
@@ -230,8 +189,8 @@ public class FileUploadCommand extends Command implements IPostCommand {
     try {
       Collection<Part> parts = request.getParts();
       for (Part part : parts) {
-        String path = getConfiguration().getTypes().get(this.getType()).getPath() + this.getCurrentFolder();
-        this.fileName = getFileItemName(part);
+        String path = getConfiguration().getTypes().get(getArguments().getType()).getPath() + getArguments().getCurrentFolder();
+        getArguments().setFileName(getFileItemName(part));
         if (validateUploadItem(part, path)) {
           return saveTemporaryFile(path, part);
         }
@@ -240,7 +199,7 @@ public class FileUploadCommand extends Command implements IPostCommand {
     } catch (ConnectorException e) {
       this.setErrorCode(e.getErrorCode());
       if (this.getErrorCode() == Constants.Errors.CKFINDER_CONNECTOR_ERROR_CUSTOM_ERROR) {
-        this.customErrorMsg = e.getMessage();
+        getArguments().setCustomErrorMsg(e.getMessage());
       }
       return false;
     } catch (Exception e) {
@@ -272,7 +231,7 @@ public class FileUploadCommand extends Command implements IPostCommand {
     if (!ImageUtils.isImageExtension(file)) {
       item.write(file.toString());
       if (getConfiguration().getEvents() != null) {
-        AfterFileUploadEventArgs args = new AfterFileUploadEventArgs(this.getCurrentFolder(), file);
+        AfterFileUploadEventArgs args = new AfterFileUploadEventArgs(getArguments().getCurrentFolder(), file);
         getConfiguration().getEvents().runAfterFileUpload(args, getConfiguration());
       }
       return true;
@@ -280,9 +239,9 @@ public class FileUploadCommand extends Command implements IPostCommand {
             || getConfiguration().isCheckSizeAfterScaling()) {
       ImageUtils.createTmpThumb(item.getInputStream(), file, getFileItemName(item), this.getConfiguration());
       if (!getConfiguration().isCheckSizeAfterScaling()
-              || FileUtils.isFileSizeInRange(getConfiguration().getTypes().get(this.getType()), Files.size(file))) {
+              || FileUtils.isFileSizeInRange(getConfiguration().getTypes().get(getArguments().getType()), Files.size(file))) {
         if (getConfiguration().getEvents() != null) {
-          AfterFileUploadEventArgs args = new AfterFileUploadEventArgs(this.getCurrentFolder(), file);
+          AfterFileUploadEventArgs args = new AfterFileUploadEventArgs(getArguments().getCurrentFolder(), file);
           getConfiguration().getEvents().runAfterFileUpload(args, getConfiguration());
         }
         return true;
@@ -321,7 +280,7 @@ public class FileUploadCommand extends Command implements IPostCommand {
         sb.append(FileUtils.getFileNameWithoutExtension(name, false));
         sb.append("(").append(number).append(").");
         sb.append(FileUtils.getFileExtension(name, false));
-        newFileName = sb.toString();
+        getArguments().setNewFileName(sb.toString());
         file = Paths.get(path, this.getNewFileName());
         protectedName = false;
         this.setErrorCode(Constants.Errors.CKFINDER_CONNECTOR_ERROR_UPLOADED_FILE_RENAMED);
@@ -341,42 +300,42 @@ public class FileUploadCommand extends Command implements IPostCommand {
   private boolean validateUploadItem(Part item, String path) {
 
     if (item.getSubmittedFileName() != null && item.getSubmittedFileName().length() > 0) {
-      this.fileName = getFileItemName(item);
+      getArguments().setFileName(getFileItemName(item));
     } else {
       this.setErrorCode(Constants.Errors.CKFINDER_CONNECTOR_ERROR_UPLOADED_INVALID);
       return false;
     }
-    this.newFileName = this.fileName;
+    getArguments().setNewFileName(getArguments().getFileName());
 
-    newFileName = UNSAFE_FILE_NAME_PATTERN.matcher(this.getNewFileName()).replaceAll("_");
+    getArguments().setNewFileName(UNSAFE_FILE_NAME_PATTERN.matcher(this.getNewFileName()).replaceAll("_"));
 
     if (getConfiguration().isDisallowUnsafeCharacters()) {
-      newFileName = this.getNewFileName().replace(';', '_');
+      getArguments().setNewFileName(this.getNewFileName().replace(';', '_'));
     }
     if (getConfiguration().isForceAscii()) {
-      newFileName = FileUtils.convertToASCII(this.getNewFileName());
+      getArguments().setNewFileName(FileUtils.convertToASCII(this.getNewFileName()));
     }
-    if (!this.newFileName.equals(this.fileName)) {
+    if (!getArguments().getNewFileName().equals(getArguments().getFileName())) {
       this.setErrorCode(Constants.Errors.CKFINDER_CONNECTOR_ERROR_UPLOADED_INVALID_NAME_RENAMED);
     }
 
-    if (FileUtils.isDirectoryHidden(this.getCurrentFolder(), getConfiguration())) {
+    if (FileUtils.isDirectoryHidden(getArguments().getCurrentFolder(), getConfiguration())) {
       this.setErrorCode(Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST);
       return false;
     }
-    if (!FileUtils.isFileNameInvalid(this.newFileName)
+    if (!FileUtils.isFileNameInvalid(getArguments().getNewFileName())
             || FileUtils.isFileHidden(this.getNewFileName(), getConfiguration())) {
       this.setErrorCode(Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_NAME);
       return false;
     }
-    final ResourceType resourceType = getConfiguration().getTypes().get(this.getType());
+    final ResourceType resourceType = getConfiguration().getTypes().get(getArguments().getType());
     int checkFileExt = FileUtils.checkFileExtension(this.getNewFileName(), resourceType);
     if (checkFileExt == 1) {
       this.setErrorCode(Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_EXTENSION);
       return false;
     }
     if (getConfiguration().isCheckDoubleFileExtensions()) {
-      newFileName = FileUtils.renameFileWithBadExt(resourceType, this.getNewFileName());
+      getArguments().setNewFileName(FileUtils.renameFileWithBadExt(resourceType, this.getNewFileName()));
     }
 
     try {
@@ -455,7 +414,7 @@ public class FileUploadCommand extends Command implements IPostCommand {
   @Override
   protected boolean isHidden()
           throws ConnectorException {
-    if (FileUtils.isDirectoryHidden(this.getCurrentFolder(), getConfiguration())) {
+    if (FileUtils.isDirectoryHidden(getArguments().getCurrentFolder(), getConfiguration())) {
       this.setErrorCode(Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST);
       return true;
     }
@@ -478,7 +437,7 @@ public class FileUploadCommand extends Command implements IPostCommand {
     String tmpType = request.getParameter("type");
     if (isTypeExists(tmpType)) {
       Path currDir = Paths.get(getConfiguration().getTypes().get(tmpType).getPath()
-              + this.getCurrentFolder());
+              + getArguments().getCurrentFolder());
       if (Files.exists(currDir) && Files.isDirectory(currDir)) {
         return true;
       } else {
@@ -503,49 +462,49 @@ public class FileUploadCommand extends Command implements IPostCommand {
    * @return the ckEditorFuncNum
    */
   protected String getCkEditorFuncNum() {
-    return ckEditorFuncNum;
+    return getArguments().getCkEditorFuncNum();
   }
 
   /**
    * @param ckEditorFuncNum the ckEditorFuncNum to set
    */
   protected void setCkEditorFuncNum(String ckEditorFuncNum) {
-    this.ckEditorFuncNum = ckEditorFuncNum;
+    getArguments().setCkEditorFuncNum(ckEditorFuncNum);
   }
 
   /**
    * @return the newFileName
    */
   protected String getNewFileName() {
-    return newFileName;
+    return getArguments().getNewFileName();
   }
 
   /**
    * @return the uploaded
    */
   protected boolean isUploaded() {
-    return uploaded;
+    return getArguments().isUploaded();
   }
 
   /**
    * @param uploaded the uploaded to set
    */
   protected void setUploaded(boolean uploaded) {
-    this.uploaded = uploaded;
+    getArguments().setUploaded(uploaded);
   }
 
   /**
    * @return the errorCode
    */
   protected int getErrorCode() {
-    return errorCode;
+    return getArguments().getErrorCode();
   }
 
   /**
    * @param errorCode the errorCode to set
    */
   protected void setErrorCode(int errorCode) {
-    this.errorCode = errorCode;
+    getArguments().setErrorCode(errorCode);
   }
 
 }

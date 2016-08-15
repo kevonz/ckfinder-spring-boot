@@ -15,39 +15,44 @@ import com.github.zhanhb.ckfinder.connector.configuration.Constants;
 import com.github.zhanhb.ckfinder.connector.configuration.IConfiguration;
 import com.github.zhanhb.ckfinder.connector.data.ResourceType;
 import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
+import com.github.zhanhb.ckfinder.connector.handlers.arguments.Arguments;
 import com.github.zhanhb.ckfinder.connector.utils.FileUtils;
 import com.github.zhanhb.ckfinder.connector.utils.PathUtils;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Base class for all command handlers.
+ *
+ * @param <T> arguments type
  */
-@Getter(AccessLevel.PROTECTED)
-@SuppressWarnings("ProtectedField")
-public abstract class Command {
+@Slf4j
+public abstract class Command<T extends Arguments> {
 
   /**
    * Connector configuration.
    */
+  @Getter(AccessLevel.PROTECTED)
   private IConfiguration configuration;
-  @Deprecated
-  private String userRole;
-  @Deprecated
-  @Setter(AccessLevel.PROTECTED)
-  private String currentFolder;
-  @Deprecated
-  @Setter(AccessLevel.PROTECTED)
-  private String type;
+  private final ThreadLocal<T> arguments;
+
+  protected Command(Supplier<? extends T> argumentsSupplier) {
+    this.arguments = ThreadLocal.withInitial(argumentsSupplier);
+  }
+
+  public T getArguments() {
+    return arguments.get();
+  }
 
   /**
    * Runs command. Initialize, sets response and execute command.
@@ -81,16 +86,17 @@ public abstract class Command {
     if (configuration != null) {
       this.configuration = configuration;
       HttpSession session = request.getSession(false);
-      userRole = session == null ? null : (String) session.getAttribute(configuration.getUserRoleName());
+      String userRole = session == null ? null : (String) session.getAttribute(configuration.getUserRoleName());
+      getArguments().setUserRole(userRole);
 
       getCurrentFolderParam(request);
 
-      if (isConnectorEnabled() && isRequestPathValid(this.getCurrentFolder())) {
-        this.setCurrentFolder(PathUtils.escape(this.getCurrentFolder()));
+      if (isConnectorEnabled() && isRequestPathValid(getArguments().getCurrentFolder())) {
+        getArguments().setCurrentFolder(PathUtils.escape(getArguments().getCurrentFolder()));
         if (!isHidden()) {
-          if ((this.getCurrentFolder() == null || this.getCurrentFolder().isEmpty())
+          if ((getArguments().getCurrentFolder() == null || getArguments().getCurrentFolder().isEmpty())
                   || isCurrFolderExists(request)) {
-            this.setType(request.getParameter("type"));
+            getArguments().setType(request.getParameter("type"));
           }
         }
       }
@@ -123,7 +129,7 @@ public abstract class Command {
     String tmpType = request.getParameter("type");
     if (tmpType != null) {
       if (isTypeExists(tmpType)) {
-        Path currDir = Paths.get(getConfiguration().getTypes().get(tmpType).getPath() + this.getCurrentFolder());
+        Path currDir = Paths.get(getConfiguration().getTypes().get(tmpType).getPath() + getArguments().getCurrentFolder());
         if (!Files.exists(currDir) || !Files.isDirectory(currDir)) {
           throw new ConnectorException(
                   Constants.Errors.CKFINDER_CONNECTOR_ERROR_FOLDER_NOT_FOUND,
@@ -155,7 +161,7 @@ public abstract class Command {
    * @throws ConnectorException when is hidden
    */
   protected boolean isHidden() throws ConnectorException {
-    if (FileUtils.isDirectoryHidden(this.getCurrentFolder(), getConfiguration())) {
+    if (FileUtils.isDirectoryHidden(getArguments().getCurrentFolder(), getConfiguration())) {
       throw new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST,
               false);
@@ -208,9 +214,9 @@ public abstract class Command {
   protected void getCurrentFolderParam(HttpServletRequest request) {
     String currFolder = request.getParameter("currentFolder");
     if (currFolder == null || currFolder.isEmpty()) {
-      this.setCurrentFolder("/");
+      getArguments().setCurrentFolder("/");
     } else {
-      this.setCurrentFolder(PathUtils.addSlashToBeginning(PathUtils.addSlashToEnd(currFolder)));
+      getArguments().setCurrentFolder(PathUtils.addSlashToBeginning(PathUtils.addSlashToEnd(currFolder)));
     }
   }
 
@@ -224,6 +230,14 @@ public abstract class Command {
    */
   protected String nullToString(String s) {
     return s == null ? "" : s;
+  }
+
+  public Command clearArguments() {
+    if (log.isTraceEnabled()) {
+      log.trace("prepare clear arguments '{}'", arguments.get());
+    }
+    arguments.remove();
+    return this;
   }
 
 }

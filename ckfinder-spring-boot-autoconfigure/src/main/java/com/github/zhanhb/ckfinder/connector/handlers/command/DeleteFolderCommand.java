@@ -12,6 +12,7 @@
 package com.github.zhanhb.ckfinder.connector.handlers.command;
 
 import com.github.zhanhb.ckfinder.connector.configuration.Constants;
+import com.github.zhanhb.ckfinder.connector.handlers.arguments.DeleteFolderArguments;
 import com.github.zhanhb.ckfinder.connector.utils.AccessControl;
 import com.github.zhanhb.ckfinder.connector.utils.FileUtils;
 import java.nio.file.Files;
@@ -24,7 +25,11 @@ import org.w3c.dom.Element;
  * Class to handle <code>DeleteFolder</code> command.
  */
 @Slf4j
-public class DeleteFolderCommand extends XMLCommand implements IPostCommand {
+public class DeleteFolderCommand extends XMLCommand<DeleteFolderArguments> implements IPostCommand {
+
+  public DeleteFolderCommand() {
+    super(DeleteFolderArguments::new);
+  }
 
   @Override
   protected void createXMLChildNodes(int errorNum, Element rootElement) {
@@ -35,27 +40,27 @@ public class DeleteFolderCommand extends XMLCommand implements IPostCommand {
    */
   @Override
   protected int getDataForXml() {
-    if (!isTypeExists(getType())) {
-      this.setType(null);
+    if (!isTypeExists(getArguments().getType())) {
+      getArguments().setType(null);
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE;
     }
 
-    if (!getConfiguration().getAccessControl().checkFolderACL(getType(),
-            getCurrentFolder(),
-            getUserRole(),
+    if (!getConfiguration().getAccessControl().checkFolderACL(getArguments().getType(),
+            getArguments().getCurrentFolder(),
+            getArguments().getUserRole(),
             AccessControl.CKFINDER_CONNECTOR_ACL_FOLDER_DELETE)) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_UNAUTHORIZED;
     }
-    if (this.getCurrentFolder().equals("/")) {
+    if (getArguments().getCurrentFolder().equals("/")) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
     }
 
-    if (FileUtils.isDirectoryHidden(this.getCurrentFolder(), getConfiguration())) {
+    if (FileUtils.isDirectoryHidden(getArguments().getCurrentFolder(), getConfiguration())) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
     }
 
-    Path dir = Paths.get(getConfiguration().getTypes().get(this.getType()).getPath()
-            + this.getCurrentFolder());
+    Path dir = Paths.get(getConfiguration().getTypes().get(getArguments().getType()).getPath()
+            + getArguments().getCurrentFolder());
 
     try {
       if (!Files.exists(dir) || !Files.isDirectory(dir)) {
@@ -64,8 +69,8 @@ public class DeleteFolderCommand extends XMLCommand implements IPostCommand {
 
       if (FileUtils.delete(dir)) {
         Path thumbDir = Paths.get(getConfiguration().getThumbsPath(),
-                this.getType()
-                + this.getCurrentFolder());
+                getArguments().getType()
+                + getArguments().getCurrentFolder());
         FileUtils.delete(thumbDir);
       } else {
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_ACCESS_DENIED;

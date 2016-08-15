@@ -14,6 +14,7 @@ package com.github.zhanhb.ckfinder.connector.handlers.command;
 import com.github.zhanhb.ckfinder.connector.configuration.Constants;
 import com.github.zhanhb.ckfinder.connector.configuration.IConfiguration;
 import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
+import com.github.zhanhb.ckfinder.connector.handlers.arguments.RenameFolderArguments;
 import com.github.zhanhb.ckfinder.connector.utils.AccessControl;
 import com.github.zhanhb.ckfinder.connector.utils.FileUtils;
 import com.github.zhanhb.ckfinder.connector.utils.PathUtils;
@@ -29,10 +30,11 @@ import org.w3c.dom.Element;
  * Class to handle <code>RenameFolder</code> command.
  */
 @Slf4j
-public class RenameFolderCommand extends XMLCommand implements IPostCommand {
+public class RenameFolderCommand extends XMLCommand<RenameFolderArguments> implements IPostCommand {
 
-  private String newFolderName;
-  private String newFolderPath;
+  public RenameFolderCommand() {
+    super(RenameFolderArguments::new);
+  }
 
   @Override
   protected void createXMLChildNodes(int errorNum, Element rootElement) {
@@ -48,10 +50,10 @@ public class RenameFolderCommand extends XMLCommand implements IPostCommand {
    * @param rootElement XML root element.
    */
   private void createRenamedFolderNode(Element rootElement) {
-    Element element = getDocument().createElement("RenamedFolder");
-    element.setAttribute("newName", this.newFolderName);
-    element.setAttribute("newPath", this.newFolderPath);
-    element.setAttribute("newUrl", getConfiguration().getTypes().get(this.getType()).getUrl() + this.newFolderPath);
+    Element element = getArguments().getDocument().createElement("RenamedFolder");
+    element.setAttribute("newName", getArguments().getNewFolderName());
+    element.setAttribute("newPath", getArguments().getNewFolderPath());
+    element.setAttribute("newUrl", getConfiguration().getTypes().get(getArguments().getType()).getUrl() + getArguments().getNewFolderPath());
     rootElement.appendChild(element);
 
   }
@@ -60,45 +62,45 @@ public class RenameFolderCommand extends XMLCommand implements IPostCommand {
   protected int getDataForXml() throws IOException {
 
     try {
-      isRequestPathValid(newFolderName);
+      isRequestPathValid(getArguments().getNewFolderName());
     } catch (ConnectorException e) {
       return e.getErrorCode();
     }
 
-    if (!isTypeExists(getType())) {
-      this.setType(null);
+    if (!isTypeExists(getArguments().getType())) {
+      getArguments().setType(null);
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE;
     }
 
-    if (!getConfiguration().getAccessControl().checkFolderACL(getType(),
-            getCurrentFolder(),
-            getUserRole(),
+    if (!getConfiguration().getAccessControl().checkFolderACL(getArguments().getType(),
+            getArguments().getCurrentFolder(),
+            getArguments().getUserRole(),
             AccessControl.CKFINDER_CONNECTOR_ACL_FOLDER_RENAME)) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_UNAUTHORIZED;
     }
 
     if (getConfiguration().isForceAscii()) {
-      this.newFolderName = FileUtils.convertToASCII(this.newFolderName);
+      getArguments().setNewFolderName(FileUtils.convertToASCII(getArguments().getNewFolderName()));
     }
 
-    if (FileUtils.isDirectoryHidden(this.newFolderName, getConfiguration())
-            || !FileUtils.isFolderNameInvalid(this.newFolderName, getConfiguration())) {
+    if (FileUtils.isDirectoryHidden(getArguments().getNewFolderName(), getConfiguration())
+            || !FileUtils.isFolderNameInvalid(getArguments().getNewFolderName(), getConfiguration())) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_NAME;
     }
 
-    if (this.getCurrentFolder().equals("/")) {
+    if (getArguments().getCurrentFolder().equals("/")) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
     }
 
-    Path dir = Paths.get(getConfiguration().getTypes().get(this.getType()).getPath()
-            + this.getCurrentFolder());
+    Path dir = Paths.get(getConfiguration().getTypes().get(getArguments().getType()).getPath()
+            + getArguments().getCurrentFolder());
     try {
       if (!Files.isDirectory(dir)) {
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
       }
       setNewFolder();
-      Path newDir = Paths.get(getConfiguration().getTypes().get(this.getType()).getPath()
-              + this.newFolderPath);
+      Path newDir = Paths.get(getConfiguration().getTypes().get(getArguments().getType()).getPath()
+              + getArguments().getNewFolderPath());
       if (Files.exists(newDir)) {
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_ALREADY_EXIST;
       }
@@ -121,23 +123,26 @@ public class RenameFolderCommand extends XMLCommand implements IPostCommand {
    */
   private void renameThumb() throws IOException {
     Path thumbDir = Paths.get(getConfiguration().getThumbsPath(),
-            this.getType()
-            + this.getCurrentFolder());
+            getArguments().getType()
+            + getArguments().getCurrentFolder());
     Path newThumbDir = Paths.get(getConfiguration().getThumbsPath(),
-            this.getType()
-            + this.newFolderPath);
-    Files.move(thumbDir, newThumbDir);
+            getArguments().getType()
+            + getArguments().getNewFolderPath());
+    try {
+      Files.move(thumbDir, newThumbDir);
+    } catch (IOException ex) {
+    }
   }
 
   /**
    * sets new folder name.
    */
   private void setNewFolder() {
-    String tmp1 = this.getCurrentFolder().substring(0,
-            this.getCurrentFolder().lastIndexOf('/'));
-    this.newFolderPath = tmp1.substring(0,
-            tmp1.lastIndexOf('/') + 1).concat(this.newFolderName);
-    this.newFolderPath = PathUtils.addSlashToEnd(this.newFolderPath);
+    String tmp1 = getArguments().getCurrentFolder().substring(0,
+            getArguments().getCurrentFolder().lastIndexOf('/'));
+    getArguments().setNewFolderPath(tmp1.substring(0,
+            tmp1.lastIndexOf('/') + 1).concat(getArguments().getNewFolderName()));
+    getArguments().setNewFolderPath(PathUtils.addSlashToEnd(getArguments().getNewFolderPath()));
   }
 
   /**
@@ -148,7 +153,7 @@ public class RenameFolderCommand extends XMLCommand implements IPostCommand {
   @Override
   protected void initParams(HttpServletRequest request, IConfiguration configuration) throws ConnectorException {
     super.initParams(request, configuration);
-    this.newFolderName = request.getParameter("NewFolderName");
+    getArguments().setNewFolderName(request.getParameter("NewFolderName"));
   }
 
 }

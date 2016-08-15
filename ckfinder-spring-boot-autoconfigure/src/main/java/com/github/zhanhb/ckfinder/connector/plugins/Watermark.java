@@ -18,7 +18,7 @@ public class Watermark extends Plugin {
 
   @Override
   public void registerEventHandlers(Events.Builder builder) {
-    builder.afterFileUploadEventHandler(WatermarkCommand::new);
+    builder.afterFileUploadEventHandler(new WatermarkCommand());
   }
 
 }

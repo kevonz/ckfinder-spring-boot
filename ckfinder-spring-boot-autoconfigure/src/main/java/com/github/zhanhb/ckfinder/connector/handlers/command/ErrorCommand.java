@@ -15,6 +15,7 @@ import com.github.zhanhb.ckfinder.connector.configuration.Constants;
 import com.github.zhanhb.ckfinder.connector.configuration.IConfiguration;
 import com.github.zhanhb.ckfinder.connector.data.ResourceType;
 import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
+import com.github.zhanhb.ckfinder.connector.handlers.arguments.ErrorArguments;
 import com.github.zhanhb.ckfinder.connector.utils.FileUtils;
 import com.github.zhanhb.ckfinder.connector.utils.PathUtils;
 import java.io.IOException;
@@ -28,20 +29,24 @@ import javax.servlet.http.HttpServletResponse;
 /**
  * Class to handle errors via HTTP headers (for non-XML commands).
  */
-public class ErrorCommand extends Command {
+public class ErrorCommand extends Command<ErrorArguments> {
 
-  private ConnectorException connectorException;
+  private static final ErrorCommand INSTANCE = new ErrorCommand();
 
-  public ErrorCommand(ConnectorException ex) {
-    this.connectorException = ex;
+  public static ErrorCommand getInstance() {
+    return INSTANCE;
+  }
+
+  private ErrorCommand() {
+    super(ErrorArguments::new);
   }
 
   @Override
   @SuppressWarnings("FinalMethod")
   final void execute(HttpServletResponse response) throws ConnectorException {
     try {
-      response.setHeader("X-CKFinder-Error", String.valueOf(connectorException.getErrorCode()));
-      switch (connectorException.getErrorCode()) {
+      response.setHeader("X-CKFinder-Error", String.valueOf(getArguments().getConnectorException().getErrorCode()));
+      switch (getArguments().getConnectorException().getErrorCode()) {
         case Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST:
         case Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_NAME:
         case Constants.Errors.CKFINDER_CONNECTOR_ERROR_THUMBNAILS_DISABLED:
@@ -88,9 +93,9 @@ public class ErrorCommand extends Command {
 
   @Override
   protected boolean isHidden() throws ConnectorException {
-    if (FileUtils.isDirectoryHidden(this.getCurrentFolder(), getConfiguration())) {
-      this.connectorException = new ConnectorException(
-              Constants.Errors.CKFINDER_CONNECTOR_ERROR_CONNECTOR_DISABLED);
+    if (FileUtils.isDirectoryHidden(getArguments().getCurrentFolder(), getConfiguration())) {
+      getArguments().setConnectorException(new ConnectorException(
+              Constants.Errors.CKFINDER_CONNECTOR_ERROR_CONNECTOR_DISABLED));
       return true;
     }
     return false;
@@ -100,8 +105,8 @@ public class ErrorCommand extends Command {
   protected boolean isConnectorEnabled()
           throws ConnectorException {
     if (!getConfiguration().isEnabled()) {
-      this.connectorException = new ConnectorException(
-              Constants.Errors.CKFINDER_CONNECTOR_ERROR_CONNECTOR_DISABLED);
+      getArguments().setConnectorException(new ConnectorException(
+              Constants.Errors.CKFINDER_CONNECTOR_ERROR_CONNECTOR_DISABLED));
       return false;
     }
     return true;
@@ -113,12 +118,12 @@ public class ErrorCommand extends Command {
     String tmpType = request.getParameter("type");
     if (isTypeExists(tmpType)) {
       Path currDir = Paths.get(getConfiguration().getTypes().get(tmpType).getPath()
-              + this.getCurrentFolder());
+              + getArguments().getCurrentFolder());
       if (Files.exists(currDir) && Files.isDirectory(currDir)) {
         return true;
       } else {
-        this.connectorException = new ConnectorException(
-                Constants.Errors.CKFINDER_CONNECTOR_ERROR_FOLDER_NOT_FOUND);
+        getArguments().setConnectorException(new ConnectorException(
+                Constants.Errors.CKFINDER_CONNECTOR_ERROR_FOLDER_NOT_FOUND));
         return false;
       }
     }
@@ -129,8 +134,8 @@ public class ErrorCommand extends Command {
   protected boolean isTypeExists(String type) {
     ResourceType testType = getConfiguration().getTypes().get(type);
     if (testType == null) {
-      this.connectorException = new ConnectorException(
-              Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE, false);
+      getArguments().setConnectorException(new ConnectorException(
+              Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE, false));
       return false;
     }
     return true;
@@ -140,8 +145,14 @@ public class ErrorCommand extends Command {
   protected void getCurrentFolderParam(HttpServletRequest request) {
     String currFolder = request.getParameter("currentFolder");
     if (!(currFolder == null || currFolder.isEmpty())) {
-      this.setCurrentFolder(PathUtils.addSlashToBeginning(PathUtils.addSlashToEnd(currFolder)));
+      getArguments().setCurrentFolder(PathUtils.addSlashToBeginning(PathUtils.addSlashToEnd(currFolder)));
     }
+  }
+
+  public ErrorCommand withArgument(ConnectorException e) {
+    clearArguments();
+    getArguments().setConnectorException(e);
+    return this;
   }
 
 }

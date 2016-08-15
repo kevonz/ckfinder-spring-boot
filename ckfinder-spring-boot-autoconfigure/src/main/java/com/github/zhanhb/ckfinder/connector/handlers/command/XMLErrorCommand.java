@@ -15,6 +15,7 @@ import com.github.zhanhb.ckfinder.connector.configuration.Constants;
 import com.github.zhanhb.ckfinder.connector.configuration.IConfiguration;
 import com.github.zhanhb.ckfinder.connector.data.ResourceType;
 import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
+import com.github.zhanhb.ckfinder.connector.handlers.arguments.XMLErrorArguments;
 import com.github.zhanhb.ckfinder.connector.utils.FileUtils;
 import com.github.zhanhb.ckfinder.connector.utils.PathUtils;
 import java.nio.file.Files;
@@ -27,32 +28,33 @@ import org.w3c.dom.Element;
 /**
  * Class to handle errors from commands returning XML response.
  */
-public class XMLErrorCommand extends XMLCommand {
+public class XMLErrorCommand extends XMLCommand<XMLErrorArguments> {
 
-  /**
-   * exception to handle.
-   */
-  private ConnectorException connectorException;
+  private static final XMLErrorCommand INSTANCE = new XMLErrorCommand();
 
-  public XMLErrorCommand(ConnectorException ex) {
-    this.connectorException = ex;
+  public static XMLErrorCommand getInstance() {
+    return INSTANCE;
+  }
+
+  private XMLErrorCommand() {
+    super(XMLErrorArguments::new);
   }
 
   @Override
   protected void initParams(HttpServletRequest request, IConfiguration configuration)
           throws ConnectorException {
     super.initParams(request, configuration);
-    if (connectorException.isAddCurrentFolder()) {
+    if (getArguments().getConnectorException().isAddCurrentFolder()) {
       String tmpType = request.getParameter("type");
       if (isTypeExists(tmpType)) {
-        this.setType(tmpType);
+        getArguments().setType(tmpType);
       }
     }
   }
 
   @Override
   protected int getDataForXml() {
-    return connectorException.getErrorCode();
+    return getArguments().getConnectorException().getErrorCode();
   }
 
   @Override
@@ -61,7 +63,7 @@ public class XMLErrorCommand extends XMLCommand {
 
   @Override
   protected String getErrorMsg(int errorNum) {
-    return connectorException.getMessage();
+    return getArguments().getConnectorException().getMessage();
   }
 
   /**
@@ -83,8 +85,8 @@ public class XMLErrorCommand extends XMLCommand {
   protected boolean isConnectorEnabled()
           throws ConnectorException {
     if (!getConfiguration().isEnabled()) {
-      this.connectorException = new ConnectorException(
-              Constants.Errors.CKFINDER_CONNECTOR_ERROR_CONNECTOR_DISABLED);
+      getArguments().setConnectorException(new ConnectorException(
+              Constants.Errors.CKFINDER_CONNECTOR_ERROR_CONNECTOR_DISABLED));
       return false;
     }
     return true;
@@ -92,9 +94,9 @@ public class XMLErrorCommand extends XMLCommand {
 
   @Override
   protected boolean isHidden() throws ConnectorException {
-    if (FileUtils.isDirectoryHidden(this.getCurrentFolder(), getConfiguration())) {
-      this.connectorException = new ConnectorException(
-              Constants.Errors.CKFINDER_CONNECTOR_ERROR_CONNECTOR_DISABLED);
+    if (FileUtils.isDirectoryHidden(getArguments().getCurrentFolder(), getConfiguration())) {
+      getArguments().setConnectorException(new ConnectorException(
+              Constants.Errors.CKFINDER_CONNECTOR_ERROR_CONNECTOR_DISABLED));
       return true;
     }
     return false;
@@ -106,12 +108,12 @@ public class XMLErrorCommand extends XMLCommand {
     String tmpType = request.getParameter("type");
     if (isTypeExists(tmpType)) {
       Path currDir = Paths.get(getConfiguration().getTypes().get(tmpType).getPath()
-              + this.getCurrentFolder());
+              + getArguments().getCurrentFolder());
       if (Files.exists(currDir) && Files.isDirectory(currDir)) {
         return true;
       } else {
-        this.connectorException = new ConnectorException(
-                Constants.Errors.CKFINDER_CONNECTOR_ERROR_FOLDER_NOT_FOUND);
+        getArguments().setConnectorException(new ConnectorException(
+                Constants.Errors.CKFINDER_CONNECTOR_ERROR_FOLDER_NOT_FOUND));
         return false;
       }
     }
@@ -122,8 +124,8 @@ public class XMLErrorCommand extends XMLCommand {
   protected boolean isTypeExists(String type) {
     ResourceType testType = getConfiguration().getTypes().get(type);
     if (testType == null) {
-      this.connectorException = new ConnectorException(
-              Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE, false);
+      getArguments().setConnectorException(new ConnectorException(
+              Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE, false));
       return false;
     }
     return true;
@@ -131,15 +133,21 @@ public class XMLErrorCommand extends XMLCommand {
 
   @Override
   protected boolean mustAddCurrentFolderNode() {
-    return connectorException.isAddCurrentFolder();
+    return getArguments().getConnectorException().isAddCurrentFolder();
   }
 
   @Override
   protected void getCurrentFolderParam(HttpServletRequest request) {
     String currFolder = request.getParameter("currentFolder");
     if (!(currFolder == null || currFolder.isEmpty())) {
-      this.setCurrentFolder(PathUtils.addSlashToBeginning(PathUtils.addSlashToEnd(currFolder)));
+      getArguments().setCurrentFolder(PathUtils.addSlashToBeginning(PathUtils.addSlashToEnd(currFolder)));
     }
+  }
+
+  public XMLErrorCommand withArgument(ConnectorException e) {
+    clearArguments();
+    getArguments().setConnectorException(e);
+    return this;
   }
 
 }

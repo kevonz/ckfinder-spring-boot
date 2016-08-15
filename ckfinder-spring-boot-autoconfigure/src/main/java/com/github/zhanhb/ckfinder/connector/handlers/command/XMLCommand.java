@@ -14,31 +14,26 @@ package com.github.zhanhb.ckfinder.connector.handlers.command;
 import com.github.zhanhb.ckfinder.connector.configuration.Constants;
 import com.github.zhanhb.ckfinder.connector.configuration.IConfiguration;
 import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
+import com.github.zhanhb.ckfinder.connector.handlers.arguments.ErrorNode;
+import com.github.zhanhb.ckfinder.connector.handlers.arguments.XMLArguments;
 import com.github.zhanhb.ckfinder.connector.utils.XMLCreator;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.function.Supplier;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import lombok.AccessLevel;
-import lombok.Getter;
-import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 /**
  * Base class to handle XML commands.
+ *
+ * @param <T>
  */
-public abstract class XMLCommand extends Command {
+public abstract class XMLCommand<T extends XMLArguments> extends Command<T> {
 
-  @Getter(AccessLevel.PROTECTED)
-  private Document document;
-
-  /**
-   *
-   * errors list.
-   */
-  private final List<ErrorNode> errorList = new ArrayList<>(4);
+  public XMLCommand(Supplier<T> argumentsSupplier) {
+    super(argumentsSupplier);
+  }
 
   /**
    * sets response headers for XML response.
@@ -64,7 +59,7 @@ public abstract class XMLCommand extends Command {
   final void execute(HttpServletResponse response) throws ConnectorException {
     try (PrintWriter out = response.getWriter()) {
       createXMLResponse(getDataForXml());
-      XMLCreator.INSTANCE.writeTo(document, out);
+      XMLCreator.INSTANCE.writeTo(getArguments().getDocument(), out);
     } catch (ConnectorException e) {
       throw e;
     } catch (IOException e) {
@@ -79,16 +74,17 @@ public abstract class XMLCommand extends Command {
    * @throws ConnectorException to handle in error handler.
    */
   private void createXMLResponse(int errorNum) throws ConnectorException, IOException {
-    Element rootElement = document.createElement("Connector");
-    if (getType() != null && !getType().isEmpty()) {
-      rootElement.setAttribute("resourceType", getType());
+    Element rootElement = getArguments().getDocument().createElement("Connector");
+    if (getArguments().getType() != null && !getArguments().getType().isEmpty()) {
+      rootElement.setAttribute("resourceType", getArguments().getType()
+      );
     }
     if (mustAddCurrentFolderNode()) {
       createCurrentFolderNode(rootElement);
     }
-    XMLCreator.INSTANCE.addErrorCommandToRoot(document, rootElement, errorNum, getErrorMsg(errorNum));
+    XMLCreator.INSTANCE.addErrorCommandToRoot(getArguments().getDocument(), rootElement, errorNum, getErrorMsg(errorNum));
     createXMLChildNodes(errorNum, rootElement);
-    document.appendChild(rootElement);
+    getArguments().getDocument().appendChild(rootElement);
   }
 
   /**
@@ -127,12 +123,13 @@ public abstract class XMLCommand extends Command {
    *
    * @param rootElement XML root node.
    */
+  @SuppressWarnings("FinalMethod")
   protected final void createCurrentFolderNode(Element rootElement) {
-    Element element = document.createElement("CurrentFolder");
-    element.setAttribute("path", getCurrentFolder());
-    element.setAttribute("url", getConfiguration().getTypes().get(getType()).getUrl()
-            + getCurrentFolder());
-    element.setAttribute("acl", String.valueOf(getConfiguration().getAccessControl().checkACLForRole(getType(), getCurrentFolder(), getUserRole())));
+    Element element = getArguments().getDocument().createElement("CurrentFolder");
+    element.setAttribute("path", getArguments().getCurrentFolder());
+    element.setAttribute("url", getConfiguration().getTypes().get(getArguments().getType()).getUrl()
+            + getArguments().getCurrentFolder());
+    element.setAttribute("acl", String.valueOf(getConfiguration().getAccessControl().checkACLForRole(getArguments().getType(), getArguments().getCurrentFolder(), getArguments().getUserRole())));
     rootElement.appendChild(element);
   }
 
@@ -141,7 +138,7 @@ public abstract class XMLCommand extends Command {
           IConfiguration configuration)
           throws ConnectorException {
     super.initParams(request, configuration);
-    document = XMLCreator.INSTANCE.createDocument();
+    getArguments().setDocument(XMLCreator.INSTANCE.createDocument());
   }
 
   /**
@@ -151,7 +148,7 @@ public abstract class XMLCommand extends Command {
    * @return true if must.
    */
   protected boolean mustAddCurrentFolderNode() {
-    return getType() != null && getCurrentFolder() != null;
+    return getArguments().getType() != null && getArguments().getCurrentFolder() != null;
   }
 
   /**
@@ -162,9 +159,10 @@ public abstract class XMLCommand extends Command {
    * @param path current folder
    * @param type resource type
    */
+  @SuppressWarnings("FinalMethod")
   protected final void appendErrorNodeChild(int errorCode, String name,
           String path, String type) {
-    errorList.add(ErrorNode.builder().type(type).name(name).folder(path).errorCode(errorCode).build());
+    getArguments().getErrorList().add(ErrorNode.builder().type(type).name(name).folder(path).errorCode(errorCode).build());
   }
 
   /**
@@ -172,8 +170,9 @@ public abstract class XMLCommand extends Command {
    *
    * @return true if there are any errors.
    */
+  @SuppressWarnings("FinalMethod")
   protected final boolean hasErrors() {
-    return !errorList.isEmpty();
+    return !getArguments().getErrorList().isEmpty();
   }
 
   /**
@@ -181,9 +180,10 @@ public abstract class XMLCommand extends Command {
    *
    * @param errorsNode XML errors node
    */
+  @SuppressWarnings("FinalMethod")
   protected final void addErrors(Element errorsNode) {
-    for (ErrorNode item : errorList) {
-      Element childElem = document.createElement("Error");
+    for (ErrorNode item : getArguments().getErrorList()) {
+      Element childElem = getArguments().getDocument().createElement("Error");
       childElem.setAttribute("code", String.valueOf(item.getErrorCode()));
       childElem.setAttribute("name", item.getName());
       childElem.setAttribute("type", item.getType());

@@ -36,10 +36,9 @@ import com.github.zhanhb.ckfinder.connector.handlers.command.ThumbnailCommand;
 import com.github.zhanhb.ckfinder.connector.handlers.command.XMLCommand;
 import com.github.zhanhb.ckfinder.connector.handlers.command.XMLErrorCommand;
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -104,7 +103,7 @@ public class ConnectorServlet extends HttpServlet {
           HttpServletResponse response, boolean post)
           throws ServletException {
     String commandName = request.getParameter("command");
-    Command command = null;
+    Command<?> command = null;
 
     try {
       if (commandName == null || commandName.isEmpty()) {
@@ -114,14 +113,14 @@ public class ConnectorServlet extends HttpServlet {
 
       BeforeExecuteCommandEventArgs args = new BeforeExecuteCommandEventArgs(commandName, request, response);
 
-      if (CommandSupplierHolder.contains(commandName.toUpperCase())) {
-        CommandSupplierHolder commandHandlerEnum = CommandSupplierHolder.valueOf(commandName.toUpperCase());
-        command = commandHandlerEnum.getCommand();
+      final String commandUpperCase = commandName.toUpperCase();
+      if (CommandHolder.contains(commandUpperCase)) {
+        command = CommandHolder.getCommand(commandUpperCase);
         // checks if command should go via POST request or it's a post request
         // and it's not upload command
         if ((command instanceof IPostCommand || post)
-                && !CommandSupplierHolder.FILEUPLOAD.equals(commandHandlerEnum)
-                && !CommandSupplierHolder.QUICKUPLOAD.equals(commandHandlerEnum)) {
+                && !"FILEUPLOAD".equals(commandUpperCase)
+                && !"QUICKUPLOAD".equals(commandUpperCase)) {
           checkPostRequest(request);
         }
       } else {
@@ -164,9 +163,13 @@ public class ConnectorServlet extends HttpServlet {
    * @throws IllegalArgumentException when provided command is not found in
    * enumeration object
    */
-  private void executeCommand(Command command, HttpServletRequest request, HttpServletResponse response, IConfiguration configuration) throws IllegalArgumentException, ConnectorException {
+  private void executeCommand(Command<?> command, HttpServletRequest request, HttpServletResponse response, IConfiguration configuration) throws IllegalArgumentException, ConnectorException {
     if (command != null) {
-      command.runCommand(request, response, configuration);
+      try {
+        command.runCommand(request, response, configuration);
+      } finally {
+        command.clearArguments();
+      }
     } else {
       throw new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_COMMAND, false);
@@ -198,96 +201,94 @@ public class ConnectorServlet extends HttpServlet {
    * @throws ServletException when error handling fails.
    */
   @SuppressWarnings({"BroadCatchBlock", "TooBroadCatch"})
-  private void handleError(ConnectorException e, IConfiguration configuration, HttpServletRequest request, HttpServletResponse response, Command command) throws ServletException {
+  private void handleError(ConnectorException e, IConfiguration configuration,
+          HttpServletRequest request, HttpServletResponse response,
+          Command<?> command) throws ServletException {
     try {
       if (command == null || command instanceof XMLCommand) {
-        XMLErrorCommand xmlErrorCommand = new XMLErrorCommand(e);
-        xmlErrorCommand.runCommand(request, response, configuration);
+        XMLErrorCommand.getInstance().withArgument(e).runCommand(request, response, configuration);
       } else {
-        ErrorCommand errorCommand = new ErrorCommand(e);
-        errorCommand.runCommand(request, response, configuration);
+        ErrorCommand.getInstance().withArgument(e).runCommand(request, response, configuration);
       }
     } catch (Exception ex) {
       throw new ServletException(ex);
     }
   }
 
-  private static enum CommandSupplierHolder {
+  @SuppressWarnings("UtilityClassWithoutPrivateConstructor")
+  private static class CommandHolder {
 
-    /**
-     * init command.
-     */
-    INIT(InitCommand::new),
-    /**
-     * get subfolders for selected location command.
-     */
-    GETFOLDERS(GetFoldersCommand::new),
-    /**
-     * get files from current folder command.
-     */
-    GETFILES(GetFilesCommand::new),
-    /**
-     * get thumbnail for file command.
-     */
-    THUMBNAIL(ThumbnailCommand::new),
-    /**
-     * download file command.
-     */
-    DOWNLOADFILE(DownloadFileCommand::new),
-    /**
-     * create subfolder.
-     */
-    CREATEFOLDER(CreateFolderCommand::new),
-    /**
-     * rename file.
-     */
-    RENAMEFILE(RenameFileCommand::new),
-    /**
-     * rename folder.
-     */
-    RENAMEFOLDER(RenameFolderCommand::new),
-    /**
-     * delete folder.
-     */
-    DELETEFOLDER(DeleteFolderCommand::new),
-    /**
-     * copy files.
-     */
-    COPYFILES(CopyFilesCommand::new),
-    /**
-     * move files.
-     */
-    MOVEFILES(MoveFilesCommand::new),
-    /**
-     * delete files.
-     */
-    DELETEFILES(DeleteFilesCommand::new),
-    /**
-     * file upload.
-     */
-    FILEUPLOAD(FileUploadCommand::new),
-    /**
-     * quick file upload.
-     */
-    QUICKUPLOAD(QuickUploadCommand::new);
-
-    /**
-     * command class for enum field.
-     */
-    private final Supplier<? extends Command> supplier;
+    private static final Map<String, Command<?>> MAP;
     /**
      * {@code Set} holding enumeration values,
      */
-    private static final Set<String> enumValues = Arrays.asList(CommandSupplierHolder.values())
-            .stream().map(CommandSupplierHolder::name).collect(Collectors.toSet());
+    private static final Set<String> enumValues;
 
-    /**
-     * Enum constructor to set command.
-     *
-     * @param command1 command name
-     */
-    private CommandSupplierHolder(Supplier<? extends Command> supplier) {
-      this.supplier = supplier;
+    static {
+      Map<String, Command<?>> map = new HashMap<>(15);
+
+      /**
+       * init command.
+       */
+      map.put("INIT", new InitCommand());
+      /**
+       * get subfolders for selected location command.
+       */
+      map.put("GETFOLDERS", new GetFoldersCommand());
+      /**
+       * get files from current folder command.
+       */
+      map.put("GETFILES", new GetFilesCommand());
+      /**
+       * get thumbnail for file command.
+       */
+      map.put("THUMBNAIL", new ThumbnailCommand());
+      /**
+       * download file command.
+       */
+      map.put("DOWNLOADFILE", new DownloadFileCommand());
+      /**
+       * create subfolder.
+       */
+      map.put("CREATEFOLDER", new CreateFolderCommand());
+      /**
+       * rename file.
+       */
+      map.put("RENAMEFILE", new RenameFileCommand());
+      /**
+       * rename folder.
+       */
+      map.put("RENAMEFOLDER", new RenameFolderCommand());
+      /**
+       * delete folder.
+       */
+      map.put("DELETEFOLDER", new DeleteFolderCommand());
+      /**
+       * copy files.
+       */
+      map.put("COPYFILES", new CopyFilesCommand());
+      /**
+       * move files.
+       */
+      map.put("MOVEFILES", new MoveFilesCommand());
+      /**
+       * delete files.
+       */
+      map.put("DELETEFILES", new DeleteFilesCommand());
+      /**
+       * file upload.
+       */
+      map.put("FILEUPLOAD", new FileUploadCommand());
+      /**
+       * quick file upload.
+       */
+      map.put("QUICKUPLOAD", new QuickUploadCommand());
+      MAP = map;
+      enumValues = map.keySet();
+    }
+
+    static Command<?> getCommand(String commandUpperCase) {
+      return MAP.get(commandUpperCase);
     }
 
     /**
@@ -300,15 +301,6 @@ public class ConnectorServlet extends HttpServlet {
      */
     public static boolean contains(String enumValue) {
       return enumValues.contains(enumValue);
-    }
-
-    /**
-     * gets command.
-     *
-     * @return command
-     */
-    public Command getCommand() {
-      return supplier.get();
     }
 
   }

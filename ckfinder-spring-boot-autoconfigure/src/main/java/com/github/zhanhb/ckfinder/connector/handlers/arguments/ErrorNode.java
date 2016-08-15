@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.zhanhb.ckfinder.connector.handlers.command;
+package com.github.zhanhb.ckfinder.connector.handlers.arguments;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -23,7 +23,7 @@ import lombok.Getter;
  */
 @Builder(builderClassName = "Builder")
 @Getter
-class ErrorNode {
+public class ErrorNode {
 
   private final String folder;
   private final String type;

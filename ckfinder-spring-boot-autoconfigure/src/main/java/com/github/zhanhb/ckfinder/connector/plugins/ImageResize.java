@@ -18,9 +18,9 @@ public class ImageResize extends Plugin {
 
   @Override
   public void registerEventHandlers(Events.Builder builder) {
-    builder.beforeExecuteCommandEventHandler(() -> new ImageResizeCommad(getPluginInfo()))
-            .beforeExecuteCommandEventHandler(ImageResizeInfoCommand::new)
-            .initCommandEventHandler(() -> new ImageResizeInitCommandEventHandler(getPluginInfo()));
+    builder.beforeExecuteCommandEventHandler(new ImageResizeCommad(getPluginInfo()))
+            .beforeExecuteCommandEventHandler(new ImageResizeInfoCommand())
+            .initCommandEventHandler(new ImageResizeInitCommandEventHandler(getPluginInfo()));
   }
 
 }
