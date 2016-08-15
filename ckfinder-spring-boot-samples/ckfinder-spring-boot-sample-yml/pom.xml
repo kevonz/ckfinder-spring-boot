@@ -6,7 +6,7 @@
     <groupId>com.github.zhanhb</groupId>
     <version>0.0.1.BUILD-SNAPSHOT</version>
   </parent>
-  <artifactId>ckfinder-spring-boot-yml</artifactId>
+  <artifactId>ckfinder-spring-boot-sample-yml</artifactId>
   <name>CKFinder Spring Boot Samples yml</name>
 
   <dependencies>
