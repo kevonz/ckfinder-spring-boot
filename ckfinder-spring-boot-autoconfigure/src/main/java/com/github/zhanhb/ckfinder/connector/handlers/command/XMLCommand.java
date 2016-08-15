@@ -90,7 +90,7 @@ public abstract class XMLCommand<T extends XMLArguments> extends Command<T> {
   /**
    * gets error message if needed.
    *
-   * @param errorNum error code
+   * @param arguments
    * @return error message
    */
   protected String getErrorMsg(T arguments) {
@@ -147,6 +147,7 @@ public abstract class XMLCommand<T extends XMLArguments> extends Command<T> {
    * whether <code>CurrentFolder</code> element should be added to the XML
    * response.
    *
+   * @param arguments
    * @return true if must.
    */
   protected boolean mustAddCurrentFolderNode(T arguments) {
@@ -156,6 +157,7 @@ public abstract class XMLCommand<T extends XMLArguments> extends Command<T> {
   /**
    * save errors node to list.
    *
+   * @param arguments
    * @param errorCode error code
    * @param name file name
    * @param path current folder
@@ -169,6 +171,7 @@ public abstract class XMLCommand<T extends XMLArguments> extends Command<T> {
   /**
    * checks if error list contains errors.
    *
+   * @param arguments
    * @return true if there are any errors.
    */
   @SuppressWarnings("FinalMethod")
@@ -179,6 +182,7 @@ public abstract class XMLCommand<T extends XMLArguments> extends Command<T> {
   /**
    * add all error nodes from saved list to xml.
    *
+   * @param arguments
    * @param errorsNode XML errors node
    */
   @SuppressWarnings("FinalMethod")

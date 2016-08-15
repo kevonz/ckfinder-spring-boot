@@ -112,6 +112,7 @@ public abstract class Command<T extends Arguments> {
   /**
    * check if connector is enabled and checks authentication.
    *
+   * @param arguments
    * @return true if connector is enabled and user is authenticated
    * @throws ConnectorException when connector is disabled
    */
@@ -153,6 +154,7 @@ public abstract class Command<T extends Arguments> {
   /**
    * Checks if type of resource provided as parameter exists.
    *
+   * @param arguments
    * @param type name of the resource type to check if it exists
    * @return {@code true} if provided type exists, {@code false} otherwise.
    */
@@ -220,6 +222,7 @@ public abstract class Command<T extends Arguments> {
    * gets current folder request param or sets default value if it's not set.
    *
    * @param request request
+   * @param arguments
    */
   protected void getCurrentFolderParam(HttpServletRequest request, T arguments) {
     String currFolder = request.getParameter("currentFolder");

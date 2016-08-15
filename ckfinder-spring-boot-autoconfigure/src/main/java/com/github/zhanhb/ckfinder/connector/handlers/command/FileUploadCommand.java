@@ -94,6 +94,7 @@ public class FileUploadCommand extends Command<FileUploadArguments> implements I
   /**
    * check if func num is set in request.
    *
+   * @param arguments
    * @return true if is.
    */
   protected boolean checkFuncNum(FileUploadArguments arguments) {
