@@ -201,25 +201,23 @@ public class ImageUtils {
   /**
    * check if image size isn't bigger then biggest allowed.
    *
-   * @param stream temp file input stream.
+   * @param part servlet part
    * @param conf connector configuration.
    * @return true if image size isn't bigger then biggest allowed.
    * @throws IOException when error occurs during reading image.
    */
-  public static boolean checkImageSize(InputStream stream,
+  public static boolean checkImageSize(Part part,
           IConfiguration conf) throws IOException {
     final int maxWidth;
     final int maxHeight;
     BufferedImage bi;
-    try {
+    try (InputStream stream = part.getInputStream()) {
       maxWidth = conf.getImgWidth();
       maxHeight = conf.getImgHeight();
       if (maxHeight == 0 && maxWidth == 0) {
         return true;
       }
       bi = ImageIO.read(stream);
-    } finally {
-      stream.close();
     }
     return bi != null && (bi.getHeight() <= maxHeight && bi.getWidth() <= maxWidth);
   }

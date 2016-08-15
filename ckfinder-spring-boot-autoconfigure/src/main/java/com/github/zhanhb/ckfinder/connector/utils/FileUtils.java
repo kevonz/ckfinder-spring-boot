@@ -324,11 +324,11 @@ public class FileUtils {
       return true;
     }
 
-    while (st.hasMoreTokens()) {
+    do {
       if (st.nextToken().equalsIgnoreCase(fileExt)) {
         return true;
       }
-    }
+    } while (st.hasMoreTokens());
     return false;
   }
 

@@ -17,10 +17,6 @@ package com.github.zhanhb.ckfinder.connector.configuration;
 public interface Constants {
 
   /**
-   * Regular expression to find images.
-   */
-  String CKFINDER_REGEX_IMAGES_EXT = "([^\\.]+(\\.(?i)(jpg|png|gif|bmp))$)";
-  /**
    * Regular expression to identify invalid characters in file name.
    */
   String INVALID_FILE_NAME_REGEX = "\\p{Cntrl}|[/\\\\\\:\\*\\?\"\\<\\>\\|]";
@@ -34,10 +30,6 @@ public interface Constants {
   String URL_REGEX = "^(https?)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]";
 
   String CKFINDER_CHARS = "123456789ABCDEFGHJKLMNPQRSTUVWXYZ";
-  /**
-   * Regular expression to find default language code in CKFinder.
-   */
-  String DEFAULT_LANG_CODE = "en";
   /**
    * Regular expression to find baseDir configuration property placeholder.
    */

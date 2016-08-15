@@ -276,7 +276,7 @@ public class FileUploadCommand extends Command implements IPostCommand {
         getConfiguration().getEvents().runAfterFileUpload(args, getConfiguration());
       }
       return true;
-    } else if (ImageUtils.checkImageSize(item.getInputStream(), this.getConfiguration())
+    } else if (ImageUtils.checkImageSize(item, this.getConfiguration())
             || getConfiguration().isCheckSizeAfterScaling()) {
       ImageUtils.createTmpThumb(item.getInputStream(), file, getFileItemName(item), this.getConfiguration());
       if (!getConfiguration().isCheckSizeAfterScaling()
