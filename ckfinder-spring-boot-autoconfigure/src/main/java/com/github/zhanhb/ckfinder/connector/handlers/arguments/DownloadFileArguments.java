@@ -20,6 +20,5 @@ public class DownloadFileArguments extends Arguments {
    * filename request param.
    */
   private String fileName;
-  private String newFileName;
 
 }

@@ -18,11 +18,8 @@ import com.github.zhanhb.ckfinder.connector.handlers.arguments.DownloadFileArgum
 import com.github.zhanhb.ckfinder.connector.utils.AccessControl;
 import com.github.zhanhb.ckfinder.connector.utils.FileUtils;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import javax.mail.internet.MimeUtility;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -100,19 +97,8 @@ public class DownloadFileCommand extends Command<DownloadFileArguments> {
 
     super.initParams(arguments, request, configuration);
     // problem with showing filename when dialog window appear
-    arguments.setNewFileName(request.getParameter("FileName").replace("\"", "\\\""));
-    arguments.setFileName(request.getParameter("FileName"));
-    try {
-      if (request.getHeader("User-Agent").contains("MSIE")) {
-        arguments.setNewFileName(URLEncoder.encode(arguments.getNewFileName(), "UTF-8"));
-        arguments.setNewFileName(arguments.getNewFileName().replace("+", " ").replace("%2E", "."));
-      } else {
-        arguments.setNewFileName(MimeUtility.encodeWord(arguments.getNewFileName(), "utf-8", "Q"));
-      }
-    } catch (UnsupportedEncodingException ex) {
-      throw new AssertionError(ex);
-    }
-
+    String parameter = request.getParameter("FileName");
+    arguments.setFileName(parameter);
   }
 
   /**
@@ -141,8 +127,9 @@ public class DownloadFileCommand extends Command<DownloadFileArguments> {
       }
     }
 
-    response.setHeader("Content-Disposition", "attachment; filename=\""
-            + arguments.getNewFileName() + "\"");
+    response.setHeader("Content-Disposition",
+            ContentDisposition.getContentDisposition("attachment",
+            arguments.getFileName()));
 
     response.setHeader("Cache-Control", "cache, must-revalidate");
     response.setHeader("Pragma", "public");

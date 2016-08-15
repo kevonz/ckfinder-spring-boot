@@ -105,7 +105,8 @@ public class ThumbnailCommand extends Command<ThumbnailArguments> {
     if (mimetype != null) {
       response.setContentType(mimetype);
     }
-    response.addHeader("Content-Disposition", "attachment; filename=\"" + arguments.getFileName() + "\"");
+    response.addHeader("Content-Disposition",
+            ContentDisposition.getContentDisposition("attachment", arguments.getFileName()));
   }
 
   /**
