@@ -115,7 +115,7 @@ public class ErrorCommand extends Command<ErrorArguments> {
   protected boolean isCurrFolderExists(ErrorArguments arguments, HttpServletRequest request)
           throws ConnectorException {
     String tmpType = request.getParameter("type");
-    if (isTypeExists(tmpType)) {
+    if (isTypeExists(arguments, tmpType)) {
       Path currDir = Paths.get(getConfiguration().getTypes().get(tmpType).getPath()
               + arguments.getCurrentFolder());
       if (Files.exists(currDir) && Files.isDirectory(currDir)) {
@@ -130,10 +130,10 @@ public class ErrorCommand extends Command<ErrorArguments> {
   }
 
   @Override
-  protected boolean isTypeExists(String type) {
+  protected boolean isTypeExists(ErrorArguments arguments, String type) {
     ResourceType testType = getConfiguration().getTypes().get(type);
     if (testType == null) {
-      getArguments().setConnectorException(new ConnectorException(
+      arguments.setConnectorException(new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE, false));
       return false;
     }
@@ -144,14 +144,8 @@ public class ErrorCommand extends Command<ErrorArguments> {
   protected void getCurrentFolderParam(HttpServletRequest request, ErrorArguments arguments) {
     String currFolder = request.getParameter("currentFolder");
     if (!(currFolder == null || currFolder.isEmpty())) {
-      getArguments().setCurrentFolder(PathUtils.addSlashToBeginning(PathUtils.addSlashToEnd(currFolder)));
+      arguments.setCurrentFolder(PathUtils.addSlashToBeginning(PathUtils.addSlashToEnd(currFolder)));
     }
-  }
-
-  public ErrorCommand withArgument(ConnectorException e) {
-    clearArguments();
-    getArguments().setConnectorException(e);
-    return this;
   }
 
 }

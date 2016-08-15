@@ -16,6 +16,8 @@ import com.github.zhanhb.ckfinder.connector.configuration.Events;
 import com.github.zhanhb.ckfinder.connector.configuration.IConfiguration;
 import com.github.zhanhb.ckfinder.connector.data.BeforeExecuteCommandEventArgs;
 import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
+import com.github.zhanhb.ckfinder.connector.handlers.arguments.ErrorArguments;
+import com.github.zhanhb.ckfinder.connector.handlers.arguments.XMLErrorArguments;
 import com.github.zhanhb.ckfinder.connector.handlers.command.Command;
 import com.github.zhanhb.ckfinder.connector.handlers.command.CopyFilesCommand;
 import com.github.zhanhb.ckfinder.connector.handlers.command.CreateFolderCommand;
@@ -38,7 +40,6 @@ import com.github.zhanhb.ckfinder.connector.handlers.command.XMLErrorCommand;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -114,8 +115,8 @@ public class ConnectorServlet extends HttpServlet {
       BeforeExecuteCommandEventArgs args = new BeforeExecuteCommandEventArgs(commandName, request, response);
 
       final String commandUpperCase = commandName.toUpperCase();
-      if (CommandHolder.contains(commandUpperCase)) {
-        command = CommandHolder.getCommand(commandUpperCase);
+      command = CommandHolder.getCommand(commandUpperCase);
+      if (command != null) {
         // checks if command should go via POST request or it's a post request
         // and it's not upload command
         if ((command instanceof IPostCommand || post)
@@ -165,11 +166,7 @@ public class ConnectorServlet extends HttpServlet {
    */
   private void executeCommand(Command<?> command, HttpServletRequest request, HttpServletResponse response, IConfiguration configuration) throws IllegalArgumentException, ConnectorException {
     if (command != null) {
-      try {
-        command.runCommand(request, response, configuration);
-      } finally {
-        command.clearArguments();
-      }
+      command.runCommand(request, response, configuration);
     } else {
       throw new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_COMMAND, false);
@@ -206,9 +203,15 @@ public class ConnectorServlet extends HttpServlet {
           Command<?> command) throws ServletException {
     try {
       if (command == null || command instanceof XMLCommand) {
-        XMLErrorCommand.getInstance().withArgument(e).runCommand(request, response, configuration);
+        XMLErrorCommand cmd = XMLErrorCommand.getInstance();
+        XMLErrorArguments args = cmd.getArgumentsSupplier().get();
+        args.setConnectorException(e);
+        cmd.runWithArguments(request, response, configuration, args);
       } else {
-        ErrorCommand.getInstance().withArgument(e).runCommand(request, response, configuration);
+        ErrorCommand cmd = ErrorCommand.getInstance();
+        ErrorArguments args = cmd.getArgumentsSupplier().get();
+        args.setConnectorException(e);
+        cmd.runWithArguments(request, response, configuration, args);
       }
     } catch (Exception ex) {
       throw new ServletException(ex);
@@ -219,10 +222,6 @@ public class ConnectorServlet extends HttpServlet {
   private static class CommandHolder {
 
     private static final Map<String, Command<?>> MAP;
-    /**
-     * {@code Set} holding enumeration values,
-     */
-    private static final Set<String> enumValues;
 
     static {
       Map<String, Command<?>> map = new HashMap<>(15);
@@ -284,23 +283,10 @@ public class ConnectorServlet extends HttpServlet {
        */
       map.put("QUICKUPLOAD", new QuickUploadCommand());
       MAP = map;
-      enumValues = map.keySet();
     }
 
     static Command<?> getCommand(String commandUpperCase) {
       return MAP.get(commandUpperCase);
-    }
-
-    /**
-     * Checks whether enumeration object contains command name specified as
-     * parameter.
-     *
-     * @param enumValue string representing command name to check
-     *
-     * @return {@code true} is command exists, {@code false} otherwise
-     */
-    public static boolean contains(String enumValue) {
-      return enumValues.contains(enumValue);
     }
 
   }

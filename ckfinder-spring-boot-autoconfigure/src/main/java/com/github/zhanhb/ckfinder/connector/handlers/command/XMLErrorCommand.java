@@ -46,7 +46,7 @@ public class XMLErrorCommand extends XMLCommand<XMLErrorArguments> {
     super.initParams(arguments, request, configuration);
     if (arguments.getConnectorException().isAddCurrentFolder()) {
       String tmpType = request.getParameter("type");
-      if (isTypeExists(tmpType)) {
+      if (isTypeExists(arguments, tmpType)) {
         arguments.setType(tmpType);
       }
     }
@@ -62,8 +62,8 @@ public class XMLErrorCommand extends XMLCommand<XMLErrorArguments> {
   }
 
   @Override
-  protected String getErrorMsg(int errorNum) {
-    return getArguments().getConnectorException().getMessage();
+  protected String getErrorMsg(XMLErrorArguments arguments) {
+    return arguments.getConnectorException().getMessage();
   }
 
   /**
@@ -86,7 +86,7 @@ public class XMLErrorCommand extends XMLCommand<XMLErrorArguments> {
   protected boolean isConnectorEnabled(XMLErrorArguments arguments)
           throws ConnectorException {
     if (!getConfiguration().isEnabled()) {
-      getArguments().setConnectorException(new ConnectorException(
+      arguments.setConnectorException(new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_CONNECTOR_DISABLED));
       return false;
     }
@@ -107,7 +107,7 @@ public class XMLErrorCommand extends XMLCommand<XMLErrorArguments> {
   protected boolean isCurrFolderExists(XMLErrorArguments arguments, HttpServletRequest request)
           throws ConnectorException {
     String tmpType = request.getParameter("type");
-    if (isTypeExists(tmpType)) {
+    if (isTypeExists(arguments, tmpType)) {
       Path currDir = Paths.get(getConfiguration().getTypes().get(tmpType).getPath()
               + arguments.getCurrentFolder());
       if (Files.exists(currDir) && Files.isDirectory(currDir)) {
@@ -122,10 +122,10 @@ public class XMLErrorCommand extends XMLCommand<XMLErrorArguments> {
   }
 
   @Override
-  protected boolean isTypeExists(String type) {
+  protected boolean isTypeExists(XMLErrorArguments arguments, String type) {
     ResourceType testType = getConfiguration().getTypes().get(type);
     if (testType == null) {
-      getArguments().setConnectorException(new ConnectorException(
+      arguments.setConnectorException(new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE, false));
       return false;
     }
@@ -133,8 +133,8 @@ public class XMLErrorCommand extends XMLCommand<XMLErrorArguments> {
   }
 
   @Override
-  protected boolean mustAddCurrentFolderNode() {
-    return getArguments().getConnectorException().isAddCurrentFolder();
+  protected boolean mustAddCurrentFolderNode(XMLErrorArguments arguments) {
+    return arguments.getConnectorException().isAddCurrentFolder();
   }
 
   @Override
@@ -143,12 +143,6 @@ public class XMLErrorCommand extends XMLCommand<XMLErrorArguments> {
     if (!(currFolder == null || currFolder.isEmpty())) {
       arguments.setCurrentFolder(PathUtils.addSlashToBeginning(PathUtils.addSlashToEnd(currFolder)));
     }
-  }
-
-  public XMLErrorCommand withArgument(ConnectorException e) {
-    clearArguments();
-    getArguments().setConnectorException(e);
-    return this;
   }
 
 }

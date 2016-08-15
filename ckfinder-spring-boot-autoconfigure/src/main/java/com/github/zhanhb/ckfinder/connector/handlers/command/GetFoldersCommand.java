@@ -53,7 +53,7 @@ public class GetFoldersCommand extends XMLCommand<GetFoldersArguments> {
    */
   @Override
   protected int getDataForXml(GetFoldersArguments arguments) throws IOException {
-    if (!isTypeExists(arguments.getType())) {
+    if (!isTypeExists(arguments, arguments.getType())) {
       arguments.setType(null);
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE;
     }

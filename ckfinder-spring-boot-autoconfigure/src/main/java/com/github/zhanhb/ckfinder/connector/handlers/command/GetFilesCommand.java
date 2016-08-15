@@ -78,7 +78,7 @@ public class GetFilesCommand extends XMLCommand<GetFilesArguments> {
    */
   @Override
   protected int getDataForXml(GetFilesArguments arguments) throws IOException {
-    if (!isTypeExists(arguments.getType())) {
+    if (!isTypeExists(arguments, arguments.getType())) {
       arguments.setType(null);
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE;
     }

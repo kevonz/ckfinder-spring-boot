@@ -66,7 +66,7 @@ public class CopyFilesCommand extends XMLCommand<CopyFilesArguments> implements 
 
   @Override
   protected int getDataForXml(CopyFilesArguments arguments) {
-    if (!isTypeExists(arguments.getType())) {
+    if (!isTypeExists(arguments, arguments.getType())) {
       arguments.setType(null);
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE;
     }
@@ -174,8 +174,7 @@ public class CopyFilesCommand extends XMLCommand<CopyFilesArguments> implements 
             } else {
               arguments.filesCopiedPlus();
             }
-          } else if (file.getOptions() != null
-                  && file.getOptions().contains("autorename")) {
+          } else if (file.getOptions() != null && file.getOptions().contains("autorename")) {
             if (!handleAutoRename(sourceFile, destFile)) {
               appendErrorNodeChild(arguments, Constants.Errors.CKFINDER_CONNECTOR_ERROR_ACCESS_DENIED,
                       file.getName(), file.getFolder(), file.getType());

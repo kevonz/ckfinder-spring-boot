@@ -66,7 +66,7 @@ public class RenameFileCommand extends XMLCommand<RenameFileArguments> implement
   @Override
   protected int getDataForXml(RenameFileArguments arguments) throws IOException {
     log.trace("getDataForXml");
-    if (!isTypeExists(arguments.getType())) {
+    if (!isTypeExists(arguments, arguments.getType())) {
       log.info("isTypeExists({}): false", arguments.getType());
       arguments.setType(null);
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE;

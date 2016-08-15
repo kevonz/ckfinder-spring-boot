@@ -29,6 +29,8 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -36,6 +38,7 @@ import lombok.extern.slf4j.Slf4j;
  *
  * @param <T> arguments type
  */
+@RequiredArgsConstructor
 @Slf4j
 public abstract class Command<T extends Arguments> {
 
@@ -44,15 +47,9 @@ public abstract class Command<T extends Arguments> {
    */
   @Getter(AccessLevel.PROTECTED)
   private IConfiguration configuration;
-  private final ThreadLocal<T> arguments;
-
-  protected Command(Supplier<? extends T> argumentsSupplier) {
-    this.arguments = ThreadLocal.withInitial(argumentsSupplier);
-  }
-
-  public T getArguments() {
-    return arguments.get();
-  }
+  @Getter
+  @NonNull
+  private final Supplier<? extends T> argumentsSupplier;
 
   /**
    * Runs command. Initialize, sets response and execute command.
@@ -64,7 +61,14 @@ public abstract class Command<T extends Arguments> {
    */
   public void runCommand(HttpServletRequest request, HttpServletResponse response,
           IConfiguration configuration) throws ConnectorException {
-    T args = getArguments();
+    T arguments = argumentsSupplier.get();
+    runWithArguments(request, response, configuration, arguments);
+  }
+
+  @Deprecated
+  public void runWithArguments(HttpServletRequest request, HttpServletResponse response,
+          IConfiguration configuration, T arguments) throws ConnectorException {
+    T args = argumentsSupplier.get();
     this.initParams(args, request, configuration);
     try {
       setResponseHeader(request, response, args);
@@ -131,7 +135,7 @@ public abstract class Command<T extends Arguments> {
           throws ConnectorException {
     String tmpType = request.getParameter("type");
     if (tmpType != null) {
-      if (isTypeExists(tmpType)) {
+      if (isTypeExists(arguments, tmpType)) {
         Path currDir = Paths.get(getConfiguration().getTypes().get(tmpType).getPath() + arguments.getCurrentFolder());
         if (!Files.exists(currDir) || !Files.isDirectory(currDir)) {
           throw new ConnectorException(
@@ -152,7 +156,7 @@ public abstract class Command<T extends Arguments> {
    * @param type name of the resource type to check if it exists
    * @return {@code true} if provided type exists, {@code false} otherwise.
    */
-  protected boolean isTypeExists(String type) {
+  protected boolean isTypeExists(T arguments, String type) {
     ResourceType testType = getConfiguration().getTypes().get(type);
     return testType != null;
   }
@@ -236,14 +240,6 @@ public abstract class Command<T extends Arguments> {
    */
   protected String nullToString(String s) {
     return s == null ? "" : s;
-  }
-
-  public Command clearArguments() {
-    if (log.isTraceEnabled()) {
-      log.trace("prepare clear arguments '{}'", arguments.get());
-    }
-    arguments.remove();
-    return this;
   }
 
 }

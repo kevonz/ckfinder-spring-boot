@@ -67,7 +67,7 @@ public class CreateFolderCommand extends XMLCommand<CreateFolderArguments> imple
       return e.getErrorCode();
     }
 
-    if (!isTypeExists(arguments.getType())) {
+    if (!isTypeExists(arguments, arguments.getType())) {
       arguments.setType(null);
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE;
     }

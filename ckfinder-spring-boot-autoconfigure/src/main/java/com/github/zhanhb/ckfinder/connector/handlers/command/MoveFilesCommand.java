@@ -66,7 +66,7 @@ public class MoveFilesCommand extends XMLCommand<MoveFilesArguments> implements 
 
   @Override
   protected int getDataForXml(MoveFilesArguments arguments) {
-    if (!isTypeExists(arguments.getType())) {
+    if (!isTypeExists(arguments, arguments.getType())) {
       arguments.setType(null);
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE;
     }

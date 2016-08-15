@@ -41,7 +41,7 @@ public class DeleteFolderCommand extends XMLCommand<XMLArguments> implements IPo
    */
   @Override
   protected int getDataForXml(XMLArguments arguments) {
-    if (!isTypeExists(arguments.getType())) {
+    if (!isTypeExists(arguments, arguments.getType())) {
       arguments.setType(null);
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE;
     }

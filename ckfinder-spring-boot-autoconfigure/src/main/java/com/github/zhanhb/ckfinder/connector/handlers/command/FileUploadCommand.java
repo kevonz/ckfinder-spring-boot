@@ -441,7 +441,7 @@ public class FileUploadCommand extends Command<FileUploadArguments> implements I
   protected boolean isCurrFolderExists(FileUploadArguments arguments, HttpServletRequest request)
           throws ConnectorException {
     String tmpType = request.getParameter("type");
-    if (isTypeExists(tmpType)) {
+    if (isTypeExists(arguments, tmpType)) {
       Path currDir = Paths.get(getConfiguration().getTypes().get(tmpType).getPath()
               + arguments.getCurrentFolder());
       if (Files.exists(currDir) && Files.isDirectory(currDir)) {
@@ -455,10 +455,10 @@ public class FileUploadCommand extends Command<FileUploadArguments> implements I
   }
 
   @Override
-  protected boolean isTypeExists(String type) {
+  protected boolean isTypeExists(FileUploadArguments arguments, String type) {
     ResourceType testType = getConfiguration().getTypes().get(type);
     if (testType == null) {
-      getArguments().setErrorCode(Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE);
+      arguments.setErrorCode(Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE);
       return false;
     }
     return true;

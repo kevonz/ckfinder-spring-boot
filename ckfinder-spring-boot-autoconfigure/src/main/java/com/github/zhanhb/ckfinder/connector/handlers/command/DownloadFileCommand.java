@@ -43,7 +43,7 @@ public class DownloadFileCommand extends Command<DownloadFileArguments> {
   @Override
   @SuppressWarnings("FinalMethod")
   final void execute(DownloadFileArguments arguments, HttpServletResponse response) throws ConnectorException {
-    if (!isTypeExists(arguments.getType())) {
+    if (!isTypeExists(arguments, arguments.getType())) {
       arguments.setType(null);
       throw new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE, false);

@@ -43,7 +43,7 @@ public class SaveFileCommand extends XMLCommand<SaveFileArguments> implements Be
   @Override
   protected int getDataForXml(SaveFileArguments arguments) {
 
-    if (!isTypeExists(arguments.getType())) {
+    if (!isTypeExists(arguments, arguments.getType())) {
       arguments.setType(null);
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE;
     }

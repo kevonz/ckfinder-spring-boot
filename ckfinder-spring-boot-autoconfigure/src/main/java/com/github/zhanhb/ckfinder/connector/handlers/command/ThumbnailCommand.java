@@ -184,7 +184,7 @@ public class ThumbnailCommand extends Command<ThumbnailArguments> {
       throw new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_THUMBNAILS_DISABLED);
     }
-    if (!isTypeExists(arguments.getType())) {
+    if (!isTypeExists(arguments, arguments.getType())) {
       arguments.setType(null);
       throw new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE, false);
