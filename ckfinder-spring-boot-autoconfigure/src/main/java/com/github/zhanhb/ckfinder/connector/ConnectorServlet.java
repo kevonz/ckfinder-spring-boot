@@ -71,7 +71,6 @@ public class ConnectorServlet extends HttpServlet {
           HttpServletResponse response) throws ServletException,
           IOException {
     request.setCharacterEncoding("UTF-8");
-    response.setCharacterEncoding("UTF-8");
     processRequest(request, response, false);
   }
 
@@ -88,7 +87,6 @@ public class ConnectorServlet extends HttpServlet {
           HttpServletResponse response) throws ServletException,
           IOException {
     request.setCharacterEncoding("UTF-8");
-    response.setCharacterEncoding("UTF-8");
     processRequest(request, response, true);
   }
 
@@ -131,12 +129,7 @@ public class ConnectorServlet extends HttpServlet {
 
       Events events = configuration.getEvents();
       log.debug("{} {}", commandName, events);
-      if (events != null) {
-        if (events.runBeforeExecuteCommand(args, configuration)) {
-          log.debug("events.runBeforeExecuteCommand(...):true");
-          executeCommand(command, request, response, configuration);
-        }
-      } else {
+      if (events == null || events.runBeforeExecuteCommand(args, configuration)) {
         executeCommand(command, request, response, configuration);
       }
     } catch (IllegalArgumentException e) {

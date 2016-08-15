@@ -355,7 +355,7 @@ public class FileUploadCommand extends Command<FileUploadArguments> implements I
       }
 
       if (!FileUtils.isExtensionHtml(file.getFileName().toString(), getConfiguration())
-              && FileUtils.detectHtml(item)) {
+              && FileUtils.hasHtmlContent(item)) {
         arguments.setErrorCode(Constants.Errors.CKFINDER_CONNECTOR_ERROR_UPLOADED_WRONG_HTML_FILE);
         return false;
       }
@@ -376,9 +376,8 @@ public class FileUploadCommand extends Command<FileUploadArguments> implements I
    * @param arguments
    */
   @Override
-  public void setResponseHeader(HttpServletRequest request, HttpServletResponse response, FileUploadArguments arguments) {
-    response.setCharacterEncoding("utf-8");
-    response.setContentType("text/html");
+  void setResponseHeader(HttpServletRequest request, HttpServletResponse response, FileUploadArguments arguments) {
+    response.setContentType("text/html;charset=UTF-8");
   }
 
   /**
@@ -406,7 +405,7 @@ public class FileUploadCommand extends Command<FileUploadArguments> implements I
    * @throws ConnectorException if validation error occurs.
    */
   @Override
-  protected boolean isRequestPathValid(String reqParam, FileUploadArguments arguments)
+  boolean isRequestPathValid(String reqParam, FileUploadArguments arguments)
           throws ConnectorException {
     if (reqParam == null || reqParam.isEmpty()) {
       return true;

@@ -194,7 +194,7 @@ public class MoveFilesCommand extends XMLCommand<MoveFilesArguments> implements 
                     file.getName(), file.getFolder(), file.getType());
           }
         } else if (FileUtils.copyFromSourceToDestFile(sourceFile, destFile,
-                true, getConfiguration())) {
+                true)) {
           arguments.filesMovedPlus();
           moveThumb(file, arguments);
         }
@@ -235,7 +235,7 @@ public class MoveFilesCommand extends XMLCommand<MoveFilesArguments> implements 
         // can't be in one if=, because when error in
         // copy file occurs then it will be infinity loop
         return (FileUtils.copyFromSourceToDestFile(sourceFile,
-                newDestFile, true, getConfiguration()));
+                newDestFile, true));
       } else {
         counter++;
       }
@@ -254,7 +254,7 @@ public class MoveFilesCommand extends XMLCommand<MoveFilesArguments> implements 
           throws IOException {
     return FileUtils.delete(destFile)
             && FileUtils.copyFromSourceToDestFile(sourceFile, destFile,
-                    true, getConfiguration());
+                    true);
   }
 
   /**
@@ -274,7 +274,7 @@ public class MoveFilesCommand extends XMLCommand<MoveFilesArguments> implements 
     );
 
     FileUtils.copyFromSourceToDestFile(sourceThumbFile, destThumbFile,
-            true, getConfiguration());
+            true);
 
   }
 

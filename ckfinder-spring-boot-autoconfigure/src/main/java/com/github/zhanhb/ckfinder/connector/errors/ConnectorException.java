@@ -24,8 +24,8 @@ public class ConnectorException extends Exception {
    *
    */
   private static final long serialVersionUID = -8643752550259111562L;
-  private int errorCode;
-  private boolean addCurrentFolder;
+  private final int errorCode;
+  private final boolean addCurrentFolder;
 
   /**
    * standard constructor.
@@ -33,9 +33,7 @@ public class ConnectorException extends Exception {
    * @param errorCode error code number
    */
   public ConnectorException(int errorCode) {
-    super(null, null);
-    addCurrentFolder = true;
-    this.errorCode = errorCode;
+    this(errorCode, true);
   }
 
   /**
@@ -45,7 +43,8 @@ public class ConnectorException extends Exception {
    * @param errorCode error code number
    */
   public ConnectorException(int errorCode, boolean addCurrentFolder) {
-    this(errorCode);
+    super(null, null);
+    this.errorCode = errorCode;
     this.addCurrentFolder = addCurrentFolder;
   }
 
@@ -57,6 +56,8 @@ public class ConnectorException extends Exception {
    */
   public ConnectorException(int errorCode, String errorMsg) {
     super(errorMsg, null);
+    this.errorCode = errorCode;
+    addCurrentFolder = false;
   }
 
   /**
@@ -67,6 +68,7 @@ public class ConnectorException extends Exception {
    */
   public ConnectorException(int errorCode, Exception e) {
     super(e.getMessage(), e);
+    this.errorCode = errorCode;
     addCurrentFolder = false;
   }
 

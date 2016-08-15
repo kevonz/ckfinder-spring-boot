@@ -66,7 +66,7 @@ public class ErrorCommand extends Command<ErrorArguments> {
   }
 
   @Override
-  public void setResponseHeader(HttpServletRequest request, HttpServletResponse response, ErrorArguments arguments) {
+  void setResponseHeader(HttpServletRequest request, HttpServletResponse response, ErrorArguments arguments) {
     response.reset();
   }
 
@@ -141,7 +141,7 @@ public class ErrorCommand extends Command<ErrorArguments> {
   }
 
   @Override
-  protected void getCurrentFolderParam(HttpServletRequest request, ErrorArguments arguments) {
+  protected void setCurrentFolderParam(HttpServletRequest request, ErrorArguments arguments) {
     String currFolder = request.getParameter("currentFolder");
     if (!(currFolder == null || currFolder.isEmpty())) {
       arguments.setCurrentFolder(PathUtils.addSlashToBeginning(PathUtils.addSlashToEnd(currFolder)));

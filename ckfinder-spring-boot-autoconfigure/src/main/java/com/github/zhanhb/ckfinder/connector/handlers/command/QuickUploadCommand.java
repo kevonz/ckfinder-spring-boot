@@ -73,12 +73,11 @@ public class QuickUploadCommand extends FileUploadCommand {
   }
 
   @Override
-  public void setResponseHeader(HttpServletRequest request, HttpServletResponse response, FileUploadArguments arguments) {
-    response.setCharacterEncoding("utf-8");
+  void setResponseHeader(HttpServletRequest request, HttpServletResponse response, FileUploadArguments arguments) {
     if (arguments.getResponseType() != null && arguments.getResponseType().equalsIgnoreCase("json")) {
-      response.setContentType("application/json");
+      response.setContentType("application/json;charset=UTF-8");
     } else {
-      response.setContentType("text/html");
+      response.setContentType("text/html;charset=UTF-8");
     }
   }
 

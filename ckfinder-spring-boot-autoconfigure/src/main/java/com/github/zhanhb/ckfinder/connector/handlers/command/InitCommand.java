@@ -199,17 +199,15 @@ public class InitCommand extends XMLCommand<XMLArguments> {
         childElement.setAttribute("acl", String.valueOf(getConfiguration().getAccessControl().checkACLForRole(key, "/", arguments.getUserRole())));
         childElement.setAttribute("hash", randomHash(
                 resourceType.getPath()));
-        childElement.setAttribute(
-                "allowedExtensions",
+        childElement.setAttribute("allowedExtensions",
                 resourceType.getAllowedExtensions());
-        childElement.setAttribute(
-                "deniedExtensions",
+        childElement.setAttribute("deniedExtensions",
                 resourceType.getDeniedExtensions());
         childElement.setAttribute("url", resourceType.getUrl() + "/");
         long maxSize = resourceType.getMaxSize();
         childElement.setAttribute("maxSize", maxSize > 0 ? Long.toString(maxSize) : "0");
-        childElement.setAttribute("hasChildren",
-                FileUtils.hasChildren(getConfiguration().getAccessControl(), "/", Paths.get(PathUtils.escape(resourceType.getPath())), getConfiguration(), resourceType.getName(), arguments.getUserRole()).toString());
+        boolean hasChildren = FileUtils.hasChildren(getConfiguration().getAccessControl(), "/", Paths.get(PathUtils.escape(resourceType.getPath())), getConfiguration(), resourceType.getName(), arguments.getUserRole());
+        childElement.setAttribute("hasChildren", String.valueOf(hasChildren));
         element.appendChild(childElement);
       }
     }
@@ -260,7 +258,7 @@ public class InitCommand extends XMLCommand<XMLArguments> {
   }
 
   @Override
-  protected void getCurrentFolderParam(HttpServletRequest request, XMLArguments arguments) {
+  protected void setCurrentFolderParam(HttpServletRequest request, XMLArguments arguments) {
     arguments.setCurrentFolder(null);
   }
 

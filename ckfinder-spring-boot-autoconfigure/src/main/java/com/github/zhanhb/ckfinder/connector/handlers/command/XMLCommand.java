@@ -44,9 +44,8 @@ public abstract class XMLCommand<T extends XMLArguments> extends Command<T> {
    */
   @Override
   public void setResponseHeader(HttpServletRequest request, HttpServletResponse response, T arguments) {
-    response.setContentType("text/xml");
+    response.setContentType("text/xml;charset=UTF-8");
     response.setHeader("Cache-Control", "no-cache");
-    response.setCharacterEncoding("utf-8");
   }
 
   /**
@@ -93,7 +92,7 @@ public abstract class XMLCommand<T extends XMLArguments> extends Command<T> {
    * @param arguments
    * @return error message
    */
-  protected String getErrorMsg(T arguments) {
+  String getErrorMsg(T arguments) {
     return null;
   }
 

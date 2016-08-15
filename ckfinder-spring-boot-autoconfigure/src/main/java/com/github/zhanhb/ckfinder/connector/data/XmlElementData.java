@@ -38,11 +38,6 @@ public class XmlElementData {
    */
   @Singular
   private final List<XmlAttribute> attributes;
-  /**
-   * list of child nodes.
-   */
-  @Singular
-  private final List<XmlElementData> childrens;
 
   /**
    * Adds element to the document.
@@ -51,10 +46,7 @@ public class XmlElementData {
    * @param parent Parent node for element.
    */
   public void addToDocument(Document document, Element parent) {
-    Element element = toElement(document);
-    for (XmlElementData xmlElementData : this.childrens) {
-      element.appendChild(xmlElementData.toElement(document));
-    }
+    Element element = document.createElement(getName());
     for (XmlAttribute attribute : this.attributes) {
       element.setAttribute(attribute.getKey(), attribute.getValue());
     }
@@ -63,16 +55,6 @@ public class XmlElementData {
     } else {
       document.appendChild(element);
     }
-  }
-
-  /**
-   * Creates this element in XML document.
-   *
-   * @param document XML document
-   * @return creates a element in document
-   */
-  private Element toElement(Document document) {
-    return document.createElement(this.name);
   }
 
 }

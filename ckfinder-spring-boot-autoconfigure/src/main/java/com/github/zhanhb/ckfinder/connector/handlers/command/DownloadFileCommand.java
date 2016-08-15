@@ -125,9 +125,11 @@ public class DownloadFileCommand extends Command<DownloadFileArguments> {
   @Override
   public void setResponseHeader(HttpServletRequest request, HttpServletResponse response, DownloadFileArguments arguments) {
     String mimetype = request.getServletContext().getMimeType(arguments.getFileName());
-    response.setCharacterEncoding("utf-8");
-
     if (mimetype != null) {
+      if (mimetype.startsWith("text/") || mimetype.endsWith("/javascript")
+              || mimetype.endsWith("/xml")) {
+        mimetype += ";charset=UTF-8";
+      }
       response.setContentType(mimetype);
     } else {
       response.setContentType("application/octet-stream");

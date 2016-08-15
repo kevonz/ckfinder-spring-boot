@@ -155,13 +155,11 @@ public class FileUtils {
    * @param sourceFile source file
    * @param destFile destination file
    * @param move if source file should be deleted.
-   * @param conf connector configuration
    * @return true if file moved/copied correctly
    * @throws IOException when IOerror occurs
    */
-  public static boolean copyFromSourceToDestFile(Path sourceFile,
-          Path destFile, boolean move, IConfiguration conf)
-          throws IOException {
+  public static boolean copyFromSourceToDestFile(Path sourceFile, Path destFile,
+          boolean move) throws IOException {
     createPath(destFile, true);
     if (move) {
       Files.move(sourceFile, destFile, StandardCopyOption.REPLACE_EXISTING);
@@ -405,7 +403,7 @@ public class FileUtils {
    * @return true if detected.
    * @throws IOException when io error occurs.
    */
-  public static boolean detectHtml(Part item) throws IOException {
+  public static boolean hasHtmlContent(Part item) throws IOException {
     byte[] buff = new byte[MAX_BUFFER_SIZE];
     try (InputStream is = item.getInputStream()) {
       is.read(buff, 0, MAX_BUFFER_SIZE);
@@ -466,11 +464,11 @@ public class FileUtils {
    * @return true if there are any allowed and non-hidden subfolders.
    * @throws java.io.IOException
    */
-  public static Boolean hasChildren(AccessControl accessControl, String dirPath, Path dir, IConfiguration configuration, String resourceType, String currentUserRole) throws IOException {
-    try (DirectoryStream<Path> subDirsList = Files.newDirectoryStream(dir, Files::isDirectory)) {
-      if (subDirsList != null) {
-        for (Path subDirsList1 : subDirsList) {
-          String subDirName = subDirsList1.getFileName().toString();
+  public static boolean hasChildren(AccessControl accessControl, String dirPath, Path dir, IConfiguration configuration, String resourceType, String currentUserRole) throws IOException {
+    try (DirectoryStream<Path> list = Files.newDirectoryStream(dir, Files::isDirectory)) {
+      if (list != null) {
+        for (Path path : list) {
+          String subDirName = path.getFileName().toString();
           if (!FileUtils.isDirectoryHidden(subDirName, configuration)
                   && accessControl.checkFolderACL(resourceType,
                           dirPath + subDirName, currentUserRole, AccessControl.CKFINDER_CONNECTOR_ACL_FOLDER_VIEW)) {

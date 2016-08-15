@@ -186,7 +186,7 @@ public class CopyFilesCommand extends XMLCommand<CopyFilesArguments> implements 
                     file.getName(), file.getFolder(), file.getType());
           }
         } else if (FileUtils.copyFromSourceToDestFile(sourceFile, destFile,
-                false, getConfiguration())) {
+                false)) {
           arguments.filesCopiedPlus();
           copyThumb(file, arguments);
         }
@@ -230,7 +230,7 @@ public class CopyFilesCommand extends XMLCommand<CopyFilesArguments> implements 
         // copy file occurs then it will be infinity loop
         return (FileUtils.copyFromSourceToDestFile(sourceFile,
                 newDestFile,
-                false, getConfiguration()));
+                false));
       } else {
         counter++;
       }
@@ -248,7 +248,7 @@ public class CopyFilesCommand extends XMLCommand<CopyFilesArguments> implements 
   private boolean handleOverwrite(Path sourceFile, Path destFile) throws IOException {
     return FileUtils.delete(destFile)
             && FileUtils.copyFromSourceToDestFile(sourceFile, destFile,
-                    false, getConfiguration());
+                    false);
   }
 
   /**
@@ -267,7 +267,7 @@ public class CopyFilesCommand extends XMLCommand<CopyFilesArguments> implements 
 
     if (Files.isRegularFile(sourceThumbFile) && Files.exists(sourceThumbFile)) {
       FileUtils.copyFromSourceToDestFile(sourceThumbFile, destThumbFile,
-              false, getConfiguration());
+              false);
     }
 
   }

@@ -62,7 +62,7 @@ public class XMLErrorCommand extends XMLCommand<XMLErrorArguments> {
   }
 
   @Override
-  protected String getErrorMsg(XMLErrorArguments arguments) {
+  String getErrorMsg(XMLErrorArguments arguments) {
     return arguments.getConnectorException().getMessage();
   }
 
@@ -138,7 +138,7 @@ public class XMLErrorCommand extends XMLCommand<XMLErrorArguments> {
   }
 
   @Override
-  protected void getCurrentFolderParam(HttpServletRequest request, XMLErrorArguments arguments) {
+  protected void setCurrentFolderParam(HttpServletRequest request, XMLErrorArguments arguments) {
     String currFolder = request.getParameter("currentFolder");
     if (!(currFolder == null || currFolder.isEmpty())) {
       arguments.setCurrentFolder(PathUtils.addSlashToBeginning(PathUtils.addSlashToEnd(currFolder)));

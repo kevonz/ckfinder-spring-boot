@@ -114,13 +114,15 @@ public class GetFoldersCommand extends XMLCommand<GetFoldersArguments> {
         XmlElementData.Builder xmlElementData = XmlElementData.builder().name("Folder");
         xmlElementData.attribute(new XmlAttribute("name", dirPath));
 
+        boolean hasChildren = FileUtils.hasChildren(getConfiguration().getAccessControl(),
+                arguments.getCurrentFolder() + dirPath + "/", dir,
+                getConfiguration(), arguments.getType(), arguments.getUserRole());
         xmlElementData.attribute(new XmlAttribute("hasChildren",
-                FileUtils.hasChildren(getConfiguration().getAccessControl(),
-                        arguments.getCurrentFolder() + dirPath + "/", dir, getConfiguration(),
-                        arguments.getType(), arguments.getUserRole()).toString()));
+                String.valueOf(hasChildren)));
 
         xmlElementData.attribute(new XmlAttribute("acl",
-                String.valueOf(getConfiguration().getAccessControl().checkACLForRole(arguments.getType(),
+                String.valueOf(getConfiguration().getAccessControl()
+                        .checkACLForRole(arguments.getType(),
                         arguments.getCurrentFolder()
                         + dirPath, arguments.getUserRole()))));
         xmlElementData.build().addToDocument(arguments.getDocument(), element);

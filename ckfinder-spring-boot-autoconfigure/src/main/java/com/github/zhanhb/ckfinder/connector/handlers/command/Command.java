@@ -59,20 +59,22 @@ public abstract class Command<T extends Arguments> {
    * @param configuration connector configuration
    * @throws ConnectorException when error occurred.
    */
-  public void runCommand(HttpServletRequest request, HttpServletResponse response,
-          IConfiguration configuration) throws ConnectorException {
+  @SuppressWarnings("FinalMethod")
+  public final void runCommand(HttpServletRequest request,
+          HttpServletResponse response, IConfiguration configuration)
+          throws ConnectorException {
     T arguments = argumentsSupplier.get();
     runWithArguments(request, response, configuration, arguments);
   }
 
   @Deprecated
-  public void runWithArguments(HttpServletRequest request, HttpServletResponse response,
-          IConfiguration configuration, T arguments) throws ConnectorException {
-    T args = argumentsSupplier.get();
-    this.initParams(args, request, configuration);
+  public void runWithArguments(HttpServletRequest request,
+          HttpServletResponse response, IConfiguration configuration,
+          T arguments) throws ConnectorException {
+    this.initParams(arguments, request, configuration);
     try {
-      setResponseHeader(request, response, args);
-      execute(args, response);
+      setResponseHeader(request, response, arguments);
+      execute(arguments, response);
     } catch (IOException e) {
       throw new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_ACCESS_DENIED, e);
@@ -87,23 +89,21 @@ public abstract class Command<T extends Arguments> {
    * @param configuration connector configuration
    * @throws ConnectorException to handle in error handler.
    */
-  protected void initParams(T arguments, HttpServletRequest request, IConfiguration configuration)
-          throws ConnectorException {
-    if (configuration != null) {
-      this.configuration = configuration;
-      HttpSession session = request.getSession(false);
-      String userRole = session == null ? null : (String) session.getAttribute(configuration.getUserRoleName());
-      arguments.setUserRole(userRole);
+  protected void initParams(T arguments, HttpServletRequest request,
+          IConfiguration configuration) throws ConnectorException {
+    this.configuration = configuration;
+    HttpSession session = request.getSession(false);
+    String userRole = session == null ? null : (String) session.getAttribute(configuration.getUserRoleName());
+    arguments.setUserRole(userRole);
 
-      getCurrentFolderParam(request, arguments);
+    setCurrentFolderParam(request, arguments);
 
-      if (isConnectorEnabled(arguments) && isRequestPathValid(arguments.getCurrentFolder(), arguments)) {
-        arguments.setCurrentFolder(PathUtils.escape(arguments.getCurrentFolder()));
-        if (!isHidden(arguments)) {
-          if ((arguments.getCurrentFolder() == null || arguments.getCurrentFolder().isEmpty())
-                  || isCurrFolderExists(arguments, request)) {
-            arguments.setType(request.getParameter("type"));
-          }
+    if (isConnectorEnabled(arguments) && isRequestPathValid(arguments.getCurrentFolder(), arguments)) {
+      arguments.setCurrentFolder(PathUtils.escape(arguments.getCurrentFolder()));
+      if (!isHidden(arguments)) {
+        if ((arguments.getCurrentFolder() == null || arguments.getCurrentFolder().isEmpty())
+                || isCurrFolderExists(arguments, request)) {
+          arguments.setType(request.getParameter("type"));
         }
       }
     }
@@ -195,7 +195,7 @@ public abstract class Command<T extends Arguments> {
    * @param response servlet response
    * @param arguments
    */
-  public abstract void setResponseHeader(HttpServletRequest request, HttpServletResponse response, T arguments);
+  abstract void setResponseHeader(HttpServletRequest request, HttpServletResponse response, T arguments);
 
   /**
    * check request for security issue.
@@ -205,7 +205,7 @@ public abstract class Command<T extends Arguments> {
    * @return true if validation passed
    * @throws ConnectorException if validation error occurs.
    */
-  protected boolean isRequestPathValid(String reqParam, T arguments) throws ConnectorException {
+  boolean isRequestPathValid(String reqParam, T arguments) throws ConnectorException {
     if (reqParam == null || reqParam.isEmpty()) {
       return true;
     }
@@ -224,7 +224,7 @@ public abstract class Command<T extends Arguments> {
    * @param request request
    * @param arguments
    */
-  protected void getCurrentFolderParam(HttpServletRequest request, T arguments) {
+  protected void setCurrentFolderParam(HttpServletRequest request, T arguments) {
     String currFolder = request.getParameter("currentFolder");
     if (currFolder == null || currFolder.isEmpty()) {
       arguments.setCurrentFolder("/");
@@ -241,7 +241,8 @@ public abstract class Command<T extends Arguments> {
    * @return empty string if parameter was {@code null} or unchanged string if
    * parameter was nonempty string.
    */
-  protected String nullToString(String s) {
+  @SuppressWarnings("FinalMethod")
+  protected final String nullToString(String s) {
     return s == null ? "" : s;
   }
 
