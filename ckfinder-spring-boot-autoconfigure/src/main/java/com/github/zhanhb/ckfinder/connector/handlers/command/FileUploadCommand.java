@@ -403,66 +403,54 @@ public class FileUploadCommand extends Command<FileUploadArguments> implements I
    * @param reqParam request param
    * @param arguments
    * @return true if validation passed
-   * @throws ConnectorException if validation error occurs.
    */
   @Override
-  boolean isRequestPathValid(String reqParam, FileUploadArguments arguments)
-          throws ConnectorException {
-    if (reqParam == null || reqParam.isEmpty()) {
-      return true;
-    }
-    if (Pattern.compile(Constants.INVALID_PATH_REGEX).matcher(reqParam).find()) {
+  boolean isRequestPathValid(String reqParam, FileUploadArguments arguments) {
+    try {
+      return super.isRequestPathValid(reqParam, arguments);
+    } catch (ConnectorException ex) {
       arguments.setErrorCode(Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_NAME);
       return false;
     }
-    return true;
   }
 
   @Override
-  protected boolean isHidden(FileUploadArguments arguments)
-          throws ConnectorException {
-    if (FileUtils.isDirectoryHidden(arguments.getCurrentFolder(), getConfiguration())) {
+  protected boolean isHidden(FileUploadArguments arguments) {
+    try {
+      return super.isHidden(arguments);
+    } catch (ConnectorException ex) {
       arguments.setErrorCode(Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST);
       return true;
     }
-    return false;
   }
 
   @Override
-  protected boolean isConnectorEnabled(FileUploadArguments arguments)
-          throws ConnectorException {
-    if (!getConfiguration().isEnabled()) {
+  protected boolean isConnectorEnabled(FileUploadArguments arguments) {
+    try {
+      return super.isConnectorEnabled(arguments);
+    } catch (ConnectorException ex) {
       arguments.setErrorCode(Constants.Errors.CKFINDER_CONNECTOR_ERROR_CONNECTOR_DISABLED);
       return false;
     }
-    return true;
   }
 
   @Override
-  protected boolean isCurrFolderExists(FileUploadArguments arguments, HttpServletRequest request)
-          throws ConnectorException {
-    String tmpType = request.getParameter("type");
-    if (isTypeExists(arguments, tmpType)) {
-      Path currDir = Paths.get(getConfiguration().getTypes().get(tmpType).getPath(),
-              arguments.getCurrentFolder());
-      if (Files.isDirectory(currDir)) {
-        return true;
-      } else {
-        arguments.setErrorCode(Constants.Errors.CKFINDER_CONNECTOR_ERROR_FOLDER_NOT_FOUND);
-        return false;
-      }
+  protected boolean isCurrFolderExists(FileUploadArguments arguments, HttpServletRequest request) {
+    try {
+      return super.isCurrFolderExists(arguments, request);
+    } catch (ConnectorException ex) {
+      arguments.setErrorCode(ex.getErrorCode());
+      return false;
     }
-    return false;
   }
 
   @Override
   protected boolean isTypeExists(FileUploadArguments arguments, String type) {
-    ResourceType testType = getConfiguration().getTypes().get(type);
-    if (testType == null) {
+    boolean typeExists = super.isTypeExists(arguments, type);
+    if (!typeExists) {
       arguments.setErrorCode(Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE);
-      return false;
     }
-    return true;
+    return typeExists;
   }
 
 }

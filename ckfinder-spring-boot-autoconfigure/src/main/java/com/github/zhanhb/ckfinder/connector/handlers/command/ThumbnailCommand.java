@@ -153,12 +153,7 @@ public class ThumbnailCommand extends Command<ThumbnailArguments> {
         }
       }
     } else {
-      try {
-        response.reset();
-        response.sendError(HttpServletResponse.SC_NOT_MODIFIED);
-      } catch (IOException e1) {
-        throw new ConnectorException(e1);
-      }
+      response.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
     }
   }
 
@@ -274,24 +269,22 @@ public class ThumbnailCommand extends Command<ThumbnailArguments> {
     try {
       FileTime lastModifiedTime = Files.getLastModifiedTime(file);
       String etag = "W/\"" + Long.toHexString(lastModifiedTime.toMillis()) + "-" + Long.toHexString(Files.size(file)) + '"';
-      if (etag.equals(arguments.getIfNoneMatch())) {
+      Instant instant = lastModifiedTime.toInstant();
+      response.setHeader("Etag", etag);
+      response.setHeader("Last-Modified", FORMATTER.format(instant));
+
+      if (etag.equals(arguments.getIfNoneMatch())
+              || lastModifiedTime.toMillis() <= arguments.getIfModifiedSince()) {
         return false;
-      } else {
-        response.setHeader("Etag", etag);
       }
 
-      if (lastModifiedTime.toMillis() <= arguments.getIfModifiedSince()) {
-        return false;
-      } else {
-        Instant instant = lastModifiedTime.toInstant();
-        response.setHeader("Last-Modified", FORMATTER.format(instant));
-      }
       response.setContentLengthLong(Files.size(file));
+
+      return true;
     } catch (SecurityException e) {
       throw new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_ACCESS_DENIED, e);
     }
-    return true;
   }
 
 }

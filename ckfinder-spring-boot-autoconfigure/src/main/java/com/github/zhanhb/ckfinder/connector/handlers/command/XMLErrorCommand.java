@@ -13,15 +13,9 @@ package com.github.zhanhb.ckfinder.connector.handlers.command;
 
 import com.github.zhanhb.ckfinder.connector.configuration.Constants;
 import com.github.zhanhb.ckfinder.connector.configuration.IConfiguration;
-import com.github.zhanhb.ckfinder.connector.data.ResourceType;
 import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
 import com.github.zhanhb.ckfinder.connector.handlers.arguments.XMLErrorArguments;
-import com.github.zhanhb.ckfinder.connector.utils.FileUtils;
 import com.github.zhanhb.ckfinder.connector.utils.PathUtils;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 import org.w3c.dom.Element;
 
@@ -73,63 +67,57 @@ public class XMLErrorCommand extends XMLCommand<XMLErrorArguments> {
    * @param reqParam request param
    * @param arguments
    * @return true if validation passed
-   * @throws ConnectorException it should never throw an exception
    */
   @Override
-  protected boolean isRequestPathValid(String reqParam, XMLErrorArguments arguments)
-          throws ConnectorException {
-    return reqParam == null || reqParam.isEmpty()
-            || !Pattern.compile(Constants.INVALID_PATH_REGEX).matcher(reqParam).find();
+  protected boolean isRequestPathValid(String reqParam, XMLErrorArguments arguments) {
+    try{
+      return super.isRequestPathValid(reqParam, arguments);
+    }catch(ConnectorException ex){
+      return false;
+    }
   }
 
   @Override
-  protected boolean isConnectorEnabled(XMLErrorArguments arguments)
-          throws ConnectorException {
-    if (!getConfiguration().isEnabled()) {
+  protected boolean isConnectorEnabled(XMLErrorArguments arguments) {
+    try {
+      return super.isConnectorEnabled(arguments);
+    } catch (ConnectorException ex) {
       arguments.setConnectorException(new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_CONNECTOR_DISABLED));
       return false;
     }
-    return true;
   }
 
   @Override
-  protected boolean isHidden(XMLErrorArguments arguments) throws ConnectorException {
-    if (FileUtils.isDirectoryHidden(arguments.getCurrentFolder(), getConfiguration())) {
+  protected boolean isHidden(XMLErrorArguments arguments) {
+    try {
+      return super.isHidden(arguments);
+    } catch (ConnectorException ex) {
       arguments.setConnectorException(new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_CONNECTOR_DISABLED));
       return true;
     }
-    return false;
   }
 
   @Override
-  protected boolean isCurrFolderExists(XMLErrorArguments arguments, HttpServletRequest request)
-          throws ConnectorException {
-    String tmpType = request.getParameter("type");
-    if (isTypeExists(arguments, tmpType)) {
-      Path currDir = Paths.get(getConfiguration().getTypes().get(tmpType).getPath(),
-              arguments.getCurrentFolder());
-      if (Files.isDirectory(currDir)) {
-        return true;
-      } else {
-        arguments.setConnectorException(new ConnectorException(
-                Constants.Errors.CKFINDER_CONNECTOR_ERROR_FOLDER_NOT_FOUND));
-        return false;
-      }
+  protected boolean isCurrFolderExists(XMLErrorArguments arguments, HttpServletRequest request) {
+    try {
+      return super.isCurrFolderExists(arguments, request);
+    } catch (ConnectorException ex) {
+      arguments.setConnectorException(new ConnectorException(
+              Constants.Errors.CKFINDER_CONNECTOR_ERROR_FOLDER_NOT_FOUND));
+      return false;
     }
-    return false;
   }
 
   @Override
   protected boolean isTypeExists(XMLErrorArguments arguments, String type) {
-    ResourceType testType = getConfiguration().getTypes().get(type);
-    if (testType == null) {
+    boolean typeExists = super.isTypeExists(arguments, type);
+    if (!typeExists) {
       arguments.setConnectorException(new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE, false));
-      return false;
     }
-    return true;
+    return typeExists;
   }
 
   @Override
