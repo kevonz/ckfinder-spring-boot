@@ -117,16 +117,17 @@ public class ThumbnailCommand extends Command<ThumbnailArguments> {
    * @return mime type of the image.
    */
   private String getMimeTypeOfImage(ServletContext sc, HttpServletResponse response, ThumbnailArguments arguments) {
-    if (arguments.getFileName() == null || arguments.getFileName().length() == 0) {
+    String fileName = arguments.getFileName();
+    if (fileName == null || fileName.length() == 0) {
       response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
       return null;
     }
-    String tempFileName = arguments.getFileName().substring(0,
-            arguments.getFileName().lastIndexOf('.') + 1).concat(
-            FileUtils.getFileExtension(arguments.getFileName()).toLowerCase());
+    String tempFileName = fileName.substring(0,
+            fileName.lastIndexOf('.') + 1).concat(
+            FileUtils.getFileExtension(fileName).toLowerCase());
     String mimeType = sc.getMimeType(tempFileName);
     if (mimeType == null || mimeType.length() == 0) {
-      mimeType = ThumbnailCommand.imgMimeTypeMap.get(arguments.getFileName().toLowerCase().substring(arguments.getFileName().lastIndexOf('.')));
+      mimeType = ThumbnailCommand.imgMimeTypeMap.get(fileName.toLowerCase().substring(arguments.getFileName().lastIndexOf('.')));
     }
 
     if (mimeType == null) {
@@ -206,8 +207,8 @@ public class ThumbnailCommand extends Command<ThumbnailArguments> {
     Path typeThumbDir = Paths.get(getConfiguration().getThumbsPath(), arguments.getType());
 
     try {
-      arguments.setFullCurrentPath(typeThumbDir.toAbsolutePath().toString()
-              + arguments.getCurrentFolder());
+      arguments.setFullCurrentPath(typeThumbDir.resolve(
+              arguments.getCurrentFolder()).toAbsolutePath().toString());
       if (!Files.exists(typeThumbDir)) {
         Files.createDirectories(typeThumbDir);
       }
@@ -226,9 +227,10 @@ public class ThumbnailCommand extends Command<ThumbnailArguments> {
    */
   @SuppressWarnings({"BroadCatchBlock", "TooBroadCatch"})
   private void createThumb(ThumbnailArguments arguments) throws ConnectorException {
-    arguments.setThumbFile(Paths.get(arguments.getFullCurrentPath(), arguments.getFileName()));
+    Path thumbFile = Paths.get(arguments.getFullCurrentPath(), arguments.getFileName());
+    arguments.setThumbFile(thumbFile);
     try {
-      if (!Files.exists(arguments.getThumbFile())) {
+      if (!Files.exists(thumbFile)) {
         Path orginFile = Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath(),
                 arguments.getCurrentFolder(), arguments.getFileName());
         if (!Files.exists(orginFile)) {
@@ -236,10 +238,10 @@ public class ThumbnailCommand extends Command<ThumbnailArguments> {
                   Constants.Errors.CKFINDER_CONNECTOR_ERROR_FILE_NOT_FOUND);
         }
         try {
-          ImageUtils.createThumb(orginFile, arguments.getThumbFile(), getConfiguration());
+          ImageUtils.createThumb(orginFile, thumbFile, getConfiguration());
         } catch (Exception e) {
           try {
-            Files.deleteIfExists(arguments.getThumbFile());
+            Files.deleteIfExists(thumbFile);
           } catch (IOException ex) {
             e.addSuppressed(ex);
           }
@@ -274,7 +276,7 @@ public class ThumbnailCommand extends Command<ThumbnailArguments> {
       response.setHeader("Last-Modified", FORMATTER.format(instant));
 
       if (etag.equals(arguments.getIfNoneMatch())
-              || lastModifiedTime.toMillis() <= arguments.getIfModifiedSince()) {
+              || lastModifiedTime.toMillis() <= arguments.getIfModifiedSince() + 1000) {
         return false;
       }
 
