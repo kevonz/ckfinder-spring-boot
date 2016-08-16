@@ -166,26 +166,7 @@ public class DeleteFilesCommand extends XMLCommand<DeleteFilesArguments> impleme
   protected void initParams(DeleteFilesArguments arguments, HttpServletRequest request, IConfiguration configuration) throws ConnectorException {
     super.initParams(arguments, request, configuration);
     arguments.setFiles(new ArrayList<>());
-    getFilesListFromRequest(request, arguments);
-  }
-
-  /**
-   * Gets list of files from request.
-   *
-   * @param request current request object
-   */
-  @SuppressWarnings("ValueOfIncrementOrDecrementUsed")
-  private void getFilesListFromRequest(HttpServletRequest request, DeleteFilesArguments arguments) {
-    int i = 0;
-    String paramName = "files[" + i + "][name]";
-    while (request.getParameter(paramName) != null) {
-      String name = request.getParameter(paramName);
-      String folder = request.getParameter("files[" + i + "][folder]");
-      String options = request.getParameter("files[" + i + "][options]");
-      String type = request.getParameter("files[" + i + "][type]");
-      arguments.getFiles().add(FilePostParam.builder().name(name).folder(folder).options(options).type(type).build());
-      paramName = "files[" + (++i) + "][name]";
-    }
+    RequestFileHelper.addFilesListFromRequest(request, arguments.getFiles());
   }
 
 }

@@ -281,29 +281,7 @@ public class MoveFilesCommand extends XMLCommand<MoveFilesArguments> implements 
     super.initParams(arguments, request, configuration);
     arguments.setFiles(new ArrayList<>());
     arguments.setMovedAll(request.getParameter("moved") != null ? Integer.parseInt(request.getParameter("moved")) : 0);
-    getFilesListFromRequest(request, arguments);
-  }
-
-  /**
-   * get file list to copy from request.
-   *
-   * @param request request
-   */
-  private void getFilesListFromRequest(HttpServletRequest request, MoveFilesArguments arguments) {
-    int i = 0;
-    while (true) {
-      String paramName = "files[" + i + "][name]";
-      String name = request.getParameter(paramName);
-      if (name != null) {
-        String folder = request.getParameter("files[" + i + "][folder]");
-        String options = request.getParameter("files[" + i + "][options]");
-        String type = request.getParameter("files[" + i + "][type]");
-        arguments.getFiles().add(FilePostParam.builder().name(name).folder(folder).options(options).type(type).build());
-      } else {
-        break;
-      }
-      i++;
-    }
+    RequestFileHelper.addFilesListFromRequest(request, arguments.getFiles());
   }
 
 }

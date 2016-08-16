@@ -278,26 +278,7 @@ public class CopyFilesCommand extends XMLCommand<CopyFilesArguments> implements 
     arguments.setFiles(new ArrayList<>());
     arguments.setCopiedAll(request.getParameter("copied") != null ? Integer.parseInt(request.getParameter("copied")) : 0);
 
-    getFilesListFromRequest(request, arguments);
-  }
-
-  /**
-   * Get list of files from request.
-   *
-   * @param request - request object.
-   */
-  @SuppressWarnings("ValueOfIncrementOrDecrementUsed")
-  private void getFilesListFromRequest(HttpServletRequest request, CopyFilesArguments arguments) {
-    int i = 0;
-    String paramName = "files[" + i + "][name]";
-    while (request.getParameter(paramName) != null) {
-      String folder = request.getParameter("files[" + i + "][folder]");
-      String name = request.getParameter(paramName);
-      String options = request.getParameter("files[" + i + "][options]");
-      String type = request.getParameter("files[" + i + "][type]");
-      arguments.getFiles().add(FilePostParam.builder().folder(folder).name(name).options(options).type(type).build());
-      paramName = "files[" + (++i) + "][name]";
-    }
+    RequestFileHelper.addFilesListFromRequest(request, arguments.getFiles());
   }
 
 }
