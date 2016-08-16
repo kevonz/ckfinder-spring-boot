@@ -11,13 +11,10 @@
     </goals>
   </action>
   <action>
-    <actionName>CUSTOM-dependency:purge-local-repository</actionName>
-    <displayName>dependency:purge-local-repository</displayName>
+    <actionName>CUSTOM-build-helper:remove-project-artifact</actionName>
+    <displayName>build-helper:remove-project-artifact</displayName>
     <goals>
-      <goal>dependency:purge-local-repository</goal>
+      <goal>build-helper:remove-project-artifact</goal>
     </goals>
-    <properties>
-      <reResolve>false</reResolve>
-    </properties>
   </action>
 </actions>
