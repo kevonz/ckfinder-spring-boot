@@ -46,8 +46,8 @@ public class DownloadFileCommand extends Command<DownloadFileArguments> {
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE, false);
     }
 
-    arguments.setFile(Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath()
-            + arguments.getCurrentFolder(), arguments.getFileName()));
+    arguments.setFile(Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath(),
+            arguments.getCurrentFolder(), arguments.getFileName()));
 
     if (!getConfiguration().getAccessControl().checkFolderACL(arguments.getType(),
             arguments.getCurrentFolder(), arguments.getUserRole(),
@@ -129,7 +129,7 @@ public class DownloadFileCommand extends Command<DownloadFileArguments> {
 
     response.setHeader("Content-Disposition",
             ContentDisposition.getContentDisposition("attachment",
-            arguments.getFileName()));
+                    arguments.getFileName()));
 
     response.setHeader("Cache-Control", "cache, must-revalidate");
     response.setHeader("Pragma", "public");

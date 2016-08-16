@@ -92,15 +92,15 @@ public class RenameFolderCommand extends XMLCommand<RenameFolderArguments> imple
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
     }
 
-    Path dir = Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath()
-            + arguments.getCurrentFolder());
+    Path dir = Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath(),
+            arguments.getCurrentFolder());
     try {
       if (!Files.isDirectory(dir)) {
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
       }
       setNewFolder(arguments);
-      Path newDir = Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath()
-              + arguments.getNewFolderPath());
+      Path newDir = Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath(),
+              arguments.getNewFolderPath());
       if (Files.exists(newDir)) {
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_ALREADY_EXIST;
       }
@@ -123,11 +123,9 @@ public class RenameFolderCommand extends XMLCommand<RenameFolderArguments> imple
    */
   private void renameThumb(RenameFolderArguments arguments) throws IOException {
     Path thumbDir = Paths.get(getConfiguration().getThumbsPath(),
-            arguments.getType()
-            + arguments.getCurrentFolder());
+            arguments.getType(), arguments.getCurrentFolder());
     Path newThumbDir = Paths.get(getConfiguration().getThumbsPath(),
-            arguments.getType()
-            + arguments.getNewFolderPath());
+            arguments.getType(), arguments.getNewFolderPath());
     try {
       Files.move(thumbDir, newThumbDir);
     } catch (IOException ex) {

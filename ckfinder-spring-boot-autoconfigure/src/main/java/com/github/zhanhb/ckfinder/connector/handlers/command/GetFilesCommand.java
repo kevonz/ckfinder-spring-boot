@@ -83,8 +83,8 @@ public class GetFilesCommand extends XMLCommand<GetFilesArguments> {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE;
     }
 
-    arguments.setFullCurrentPath(getConfiguration().getTypes().get(arguments.getType()).getPath()
-            + arguments.getCurrentFolder());
+    arguments.setFullCurrentPath(Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath(),
+            arguments.getCurrentFolder()).toString());
 
     if (!getConfiguration().getAccessControl().checkFolderACL(arguments.getType(),
             arguments.getCurrentFolder(), arguments.getUserRole(),
@@ -156,7 +156,7 @@ public class GetFilesCommand extends XMLCommand<GetFilesArguments> {
    */
   private String createThumbAttr(Path file, GetFilesArguments arguments) {
     Path thumbFile = Paths.get(getConfiguration().getThumbsPath(),
-            arguments.getType() + arguments.getCurrentFolder(),
+            arguments.getType(), arguments.getCurrentFolder(),
             file.getFileName().toString());
     if (Files.exists(thumbFile)) {
       return file.getFileName().toString();

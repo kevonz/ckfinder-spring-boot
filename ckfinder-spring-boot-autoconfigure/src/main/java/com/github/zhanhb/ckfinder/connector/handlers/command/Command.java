@@ -31,7 +31,6 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Base class for all command handlers.
@@ -39,7 +38,6 @@ import lombok.extern.slf4j.Slf4j;
  * @param <T> arguments type
  */
 @RequiredArgsConstructor
-@Slf4j
 public abstract class Command<T extends Arguments> {
 
   /**
@@ -137,7 +135,8 @@ public abstract class Command<T extends Arguments> {
     String tmpType = request.getParameter("type");
     if (tmpType != null) {
       if (isTypeExists(arguments, tmpType)) {
-        Path currDir = Paths.get(getConfiguration().getTypes().get(tmpType).getPath() + arguments.getCurrentFolder());
+        Path currDir = Paths.get(getConfiguration().getTypes().get(tmpType).getPath(),
+                arguments.getCurrentFolder());
         if (!Files.exists(currDir) || !Files.isDirectory(currDir)) {
           throw new ConnectorException(
                   Constants.Errors.CKFINDER_CONNECTOR_ERROR_FOLDER_NOT_FOUND,

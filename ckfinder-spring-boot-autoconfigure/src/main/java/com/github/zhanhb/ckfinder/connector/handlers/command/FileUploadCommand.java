@@ -191,7 +191,8 @@ public class FileUploadCommand extends Command<FileUploadArguments> implements I
     try {
       Collection<Part> parts = request.getParts();
       for (Part part : parts) {
-        String path = getConfiguration().getTypes().get(arguments.getType()).getPath() + arguments.getCurrentFolder();
+        String path = Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath(),
+                arguments.getCurrentFolder()).toString();
         arguments.setFileName(getFileItemName(part));
         if (validateUploadItem(part, path, arguments)) {
           return saveTemporaryFile(path, part, arguments);
@@ -442,8 +443,8 @@ public class FileUploadCommand extends Command<FileUploadArguments> implements I
           throws ConnectorException {
     String tmpType = request.getParameter("type");
     if (isTypeExists(arguments, tmpType)) {
-      Path currDir = Paths.get(getConfiguration().getTypes().get(tmpType).getPath()
-              + arguments.getCurrentFolder());
+      Path currDir = Paths.get(getConfiguration().getTypes().get(tmpType).getPath(),
+              arguments.getCurrentFolder());
       if (Files.exists(currDir) && Files.isDirectory(currDir)) {
         return true;
       } else {

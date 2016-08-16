@@ -112,12 +112,11 @@ public class RenameFileCommand extends XMLCommand<RenameFileArguments> implement
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
     }
 
-    String dirPath = getConfiguration().getTypes().get(arguments.getType()).getPath()
-            + arguments.getCurrentFolder();
+    Path dir = Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath(),
+            arguments.getCurrentFolder());
 
-    Path file = Paths.get(dirPath, arguments.getFileName());
-    Path newFile = Paths.get(dirPath, arguments.getNewFileName());
-    Path dir = Paths.get(dirPath);
+    Path file = dir.resolve(arguments.getFileName());
+    Path newFile = dir.resolve(arguments.getNewFileName());
 
     try {
       if (!Files.exists(file)) {
@@ -154,10 +153,10 @@ public class RenameFileCommand extends XMLCommand<RenameFileArguments> implement
    */
   private void renameThumb(RenameFileArguments arguments) throws IOException {
     Path thumbFile = Paths.get(getConfiguration().getThumbsPath(),
-            arguments.getType() + arguments.getCurrentFolder(),
+            arguments.getType(), arguments.getCurrentFolder(),
             arguments.getFileName());
     Path newThumbFile = Paths.get(getConfiguration().getThumbsPath(),
-            arguments.getType() + arguments.getCurrentFolder(),
+            arguments.getType(), arguments.getCurrentFolder(),
             arguments.getNewFileName());
 
     try {

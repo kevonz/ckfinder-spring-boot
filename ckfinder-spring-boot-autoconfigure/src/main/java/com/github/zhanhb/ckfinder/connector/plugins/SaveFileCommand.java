@@ -70,8 +70,8 @@ public class SaveFileCommand extends XMLCommand<SaveFileArguments> implements Be
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
     }
 
-    Path sourceFile = Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath()
-            + arguments.getCurrentFolder(), arguments.getFileName());
+    Path sourceFile = Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath(),
+            arguments.getCurrentFolder(), arguments.getFileName());
 
     try {
       if (!(Files.exists(sourceFile) && Files.isRegularFile(sourceFile))) {

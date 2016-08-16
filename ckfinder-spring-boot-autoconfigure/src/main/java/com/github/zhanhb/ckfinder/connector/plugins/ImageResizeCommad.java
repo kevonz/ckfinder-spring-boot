@@ -87,7 +87,8 @@ public class ImageResizeCommad extends XMLCommand<ImageResizeArguments> implemen
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
     }
 
-    Path file = Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath() + arguments.getCurrentFolder(),
+    Path file = Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath(),
+            arguments.getCurrentFolder(),
             arguments.getFileName());
     try {
       if (!(Files.exists(file) && Files.isRegularFile(file))) {
@@ -110,7 +111,8 @@ public class ImageResizeCommad extends XMLCommand<ImageResizeArguments> implemen
           return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_EXTENSION;
         }
 
-        Path thumbFile = Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath() + arguments.getCurrentFolder(),
+        Path thumbFile = Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath(),
+                arguments.getCurrentFolder(),
                 arguments.getNewFileName());
 
         if (Files.exists(thumbFile) && !Files.isWritable(thumbFile)) {
@@ -141,10 +143,11 @@ public class ImageResizeCommad extends XMLCommand<ImageResizeArguments> implemen
       for (String size : SIZES) {
         if (arguments.getSizesFromReq().get(size) != null
                 && arguments.getSizesFromReq().get(size).equals("1")) {
-          String thumbName = fileNameWithoutExt.concat("_").concat(size).concat(".").concat(fileExt);
-          Path thumbFile = Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath().concat(arguments.getCurrentFolder()).concat(thumbName));
+          String thumbName = fileNameWithoutExt + ("_") + size + "." + fileExt;
+          Path thumbFile = Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath(),
+                  arguments.getCurrentFolder(), thumbName);
           for (PluginParam param : pluginInfo.getParams()) {
-            if (size.concat("Thumb").equals(param.getName())) {
+            if ((size + "Thumb").equals(param.getName())) {
               if (checkParamSize(param.getValue())) {
                 String[] params = parseValue(param.getValue());
                 try {

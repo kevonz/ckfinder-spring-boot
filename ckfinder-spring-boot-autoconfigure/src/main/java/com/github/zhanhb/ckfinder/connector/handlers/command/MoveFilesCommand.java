@@ -144,13 +144,13 @@ public class MoveFilesCommand extends XMLCommand<MoveFilesArguments> implements 
               AccessControl.CKFINDER_CONNECTOR_ACL_FILE_VIEW)) {
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_UNAUTHORIZED;
       }
-      Path sourceFile = Paths.get(getConfiguration().getTypes().get(file.getType()).getPath()
-              + file.getFolder(), file.getName());
-      Path destFile = Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath()
-              + arguments.getCurrentFolder(), file.getName());
+      Path sourceFile = Paths.get(getConfiguration().getTypes().get(file.getType()).getPath(),
+              file.getFolder(), file.getName());
+      Path destFile = Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath(),
+              arguments.getCurrentFolder(), file.getName());
 
-      Path sourceThumb = Paths.get(getConfiguration().getThumbsPath(), file.getType()
-              + file.getFolder() + file.getName());
+      Path sourceThumb = Paths.get(getConfiguration().getThumbsPath(), file.getType(),
+              file.getFolder(), file.getName());
       try {
         if (!Files.exists(sourceFile) || !Files.isRegularFile(sourceFile)) {
           appendErrorNodeChild(arguments, Constants.Errors.CKFINDER_CONNECTOR_ERROR_FILE_NOT_FOUND,
@@ -265,17 +265,13 @@ public class MoveFilesCommand extends XMLCommand<MoveFilesArguments> implements 
    */
   private void moveThumb(FilePostParam file, MoveFilesArguments arguments) throws IOException {
     Path sourceThumbFile = Paths.get(getConfiguration().getThumbsPath(),
-            file.getType()
-            + file.getFolder() + file.getName());
+            file.getType(), file.getFolder(), file.getName());
     Path destThumbFile = Paths.get(getConfiguration().getThumbsPath(),
-            arguments.getType()
-            + arguments.getCurrentFolder()
-            + file.getName()
+            arguments.getType(), arguments.getCurrentFolder(), file.getName()
     );
 
     FileUtils.copyFromSourceToDestFile(sourceThumbFile, destThumbFile,
             true);
-
   }
 
   @Override

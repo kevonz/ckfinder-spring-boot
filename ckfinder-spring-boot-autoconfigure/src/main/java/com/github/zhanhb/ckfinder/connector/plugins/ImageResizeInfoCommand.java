@@ -86,8 +86,8 @@ public class ImageResizeInfoCommand extends XMLCommand<ImageResizeInfoArguments>
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
     }
 
-    Path imageFile = Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath()
-            + arguments.getCurrentFolder(),
+    Path imageFile = Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath(),
+            arguments.getCurrentFolder(),
             arguments.getFileName());
 
     try {

@@ -395,7 +395,7 @@ public enum XmlConfigurationParser {
         case "directory":
           String thumbsDir = nullNodeToString(childNode);
           builder.thumbsDir(thumbsDir);
-          Path file = Paths.get(PathUtils.removeSlashFromEnd(thumbsDir.replace(Constants.BASE_DIR_PLACEHOLDER, baseFolder)));
+          Path file = Paths.get(thumbsDir.replace(Constants.BASE_DIR_PLACEHOLDER, baseFolder));
           if (file == null) {
             throw new ConnectorException(Constants.Errors.CKFINDER_CONNECTOR_ERROR_FOLDER_NOT_FOUND,
                     "Thumbs directory could not be created using specified path.");

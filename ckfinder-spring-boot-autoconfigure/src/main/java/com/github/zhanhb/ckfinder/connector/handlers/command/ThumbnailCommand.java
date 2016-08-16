@@ -234,8 +234,8 @@ public class ThumbnailCommand extends Command<ThumbnailArguments> {
     arguments.setThumbFile(Paths.get(arguments.getFullCurrentPath(), arguments.getFileName()));
     try {
       if (!Files.exists(arguments.getThumbFile())) {
-        Path orginFile = Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath()
-                + arguments.getCurrentFolder(), arguments.getFileName());
+        Path orginFile = Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath(),
+                arguments.getCurrentFolder(), arguments.getFileName());
         if (!Files.exists(orginFile)) {
           throw new ConnectorException(
                   Constants.Errors.CKFINDER_CONNECTOR_ERROR_FILE_NOT_FOUND);

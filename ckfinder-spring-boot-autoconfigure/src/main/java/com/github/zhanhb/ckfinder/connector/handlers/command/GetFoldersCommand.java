@@ -67,8 +67,8 @@ public class GetFoldersCommand extends XMLCommand<GetFoldersArguments> {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
     }
 
-    Path dir = Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath()
-            + arguments.getCurrentFolder());
+    Path dir = Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath(),
+            arguments.getCurrentFolder());
     try {
       if (!Files.exists(dir)) {
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_FOLDER_NOT_FOUND;
@@ -107,9 +107,8 @@ public class GetFoldersCommand extends XMLCommand<GetFoldersArguments> {
   private void createFoldersData(Element rootElement, GetFoldersArguments arguments) throws IOException {
     Element element = arguments.getDocument().createElement("Folders");
     for (String dirPath : arguments.getDirectories()) {
-      Path dir = Paths.get(this.getConfiguration().getTypes().get(arguments.getType()).getPath()
-              + arguments.getCurrentFolder()
-              + dirPath);
+      Path dir = Paths.get(this.getConfiguration().getTypes().get(arguments.getType()).getPath(),
+              arguments.getCurrentFolder(), dirPath);
       if (Files.exists(dir)) {
         XmlElementData.Builder xmlElementData = XmlElementData.builder().name("Folder");
         xmlElementData.attribute(new XmlAttribute("name", dirPath));
@@ -123,8 +122,8 @@ public class GetFoldersCommand extends XMLCommand<GetFoldersArguments> {
         xmlElementData.attribute(new XmlAttribute("acl",
                 String.valueOf(getConfiguration().getAccessControl()
                         .checkACLForRole(arguments.getType(),
-                        arguments.getCurrentFolder()
-                        + dirPath, arguments.getUserRole()))));
+                                arguments.getCurrentFolder()
+                                + dirPath, arguments.getUserRole()))));
         xmlElementData.build().addToDocument(arguments.getDocument(), element);
       }
     }

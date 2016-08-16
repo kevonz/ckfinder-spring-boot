@@ -127,7 +127,6 @@ public class CopyFilesCommand extends XMLCommand<CopyFilesArguments> implements 
           appendErrorNodeChild(arguments, Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_EXTENSION,
                   file.getName(), file.getFolder(), file.getType());
           continue;
-
         }
       }
       if (FileUtils.isDirectoryHidden(file.getFolder(), this.getConfiguration())) {
@@ -143,10 +142,10 @@ public class CopyFilesCommand extends XMLCommand<CopyFilesArguments> implements 
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_UNAUTHORIZED;
       }
 
-      Path sourceFile = Paths.get(getConfiguration().getTypes().get(file.getType()).getPath()
-              + file.getFolder(), file.getName());
-      Path destFile = Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath()
-              + arguments.getCurrentFolder(), file.getName());
+      Path sourceFile = Paths.get(getConfiguration().getTypes().get(file.getType()).getPath(),
+              file.getFolder(), file.getName());
+      Path destFile = Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath(),
+              arguments.getCurrentFolder(), file.getName());
 
       try {
         if (!Files.exists(sourceFile) || !Files.isRegularFile(sourceFile)) {
@@ -259,17 +258,17 @@ public class CopyFilesCommand extends XMLCommand<CopyFilesArguments> implements 
    */
   private void copyThumb(FilePostParam file, CopyFilesArguments arguments) throws IOException {
     Path sourceThumbFile = Paths.get(getConfiguration().getThumbsPath(),
-            file.getType()
-            + file.getFolder(), file.getName());
+            file.getType(), file.getFolder(), file.getName());
     Path destThumbFile = Paths.get(getConfiguration().getThumbsPath(),
-            arguments.getType()
-            + arguments.getCurrentFolder(), file.getName());
+            arguments.getType(), arguments.getCurrentFolder(),
+            file.getName());
+
+    log.debug("copy thumb from '{}' to '{}'", sourceThumbFile, destThumbFile);
 
     if (Files.isRegularFile(sourceThumbFile) && Files.exists(sourceThumbFile)) {
       FileUtils.copyFromSourceToDestFile(sourceThumbFile, destThumbFile,
               false);
     }
-
   }
 
   @Override

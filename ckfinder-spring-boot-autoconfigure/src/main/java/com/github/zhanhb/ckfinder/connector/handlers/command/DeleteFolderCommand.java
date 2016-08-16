@@ -60,8 +60,8 @@ public class DeleteFolderCommand extends XMLCommand<XMLArguments> implements IPo
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
     }
 
-    Path dir = Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath()
-            + arguments.getCurrentFolder());
+    Path dir = Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath(),
+            arguments.getCurrentFolder());
 
     try {
       if (!Files.exists(dir) || !Files.isDirectory(dir)) {
@@ -70,8 +70,7 @@ public class DeleteFolderCommand extends XMLCommand<XMLArguments> implements IPo
 
       if (FileUtils.delete(dir)) {
         Path thumbDir = Paths.get(getConfiguration().getThumbsPath(),
-                arguments.getType()
-                + arguments.getCurrentFolder());
+                arguments.getType(), arguments.getCurrentFolder());
         FileUtils.delete(thumbDir);
       } else {
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_ACCESS_DENIED;

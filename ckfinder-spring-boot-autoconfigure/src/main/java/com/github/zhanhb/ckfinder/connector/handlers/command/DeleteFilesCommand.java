@@ -112,7 +112,7 @@ public class DeleteFilesCommand extends XMLCommand<DeleteFilesArguments> impleme
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_UNAUTHORIZED;
       }
 
-      Path file = Paths.get(getConfiguration().getTypes().get(fileItem.getType()).getPath() + fileItem.getFolder(), fileItem.getName());
+      Path file = Paths.get(getConfiguration().getTypes().get(fileItem.getType()).getPath(), fileItem.getFolder(), fileItem.getName());
 
       try {
         arguments.setAddDeleteNode(true);
@@ -122,14 +122,17 @@ public class DeleteFilesCommand extends XMLCommand<DeleteFilesArguments> impleme
           continue;
         }
 
+        log.debug("prepare delete file '{}'", file);
         if (FileUtils.delete(file)) {
           Path thumbFile = Paths.get(getConfiguration().getThumbsPath(),
-                  fileItem.getType() + arguments.getCurrentFolder(), fileItem.getName());
+                  fileItem.getType(), arguments.getCurrentFolder(), fileItem.getName());
           arguments.filesDeletedPlus();
 
           try {
+            log.debug("prepare delete thumb file '{}'", thumbFile);
             FileUtils.delete(thumbFile);
-          } catch (Exception exp) {
+          } catch (Exception ignore) {
+            log.debug("delete thumb file '{}' failed", thumbFile);
             // No errors if we are not able to delete the thumb.
           }
         } else { //If access is denied, report error and try to delete rest of files.
