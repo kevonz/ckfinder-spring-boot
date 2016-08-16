@@ -91,7 +91,7 @@ public class ImageResizeCommad extends XMLCommand<ImageResizeArguments> implemen
             arguments.getCurrentFolder(),
             arguments.getFileName());
     try {
-      if (!(Files.exists(file) && Files.isRegularFile(file))) {
+      if (!Files.isRegularFile(file)) {
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_FILE_NOT_FOUND;
       }
 

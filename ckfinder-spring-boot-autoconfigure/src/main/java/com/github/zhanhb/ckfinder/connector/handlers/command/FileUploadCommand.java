@@ -445,7 +445,7 @@ public class FileUploadCommand extends Command<FileUploadArguments> implements I
     if (isTypeExists(arguments, tmpType)) {
       Path currDir = Paths.get(getConfiguration().getTypes().get(tmpType).getPath(),
               arguments.getCurrentFolder());
-      if (Files.exists(currDir) && Files.isDirectory(currDir)) {
+      if (Files.isDirectory(currDir)) {
         return true;
       } else {
         arguments.setErrorCode(Constants.Errors.CKFINDER_CONNECTOR_ERROR_FOLDER_NOT_FOUND);

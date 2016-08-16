@@ -110,7 +110,7 @@ public class XMLErrorCommand extends XMLCommand<XMLErrorArguments> {
     if (isTypeExists(arguments, tmpType)) {
       Path currDir = Paths.get(getConfiguration().getTypes().get(tmpType).getPath(),
               arguments.getCurrentFolder());
-      if (Files.exists(currDir) && Files.isDirectory(currDir)) {
+      if (Files.isDirectory(currDir)) {
         return true;
       } else {
         arguments.setConnectorException(new ConnectorException(

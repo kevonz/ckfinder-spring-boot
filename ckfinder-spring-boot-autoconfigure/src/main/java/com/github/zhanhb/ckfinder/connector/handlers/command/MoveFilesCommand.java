@@ -152,7 +152,7 @@ public class MoveFilesCommand extends XMLCommand<MoveFilesArguments> implements 
       Path sourceThumb = Paths.get(getConfiguration().getThumbsPath(), file.getType(),
               file.getFolder(), file.getName());
       try {
-        if (!Files.exists(sourceFile) || !Files.isRegularFile(sourceFile)) {
+        if (!Files.isRegularFile(sourceFile)) {
           appendErrorNodeChild(arguments, Constants.Errors.CKFINDER_CONNECTOR_ERROR_FILE_NOT_FOUND,
                   file.getName(), file.getFolder(), file.getType());
           continue;

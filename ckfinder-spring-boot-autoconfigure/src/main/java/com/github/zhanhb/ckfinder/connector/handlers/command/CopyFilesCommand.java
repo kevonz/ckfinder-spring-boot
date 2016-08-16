@@ -148,7 +148,7 @@ public class CopyFilesCommand extends XMLCommand<CopyFilesArguments> implements 
               arguments.getCurrentFolder(), file.getName());
 
       try {
-        if (!Files.exists(sourceFile) || !Files.isRegularFile(sourceFile)) {
+        if (!Files.isRegularFile(sourceFile)) {
           appendErrorNodeChild(arguments, Constants.Errors.CKFINDER_CONNECTOR_ERROR_FILE_NOT_FOUND,
                   file.getName(), file.getFolder(), file.getType());
           continue;
@@ -265,7 +265,7 @@ public class CopyFilesCommand extends XMLCommand<CopyFilesArguments> implements 
 
     log.debug("copy thumb from '{}' to '{}'", sourceThumbFile, destThumbFile);
 
-    if (Files.isRegularFile(sourceThumbFile) && Files.exists(sourceThumbFile)) {
+    if (Files.isRegularFile(sourceThumbFile)) {
       FileUtils.copyFromSourceToDestFile(sourceThumbFile, destThumbFile,
               false);
     }

@@ -137,7 +137,7 @@ public abstract class Command<T extends Arguments> {
       if (isTypeExists(arguments, tmpType)) {
         Path currDir = Paths.get(getConfiguration().getTypes().get(tmpType).getPath(),
                 arguments.getCurrentFolder());
-        if (!Files.exists(currDir) || !Files.isDirectory(currDir)) {
+        if (!Files.isDirectory(currDir)) {
           throw new ConnectorException(
                   Constants.Errors.CKFINDER_CONNECTOR_ERROR_FOLDER_NOT_FOUND,
                   false);

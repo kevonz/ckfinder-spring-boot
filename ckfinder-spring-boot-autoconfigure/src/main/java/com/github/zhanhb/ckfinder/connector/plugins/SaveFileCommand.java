@@ -74,7 +74,7 @@ public class SaveFileCommand extends XMLCommand<SaveFileArguments> implements Be
             arguments.getCurrentFolder(), arguments.getFileName());
 
     try {
-      if (!(Files.exists(sourceFile) && Files.isRegularFile(sourceFile))) {
+      if (!Files.isRegularFile(sourceFile)) {
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_FILE_NOT_FOUND;
       }
       Files.write(sourceFile, arguments.getFileContent().getBytes("UTF-8"));

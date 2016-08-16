@@ -64,7 +64,7 @@ public class DeleteFolderCommand extends XMLCommand<XMLArguments> implements IPo
             arguments.getCurrentFolder());
 
     try {
-      if (!Files.exists(dir) || !Files.isDirectory(dir)) {
+      if (!Files.isDirectory(dir)) {
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_FOLDER_NOT_FOUND;
       }
 
