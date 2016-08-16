@@ -35,13 +35,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.w3c.dom.Element;
 
 @Slf4j
-public class ImageResizeCommad extends XMLCommand<ImageResizeArguments> implements BeforeExecuteCommandEventHandler {
+public class ImageResizeCommand extends XMLCommand<ImageResizeArguments> implements BeforeExecuteCommandEventHandler {
 
   private static final String[] SIZES = {"small", "medium", "large"};
 
   private final PluginInfo pluginInfo;
 
-  public ImageResizeCommad(PluginInfo pluginInfo) {
+  public ImageResizeCommand(PluginInfo pluginInfo) {
     super(ImageResizeArguments::new);
     this.pluginInfo = pluginInfo;
   }
