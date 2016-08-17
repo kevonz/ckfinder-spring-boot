@@ -19,7 +19,7 @@ import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
  *
  * @param <T> actual event arguments type
  */
-public interface IEventHandler<T extends EventArgs> {
+public interface IEventHandler<T> {
 
   /**
    * execute event handler.

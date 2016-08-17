@@ -25,7 +25,7 @@ import org.w3c.dom.Element;
 @Getter
 @RequiredArgsConstructor
 @ToString
-public class InitCommandEventArgs extends EventArgs {
+public class InitCommandEventArgs {
 
   private final Document document;
   private final Element rootElement;

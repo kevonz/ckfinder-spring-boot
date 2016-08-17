@@ -25,7 +25,7 @@ import lombok.ToString;
 @Getter
 @RequiredArgsConstructor
 @ToString
-public class BeforeExecuteCommandEventArgs extends EventArgs {
+public class BeforeExecuteCommandEventArgs {
 
   private final String command;
   private final HttpServletRequest request;

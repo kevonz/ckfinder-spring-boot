@@ -15,7 +15,6 @@ import com.github.zhanhb.ckfinder.connector.data.AfterFileUploadEventArgs;
 import com.github.zhanhb.ckfinder.connector.data.AfterFileUploadEventHandler;
 import com.github.zhanhb.ckfinder.connector.data.BeforeExecuteCommandEventArgs;
 import com.github.zhanhb.ckfinder.connector.data.BeforeExecuteCommandEventHandler;
-import com.github.zhanhb.ckfinder.connector.data.EventArgs;
 import com.github.zhanhb.ckfinder.connector.data.IEventHandler;
 import com.github.zhanhb.ckfinder.connector.data.InitCommandEventArgs;
 import com.github.zhanhb.ckfinder.connector.data.InitCommandEventHandler;
@@ -33,7 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 public class Events {
 
   @SuppressWarnings({"BroadCatchBlock", "TooBroadCatch"})
-  private static <T extends EventArgs> boolean run(List<? extends IEventHandler<T>> handlers,
+  private static <T> boolean run(List<? extends IEventHandler<T>> handlers,
           T args, IConfiguration configuration) throws ConnectorException {
     log.trace("{}", handlers);
     for (IEventHandler<T> eventHandler : handlers) {

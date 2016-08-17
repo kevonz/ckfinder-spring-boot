@@ -24,7 +24,7 @@ import lombok.ToString;
 @Getter
 @RequiredArgsConstructor
 @ToString
-public class AfterFileUploadEventArgs extends EventArgs {
+public class AfterFileUploadEventArgs {
 
   private final String currentFolder;
   private final Path file;
