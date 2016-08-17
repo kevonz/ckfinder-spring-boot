@@ -274,7 +274,7 @@ public class ThumbnailCommand extends Command<ThumbnailArguments> {
       response.setHeader("Last-Modified", FORMATTER.format(instant));
 
       if (etag.equals(arguments.getIfNoneMatch())
-              || lastModifiedTime.toMillis() <= arguments.getIfModifiedSince()) {
+              || lastModifiedTime.toMillis() <= arguments.getIfModifiedSince() + 1000L) {
         return false;
       }
 
