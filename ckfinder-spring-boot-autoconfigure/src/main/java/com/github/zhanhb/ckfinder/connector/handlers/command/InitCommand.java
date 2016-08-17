@@ -190,7 +190,7 @@ public class InitCommand extends XMLCommand<XMLArguments> {
     for (String key : types) {
       ResourceType resourceType = getConfiguration().getTypes().get(key);
       if (((arguments.getType() == null || arguments.getType().equals(key)) && resourceType != null)
-              && getConfiguration().getAccessControl().checkFolderACL(key, "/", arguments.getUserRole(),
+              && getConfiguration().getAccessControl().hasPermission(key, "/", arguments.getUserRole(),
                       AccessControl.CKFINDER_CONNECTOR_ACL_FOLDER_VIEW)) {
 
         Element childElement = arguments.getDocument().

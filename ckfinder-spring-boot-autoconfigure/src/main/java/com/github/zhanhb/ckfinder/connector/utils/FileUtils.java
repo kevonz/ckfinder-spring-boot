@@ -470,7 +470,7 @@ public class FileUtils {
         for (Path path : list) {
           String subDirName = path.getFileName().toString();
           if (!FileUtils.isDirectoryHidden(subDirName, configuration)
-                  && accessControl.checkFolderACL(resourceType,
+                  && accessControl.hasPermission(resourceType,
                           dirPath + subDirName, currentUserRole, AccessControl.CKFINDER_CONNECTOR_ACL_FOLDER_VIEW)) {
             return true;
           }

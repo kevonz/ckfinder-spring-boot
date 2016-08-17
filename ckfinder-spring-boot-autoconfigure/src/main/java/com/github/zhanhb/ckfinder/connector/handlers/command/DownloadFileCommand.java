@@ -49,7 +49,7 @@ public class DownloadFileCommand extends Command<DownloadFileArguments> {
     arguments.setFile(Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath(),
             arguments.getCurrentFolder(), arguments.getFileName()));
 
-    if (!getConfiguration().getAccessControl().checkFolderACL(arguments.getType(),
+    if (!getConfiguration().getAccessControl().hasPermission(arguments.getType(),
             arguments.getCurrentFolder(), arguments.getUserRole(),
             AccessControl.CKFINDER_CONNECTOR_ACL_FILE_VIEW)) {
       throw new ConnectorException(

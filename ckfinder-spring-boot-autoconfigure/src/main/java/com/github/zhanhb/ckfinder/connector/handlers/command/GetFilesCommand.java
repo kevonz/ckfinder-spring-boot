@@ -86,7 +86,7 @@ public class GetFilesCommand extends XMLCommand<GetFilesArguments> {
     arguments.setFullCurrentPath(Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath(),
             arguments.getCurrentFolder()).toString());
 
-    if (!getConfiguration().getAccessControl().checkFolderACL(arguments.getType(),
+    if (!getConfiguration().getAccessControl().hasPermission(arguments.getType(),
             arguments.getCurrentFolder(), arguments.getUserRole(),
             AccessControl.CKFINDER_CONNECTOR_ACL_FILE_VIEW)) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_UNAUTHORIZED;

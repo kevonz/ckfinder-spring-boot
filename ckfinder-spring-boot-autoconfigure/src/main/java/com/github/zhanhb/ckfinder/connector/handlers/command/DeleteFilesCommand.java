@@ -107,7 +107,7 @@ public class DeleteFilesCommand extends XMLCommand<DeleteFilesArguments> impleme
 
       }
 
-      if (!getConfiguration().getAccessControl().checkFolderACL(fileItem.getType(), fileItem.getFolder(), arguments.getUserRole(),
+      if (!getConfiguration().getAccessControl().hasPermission(fileItem.getType(), fileItem.getFolder(), arguments.getUserRole(),
               AccessControl.CKFINDER_CONNECTOR_ACL_FILE_DELETE)) {
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_UNAUTHORIZED;
       }

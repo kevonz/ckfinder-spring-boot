@@ -74,7 +74,7 @@ public final class AccessControl {
    * @param currentUserRole user role
    * @return true if acl flag is true
    */
-  public boolean checkFolderACL(String resourceType, String folder, String currentUserRole, int acl) {
+  public boolean hasPermission(String resourceType, String folder, String currentUserRole, int acl) {
     return (checkACLForRole(resourceType, folder, currentUserRole) & acl) == acl;
   }
 

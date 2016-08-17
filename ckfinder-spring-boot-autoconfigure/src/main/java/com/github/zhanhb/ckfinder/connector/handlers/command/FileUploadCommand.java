@@ -173,7 +173,7 @@ public class FileUploadCommand extends Command<FileUploadArguments> implements I
    * @return true if uploaded correctly.
    */
   private boolean uploadFile(HttpServletRequest request, FileUploadArguments arguments) {
-    if (!getConfiguration().getAccessControl().checkFolderACL(arguments.getType(),
+    if (!getConfiguration().getAccessControl().hasPermission(arguments.getType(),
             arguments.getCurrentFolder(), arguments.getUserRole(),
             AccessControl.CKFINDER_CONNECTOR_ACL_FILE_UPLOAD)) {
       arguments.setErrorCode(Constants.Errors.CKFINDER_CONNECTOR_ERROR_UNAUTHORIZED);
