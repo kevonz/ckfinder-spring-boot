@@ -14,7 +14,6 @@ package com.github.zhanhb.ckfinder.connector.handlers.command;
 import com.github.zhanhb.ckfinder.connector.configuration.Constants;
 import com.github.zhanhb.ckfinder.connector.configuration.IConfiguration;
 import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
-import com.github.zhanhb.ckfinder.connector.handlers.arguments.ErrorNode;
 import com.github.zhanhb.ckfinder.connector.handlers.arguments.XMLArguments;
 import com.github.zhanhb.ckfinder.connector.utils.XMLCreator;
 import java.io.IOException;
@@ -147,53 +146,10 @@ public abstract class XMLCommand<T extends XMLArguments> extends Command<T> {
    * response.
    *
    * @param arguments
-   * @return true if must.
+   * @return true if must
    */
   protected boolean mustAddCurrentFolderNode(T arguments) {
     return arguments.getType() != null && arguments.getCurrentFolder() != null;
-  }
-
-  /**
-   * save errors node to list.
-   *
-   * @param arguments
-   * @param errorCode error code
-   * @param name file name
-   * @param path current folder
-   * @param type resource type
-   */
-  @SuppressWarnings("FinalMethod")
-  protected final void appendErrorNodeChild(T arguments, int errorCode, String name, String path, String type) {
-    arguments.getErrorList().add(ErrorNode.builder().type(type).name(name).folder(path).errorCode(errorCode).build());
-  }
-
-  /**
-   * checks if error list contains errors.
-   *
-   * @param arguments
-   * @return true if there are any errors.
-   */
-  @SuppressWarnings("FinalMethod")
-  protected final boolean hasErrors(T arguments) {
-    return !arguments.getErrorList().isEmpty();
-  }
-
-  /**
-   * add all error nodes from saved list to xml.
-   *
-   * @param arguments
-   * @param errorsNode XML errors node
-   */
-  @SuppressWarnings("FinalMethod")
-  protected final void addErrors(T arguments, Element errorsNode) {
-    for (ErrorNode item : arguments.getErrorList()) {
-      Element childElem = arguments.getDocument().createElement("Error");
-      childElem.setAttribute("code", String.valueOf(item.getErrorCode()));
-      childElem.setAttribute("name", item.getName());
-      childElem.setAttribute("type", item.getType());
-      childElem.setAttribute("folder", item.getFolder());
-      errorsNode.appendChild(childElem);
-    }
   }
 
 }

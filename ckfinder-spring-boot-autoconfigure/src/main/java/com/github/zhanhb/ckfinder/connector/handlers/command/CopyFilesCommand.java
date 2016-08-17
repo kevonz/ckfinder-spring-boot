@@ -18,6 +18,7 @@ import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
 import com.github.zhanhb.ckfinder.connector.handlers.arguments.CopyFilesArguments;
 import com.github.zhanhb.ckfinder.connector.utils.AccessControl;
 import com.github.zhanhb.ckfinder.connector.utils.FileUtils;
+import com.github.zhanhb.ckfinder.connector.utils.XMLCreator;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -40,9 +41,9 @@ public class CopyFilesCommand extends XMLCommand<CopyFilesArguments> implements 
 
   @Override
   protected void createXMLChildNodes(int errorNum, Element rootElement, CopyFilesArguments arguments) {
-    if (hasErrors(arguments)) {
+    if (XMLCreator.INSTANCE.hasErrors(arguments)) {
       Element errorsNode = arguments.getDocument().createElement("Errors");
-      addErrors(arguments, errorsNode);
+      XMLCreator.INSTANCE.addErrors(arguments, errorsNode);
       rootElement.appendChild(errorsNode);
     }
 
@@ -115,7 +116,7 @@ public class CopyFilesCommand extends XMLCommand<CopyFilesArguments> implements 
       }
       if (FileUtils.checkFileExtension(file.getName(),
               this.getConfiguration().getTypes().get(arguments.getType())) == 1) {
-        appendErrorNodeChild(arguments, Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_EXTENSION,
+        XMLCreator.INSTANCE.appendErrorNodeChild(arguments, Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_EXTENSION,
                 file.getName(), file.getFolder(), file.getType());
         continue;
       }
@@ -124,7 +125,7 @@ public class CopyFilesCommand extends XMLCommand<CopyFilesArguments> implements 
       if (!arguments.getType().equals(file.getType())) {
         if (FileUtils.checkFileExtension(file.getName(),
                 this.getConfiguration().getTypes().get(file.getType())) == 1) {
-          appendErrorNodeChild(arguments, Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_EXTENSION,
+          XMLCreator.INSTANCE.appendErrorNodeChild(arguments, Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_EXTENSION,
                   file.getName(), file.getFolder(), file.getType());
           continue;
         }
@@ -149,39 +150,39 @@ public class CopyFilesCommand extends XMLCommand<CopyFilesArguments> implements 
 
       try {
         if (!Files.isRegularFile(sourceFile)) {
-          appendErrorNodeChild(arguments, Constants.Errors.CKFINDER_CONNECTOR_ERROR_FILE_NOT_FOUND,
+          XMLCreator.INSTANCE.appendErrorNodeChild(arguments, Constants.Errors.CKFINDER_CONNECTOR_ERROR_FILE_NOT_FOUND,
                   file.getName(), file.getFolder(), file.getType());
           continue;
         }
         if (!arguments.getType().equals(file.getType())) {
           long maxSize = getConfiguration().getTypes().get(arguments.getType()).getMaxSize();
           if (maxSize != 0 && maxSize < Files.size(sourceFile)) {
-            appendErrorNodeChild(arguments, Constants.Errors.CKFINDER_CONNECTOR_ERROR_UPLOADED_TOO_BIG,
+            XMLCreator.INSTANCE.appendErrorNodeChild(arguments, Constants.Errors.CKFINDER_CONNECTOR_ERROR_UPLOADED_TOO_BIG,
                     file.getName(), file.getFolder(), file.getType());
             continue;
           }
         }
         if (sourceFile.equals(destFile)) {
-          appendErrorNodeChild(arguments, Constants.Errors.CKFINDER_CONNECTOR_ERROR_SOURCE_AND_TARGET_PATH_EQUAL,
+          XMLCreator.INSTANCE.appendErrorNodeChild(arguments, Constants.Errors.CKFINDER_CONNECTOR_ERROR_SOURCE_AND_TARGET_PATH_EQUAL,
                   file.getName(), file.getFolder(), file.getType());
         } else if (Files.exists(destFile)) {
           if (file.getOptions() != null
                   && file.getOptions().contains("overwrite")) {
             if (!handleOverwrite(sourceFile, destFile)) {
-              appendErrorNodeChild(arguments, Constants.Errors.CKFINDER_CONNECTOR_ERROR_ACCESS_DENIED,
+              XMLCreator.INSTANCE.appendErrorNodeChild(arguments, Constants.Errors.CKFINDER_CONNECTOR_ERROR_ACCESS_DENIED,
                       file.getName(), file.getFolder(), file.getType());
             } else {
               arguments.filesCopiedPlus();
             }
           } else if (file.getOptions() != null && file.getOptions().contains("autorename")) {
             if (!handleAutoRename(sourceFile, destFile)) {
-              appendErrorNodeChild(arguments, Constants.Errors.CKFINDER_CONNECTOR_ERROR_ACCESS_DENIED,
+              XMLCreator.INSTANCE.appendErrorNodeChild(arguments, Constants.Errors.CKFINDER_CONNECTOR_ERROR_ACCESS_DENIED,
                       file.getName(), file.getFolder(), file.getType());
             } else {
               arguments.filesCopiedPlus();
             }
           } else {
-            appendErrorNodeChild(arguments, Constants.Errors.CKFINDER_CONNECTOR_ERROR_ALREADY_EXIST,
+            XMLCreator.INSTANCE.appendErrorNodeChild(arguments, Constants.Errors.CKFINDER_CONNECTOR_ERROR_ALREADY_EXIST,
                     file.getName(), file.getFolder(), file.getType());
           }
         } else if (FileUtils.copyFromSourceToDestFile(sourceFile, destFile,
@@ -191,12 +192,12 @@ public class CopyFilesCommand extends XMLCommand<CopyFilesArguments> implements 
         }
       } catch (SecurityException | IOException e) {
         log.error("", e);
-        appendErrorNodeChild(arguments, Constants.Errors.CKFINDER_CONNECTOR_ERROR_ACCESS_DENIED,
+        XMLCreator.INSTANCE.appendErrorNodeChild(arguments, Constants.Errors.CKFINDER_CONNECTOR_ERROR_ACCESS_DENIED,
                 file.getName(), file.getFolder(), file.getType());
       }
     }
     arguments.setAddCopyNode(true);
-    if (hasErrors(arguments)) {
+    if (XMLCreator.INSTANCE.hasErrors(arguments)) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_COPY_FAILED;
     } else {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_NONE;

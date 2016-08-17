@@ -18,6 +18,7 @@ import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
 import com.github.zhanhb.ckfinder.connector.handlers.arguments.DeleteFilesArguments;
 import com.github.zhanhb.ckfinder.connector.utils.AccessControl;
 import com.github.zhanhb.ckfinder.connector.utils.FileUtils;
+import com.github.zhanhb.ckfinder.connector.utils.XMLCreator;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -39,9 +40,9 @@ public class DeleteFilesCommand extends XMLCommand<DeleteFilesArguments> impleme
 
   @Override
   protected void createXMLChildNodes(int errorNum, Element rootElement, DeleteFilesArguments arguments) {
-    if (hasErrors(arguments)) {
+    if (XMLCreator.INSTANCE.hasErrors(arguments)) {
       Element errorsNode = arguments.getDocument().createElement("Errors");
-      addErrors(arguments, errorsNode);
+      XMLCreator.INSTANCE.addErrors(arguments, errorsNode);
       rootElement.appendChild(errorsNode);
     }
 
@@ -117,7 +118,7 @@ public class DeleteFilesCommand extends XMLCommand<DeleteFilesArguments> impleme
       try {
         arguments.setAddDeleteNode(true);
         if (!Files.exists(file)) {
-          appendErrorNodeChild(arguments, Constants.Errors.CKFINDER_CONNECTOR_ERROR_FILE_NOT_FOUND,
+          XMLCreator.INSTANCE.appendErrorNodeChild(arguments, Constants.Errors.CKFINDER_CONNECTOR_ERROR_FILE_NOT_FOUND,
                   fileItem.getName(), fileItem.getFolder(), fileItem.getType());
           continue;
         }
@@ -136,7 +137,7 @@ public class DeleteFilesCommand extends XMLCommand<DeleteFilesArguments> impleme
             // No errors if we are not able to delete the thumb.
           }
         } else { //If access is denied, report error and try to delete rest of files.
-          appendErrorNodeChild(arguments, Constants.Errors.CKFINDER_CONNECTOR_ERROR_ACCESS_DENIED,
+          XMLCreator.INSTANCE.appendErrorNodeChild(arguments, Constants.Errors.CKFINDER_CONNECTOR_ERROR_ACCESS_DENIED,
                   fileItem.getName(), fileItem.getFolder(), fileItem.getType());
         }
       } catch (SecurityException e) {
@@ -145,7 +146,7 @@ public class DeleteFilesCommand extends XMLCommand<DeleteFilesArguments> impleme
 
       }
     }
-    if (hasErrors(arguments)) {
+    if (XMLCreator.INSTANCE.hasErrors(arguments)) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_DELETE_FAILED;
     } else {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_NONE;
