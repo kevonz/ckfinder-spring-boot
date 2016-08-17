@@ -35,9 +35,27 @@ public class XMLErrorCommand extends XMLCommand<XMLErrorArguments> {
   }
 
   @Override
-  protected void initParams(XMLErrorArguments arguments, HttpServletRequest request, IConfiguration configuration)
+  @SuppressWarnings("FinalMethod")
+  protected final void initParams(XMLErrorArguments arguments, HttpServletRequest request, IConfiguration configuration)
           throws ConnectorException {
-    super.initParams(arguments, request, configuration);
+    try {
+      super.initParams(arguments, request, configuration);
+    } catch (ConnectorException ex) {
+      switch (ex.getErrorCode()) {
+        case Constants.Errors.CKFINDER_CONNECTOR_ERROR_CONNECTOR_DISABLED:
+          arguments.setConnectorException(new ConnectorException(
+                  Constants.Errors.CKFINDER_CONNECTOR_ERROR_CONNECTOR_DISABLED));
+          break;
+        case Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST:
+          arguments.setConnectorException(new ConnectorException(
+                  Constants.Errors.CKFINDER_CONNECTOR_ERROR_CONNECTOR_DISABLED));
+          break;
+        case Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_NAME:
+          break;
+        default:
+          throw ex;
+      }
+    }
     if (arguments.getConnectorException().isAddCurrentFolder()) {
       String tmpType = request.getParameter("type");
       if (isTypeExists(arguments, tmpType)) {
@@ -58,45 +76,6 @@ public class XMLErrorCommand extends XMLCommand<XMLErrorArguments> {
   @Override
   String getErrorMsg(XMLErrorArguments arguments) {
     return arguments.getConnectorException().getMessage();
-  }
-
-  /**
-   * for error command there should be no exception throw because there is no
-   * more exception handlers.
-   *
-   * @param reqParam request param
-   * @param arguments
-   * @return true if validation passed
-   */
-  @Override
-  protected boolean isRequestPathValid(String reqParam, XMLErrorArguments arguments) {
-    try {
-      return super.isRequestPathValid(reqParam, arguments);
-    } catch (ConnectorException ex) {
-      return false;
-    }
-  }
-
-  @Override
-  protected boolean isConnectorEnabled(XMLErrorArguments arguments) {
-    try {
-      return super.isConnectorEnabled(arguments);
-    } catch (ConnectorException ex) {
-      arguments.setConnectorException(new ConnectorException(
-              Constants.Errors.CKFINDER_CONNECTOR_ERROR_CONNECTOR_DISABLED));
-      return false;
-    }
-  }
-
-  @Override
-  protected boolean isHidden(XMLErrorArguments arguments) {
-    try {
-      return super.isHidden(arguments);
-    } catch (ConnectorException ex) {
-      arguments.setConnectorException(new ConnectorException(
-              Constants.Errors.CKFINDER_CONNECTOR_ERROR_CONNECTOR_DISABLED));
-      return true;
-    }
   }
 
   @Override

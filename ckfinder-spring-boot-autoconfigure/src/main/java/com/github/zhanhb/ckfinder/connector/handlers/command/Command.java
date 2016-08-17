@@ -98,31 +98,30 @@ public abstract class Command<T extends Arguments> {
     setCurrentFolderParam(request, arguments);
 
     String currentFolder = arguments.getCurrentFolder();
-    if (isConnectorEnabled(arguments) && isRequestPathValid(currentFolder, arguments)) {
-      currentFolder = PathUtils.escape(currentFolder);
-      arguments.setCurrentFolder(currentFolder);
-      if (!isHidden(arguments)) {
-        if (currentFolder == null || currentFolder.isEmpty()
-                || isCurrFolderExists(arguments, request)) {
-          arguments.setType(request.getParameter("type"));
-        }
-      }
+    checkConnectorEnabled();
+    checkRequestPathValid(currentFolder);
+
+    currentFolder = PathUtils.escape(currentFolder);
+    arguments.setCurrentFolder(currentFolder);
+    checkCurrentDirectoryHidden(arguments.getCurrentFolder());
+
+    if (currentFolder == null || currentFolder.isEmpty()
+            || isCurrFolderExists(arguments, request)) {
+      arguments.setType(request.getParameter("type"));
     }
   }
 
   /**
    * check if connector is enabled and checks authentication.
    *
-   * @param arguments
    * @return true if connector is enabled and user is authenticated
    * @throws ConnectorException when connector is disabled
    */
-  protected boolean isConnectorEnabled(T arguments) throws ConnectorException {
+  private void checkConnectorEnabled() throws ConnectorException {
     if (!getConfiguration().isEnabled()) {
       throw new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_CONNECTOR_DISABLED, false);
     }
-    return true;
   }
 
   /**
@@ -133,6 +132,7 @@ public abstract class Command<T extends Arguments> {
    * @return {@code true} if current folder exists
    * @throws ConnectorException if current folder doesn't exist
    */
+  @Deprecated
   protected boolean isCurrFolderExists(T arguments, HttpServletRequest request)
           throws ConnectorException {
     String tmpType = request.getParameter("type");
@@ -160,6 +160,7 @@ public abstract class Command<T extends Arguments> {
    * @param type name of the resource type to check if it exists
    * @return {@code true} if provided type exists, {@code false} otherwise.
    */
+  @Deprecated
   protected boolean isTypeExists(T arguments, String type) {
     ResourceType testType = getConfiguration().getTypes().get(type);
     return testType != null;
@@ -168,17 +169,16 @@ public abstract class Command<T extends Arguments> {
   /**
    * checks if current folder is hidden.
    *
-   * @param arguments
+   * @param currentDirectory
    * @return false if isn't.
    * @throws ConnectorException when is hidden
    */
-  protected boolean isHidden(T arguments) throws ConnectorException {
-    if (FileUtils.isDirectoryHidden(arguments.getCurrentFolder(), getConfiguration())) {
+  private void checkCurrentDirectoryHidden(String currentDirectory) throws ConnectorException {
+    if (FileUtils.isDirectoryHidden(currentDirectory, getConfiguration())) {
       throw new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST,
               false);
     }
-    return false;
   }
 
   /**
@@ -207,17 +207,16 @@ public abstract class Command<T extends Arguments> {
    * @return true if validation passed
    * @throws ConnectorException if validation error occurs.
    */
-  boolean isRequestPathValid(String reqParam, T arguments) throws ConnectorException {
+  @Deprecated
+  final void checkRequestPathValid(String reqParam) throws ConnectorException {
     if (reqParam == null || reqParam.isEmpty()) {
-      return true;
+      return;
     }
     if (Pattern.compile(Constants.INVALID_PATH_REGEX).matcher(reqParam).find()) {
       throw new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_NAME,
               false);
     }
-
-    return true;
   }
 
   /**
@@ -226,7 +225,8 @@ public abstract class Command<T extends Arguments> {
    * @param request request
    * @param arguments
    */
-  protected void setCurrentFolderParam(HttpServletRequest request, T arguments) {
+  @Deprecated
+  void setCurrentFolderParam(HttpServletRequest request, T arguments) {
     String currFolder = request.getParameter("currentFolder");
     if (currFolder == null || currFolder.isEmpty()) {
       arguments.setCurrentFolder("/");

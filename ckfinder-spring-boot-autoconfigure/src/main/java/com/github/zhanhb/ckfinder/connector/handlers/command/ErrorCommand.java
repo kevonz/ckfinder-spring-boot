@@ -18,7 +18,6 @@ import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
 import com.github.zhanhb.ckfinder.connector.handlers.arguments.ErrorArguments;
 import com.github.zhanhb.ckfinder.connector.utils.PathUtils;
 import java.io.IOException;
-import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -69,52 +68,12 @@ public class ErrorCommand extends Command<ErrorArguments> {
   @Override
   protected void initParams(ErrorArguments arguments, HttpServletRequest request, IConfiguration configuration)
           throws ConnectorException {
-    super.initParams(arguments, request, configuration);
-  }
-
-  /**
-   * for error command there should be no exception thrown because there are no
-   * more exception handlers.
-   *
-   * @param reqParam request param
-   * @param arguments
-   * @return true if validation passed
-   * @throws ConnectorException it should never throw an exception
-   */
-  @Override
-  protected boolean isRequestPathValid(String reqParam, ErrorArguments arguments) throws ConnectorException {
-    return reqParam == null || reqParam.isEmpty()
-            || !Pattern.compile(Constants.INVALID_PATH_REGEX).matcher(reqParam).find();
-  }
-
-  @Override
-  protected boolean isHidden(ErrorArguments arguments) {
     try {
-      return super.isHidden(arguments);
+      super.initParams(arguments, request, configuration);
     } catch (ConnectorException ex) {
-      arguments.setConnectorException(ex);
-      return true;
-    }
-  }
-
-  @Override
-  protected boolean isConnectorEnabled(ErrorArguments arguments) throws ConnectorException {
-    try {
-      return super.isConnectorEnabled(arguments);
-    } catch (ConnectorException ex) {
-      arguments.setConnectorException(ex);
-      return false;
-    }
-  }
-
-  @Override
-  protected boolean isCurrFolderExists(ErrorArguments arguments, HttpServletRequest request)
-          throws ConnectorException {
-    try {
-      return super.isCurrFolderExists(arguments, request);
-    } catch (ConnectorException ex) {
-      arguments.setConnectorException(ex);
-      return false;
+      if (ex.getErrorCode() != Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_NAME) {
+        arguments.setConnectorException(ex);
+      }
     }
   }
 
@@ -127,6 +86,18 @@ public class ErrorCommand extends Command<ErrorArguments> {
       return false;
     }
     return true;
+  }
+
+  @Deprecated
+  @Override
+  protected boolean isCurrFolderExists(ErrorArguments arguments, HttpServletRequest request)
+          throws ConnectorException {
+    try {
+      return super.isCurrFolderExists(arguments, request);
+    } catch (ConnectorException ex) {
+      arguments.setConnectorException(ex);
+      return false;
+    }
   }
 
   @Override

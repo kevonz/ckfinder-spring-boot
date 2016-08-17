@@ -62,7 +62,7 @@ public class CreateFolderCommand extends XMLCommand<CreateFolderArguments> imple
   @Override
   protected int getDataForXml(CreateFolderArguments arguments) {
     try {
-      isRequestPathValid(arguments.getNewFolderName(), arguments);
+      checkRequestPathValid(arguments.getNewFolderName());
     } catch (ConnectorException e) {
       return e.getErrorCode();
     }
