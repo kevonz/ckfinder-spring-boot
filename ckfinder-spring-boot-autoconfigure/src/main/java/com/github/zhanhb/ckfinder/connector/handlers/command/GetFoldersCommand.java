@@ -58,7 +58,7 @@ public class GetFoldersCommand extends XMLCommand<GetFoldersArguments> {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE;
     }
 
-    if (!getConfiguration().getAccessControl().checkFolderACL(arguments.getType(),
+    if (!getConfiguration().getAccessControl().hasPermission(arguments.getType(),
             arguments.getCurrentFolder(), arguments.getUserRole(),
             AccessControl.CKFINDER_CONNECTOR_ACL_FOLDER_VIEW)) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_UNAUTHORIZED;
@@ -89,7 +89,7 @@ public class GetFoldersCommand extends XMLCommand<GetFoldersArguments> {
    */
   private void filterListByHiddenAndNotAllowed(GetFoldersArguments arguments) {
     List<String> tmpDirs = arguments.getDirectories().stream()
-            .filter(dir -> (getConfiguration().getAccessControl().checkFolderACL(arguments.getType(), arguments.getCurrentFolder() + dir, arguments.getUserRole(),
+            .filter(dir -> (getConfiguration().getAccessControl().hasPermission(arguments.getType(), arguments.getCurrentFolder() + dir, arguments.getUserRole(),
                     AccessControl.CKFINDER_CONNECTOR_ACL_FOLDER_VIEW)
                     && !FileUtils.isDirectoryHidden(dir, getConfiguration())))
             .collect(Collectors.toList());

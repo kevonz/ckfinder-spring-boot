@@ -464,13 +464,15 @@ public class FileUtils {
    * @return true if there are any allowed and non-hidden subfolders.
    * @throws java.io.IOException
    */
-  public static boolean hasChildren(AccessControl accessControl, String dirPath, Path dir, IConfiguration configuration, String resourceType, String currentUserRole) throws IOException {
+  public static boolean hasChildren(AccessControl accessControl, String dirPath,
+          Path dir, IConfiguration configuration, String resourceType,
+          String currentUserRole) throws IOException {
     try (DirectoryStream<Path> list = Files.newDirectoryStream(dir, Files::isDirectory)) {
       if (list != null) {
         for (Path path : list) {
           String subDirName = path.getFileName().toString();
           if (!FileUtils.isDirectoryHidden(subDirName, configuration)
-                  && accessControl.checkFolderACL(resourceType,
+                  && accessControl.hasPermission(resourceType,
                           dirPath + subDirName, currentUserRole, AccessControl.CKFINDER_CONNECTOR_ACL_FOLDER_VIEW)) {
             return true;
           }

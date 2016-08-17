@@ -71,7 +71,7 @@ public class CopyFilesCommand extends XMLCommand<CopyFilesArguments> implements 
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE;
     }
 
-    if (!getConfiguration().getAccessControl().checkFolderACL(arguments.getType(),
+    if (!getConfiguration().getAccessControl().hasPermission(arguments.getType(),
             arguments.getCurrentFolder(),
             arguments.getUserRole(),
             AccessControl.CKFINDER_CONNECTOR_ACL_FILE_RENAME
@@ -137,7 +137,7 @@ public class CopyFilesCommand extends XMLCommand<CopyFilesArguments> implements 
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
       }
 
-      if (!getConfiguration().getAccessControl().checkFolderACL(file.getType(), file.getFolder(), arguments.getUserRole(),
+      if (!getConfiguration().getAccessControl().hasPermission(file.getType(), file.getFolder(), arguments.getUserRole(),
               AccessControl.CKFINDER_CONNECTOR_ACL_FILE_VIEW)) {
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_UNAUTHORIZED;
       }
@@ -227,6 +227,7 @@ public class CopyFilesCommand extends XMLCommand<CopyFilesArguments> implements 
       if (!Files.exists(newDestFile)) {
         // can't be in one if=, because when error in
         // copy file occurs then it will be infinity loop
+        log.debug("prepare copy file '{}' to '{}'", sourceFile, newDestFile);
         return (FileUtils.copyFromSourceToDestFile(sourceFile,
                 newDestFile,
                 false));

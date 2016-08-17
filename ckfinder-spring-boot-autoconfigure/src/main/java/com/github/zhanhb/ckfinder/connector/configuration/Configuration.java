@@ -40,7 +40,7 @@ public class Configuration implements IConfiguration {
   @Singular
   private final Map<String, ResourceType> types;
   private final boolean thumbsEnabled;
-  private final String thumbsURL;
+  private final String thumbsUrl;
   private final String thumbsDir;
   private final String thumbsPath;
   private final boolean thumbsDirectAccess;
@@ -76,7 +76,7 @@ public class Configuration implements IConfiguration {
       imgWidth = DEFAULT_IMG_WIDTH;
       imgHeight = DEFAULT_IMG_HEIGHT;
       imgQuality = DEFAULT_IMG_QUALITY;
-      thumbsURL = "";
+      thumbsUrl = "";
       thumbsDir = "";
       thumbsPath = "";
       thumbsQuality = DEFAULT_IMG_QUALITY;

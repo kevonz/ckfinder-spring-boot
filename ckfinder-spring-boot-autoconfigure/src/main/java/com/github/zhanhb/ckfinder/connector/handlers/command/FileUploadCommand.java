@@ -149,12 +149,14 @@ public class FileUploadCommand extends Command<FileUploadArguments> implements I
    * @param arguments
    * @param request request
    * @param configuration connector configuration.
-   * @throws ConnectorException when error occurs.
    */
   @Override
-  protected void initParams(FileUploadArguments arguments, HttpServletRequest request, IConfiguration configuration)
-          throws ConnectorException {
-    super.initParams(arguments, request, configuration);
+  protected void initParams(FileUploadArguments arguments, HttpServletRequest request, IConfiguration configuration) {
+    try {
+      super.initParams(arguments, request, configuration);
+    } catch (ConnectorException ex) {
+      arguments.setErrorCode(ex.getErrorCode());
+    }
     arguments.setCkFinderFuncNum(request.getParameter("CKFinderFuncNum"));
     arguments.setCkEditorFuncNum(request.getParameter("CKEditorFuncNum"));
     arguments.setResponseType(request.getParameter("response_type") != null ? request.getParameter("response_type") : request.getParameter("responseType"));
@@ -173,7 +175,7 @@ public class FileUploadCommand extends Command<FileUploadArguments> implements I
    * @return true if uploaded correctly.
    */
   private boolean uploadFile(HttpServletRequest request, FileUploadArguments arguments) {
-    if (!getConfiguration().getAccessControl().checkFolderACL(arguments.getType(),
+    if (!getConfiguration().getAccessControl().hasPermission(arguments.getType(),
             arguments.getCurrentFolder(), arguments.getUserRole(),
             AccessControl.CKFINDER_CONNECTOR_ACL_FILE_UPLOAD)) {
       arguments.setErrorCode(Constants.Errors.CKFINDER_CONNECTOR_ERROR_UNAUTHORIZED);
@@ -392,46 +394,6 @@ public class FileUploadCommand extends Command<FileUploadArguments> implements I
     Matcher m = p.matcher(item.getSubmittedFileName());
 
     return (m.find()) ? m.group(0) : "";
-  }
-
-  /**
-   * @param errorCode the errorCode to set
-   */
-  /**
-   * check request for security issue.
-   *
-   * @param reqParam request param
-   * @param arguments
-   * @return true if validation passed
-   */
-  @Override
-  boolean isRequestPathValid(String reqParam, FileUploadArguments arguments) {
-    try {
-      return super.isRequestPathValid(reqParam, arguments);
-    } catch (ConnectorException ex) {
-      arguments.setErrorCode(Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_NAME);
-      return false;
-    }
-  }
-
-  @Override
-  protected boolean isHidden(FileUploadArguments arguments) {
-    try {
-      return super.isHidden(arguments);
-    } catch (ConnectorException ex) {
-      arguments.setErrorCode(Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST);
-      return true;
-    }
-  }
-
-  @Override
-  protected boolean isConnectorEnabled(FileUploadArguments arguments) {
-    try {
-      return super.isConnectorEnabled(arguments);
-    } catch (ConnectorException ex) {
-      arguments.setErrorCode(Constants.Errors.CKFINDER_CONNECTOR_ERROR_CONNECTOR_DISABLED);
-      return false;
-    }
   }
 
   @Override

@@ -31,7 +31,6 @@ public interface IConfiguration {
   float DEFAULT_IMG_QUALITY = 0.8f;
   String DEFAULT_THUMBS_URL = "_thumbs/";
   String DEFAULT_THUMBS_DIR = "%BASE_DIR%_thumbs/";
-  boolean DEFAULT_CHECKAUTHENTICATION = true;
   String DEFAULT_BASE_URL = "/userfiles";
 
   /**
@@ -102,7 +101,7 @@ public interface IConfiguration {
    *
    * @return thumbs url
    */
-  public String getThumbsURL();
+  public String getThumbsUrl();
 
   /**
    * gets path to thumbs directory.
@@ -229,6 +228,10 @@ public interface IConfiguration {
    */
   public AccessControl getAccessControl();
 
+  /**
+   *
+   * @return the watermarkSettings
+   */
   public WatermarkSettings getWatermarkSettings();
 
 }

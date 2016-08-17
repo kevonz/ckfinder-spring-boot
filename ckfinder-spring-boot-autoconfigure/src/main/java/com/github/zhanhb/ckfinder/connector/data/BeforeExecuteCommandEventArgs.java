@@ -19,13 +19,13 @@ import lombok.ToString;
 
 /**
  * Event data for
- * {@link com.github.zhanhb.ckfinder.connector.configuration.Events.Builder#beforeExecuteCommandEventHandler(com.github.zhanhb.ckfinder.connector.data.IEventHandler) }
+ * {@link com.github.zhanhb.ckfinder.connector.configuration.Events.Builder#beforeExecuteCommandEventHandler(com.github.zhanhb.ckfinder.connector.data.BeforeExecuteCommandEventHandler) }
  * event.
  */
 @Getter
 @RequiredArgsConstructor
 @ToString
-public class BeforeExecuteCommandEventArgs extends EventArgs {
+public class BeforeExecuteCommandEventArgs {
 
   private final String command;
   private final HttpServletRequest request;
