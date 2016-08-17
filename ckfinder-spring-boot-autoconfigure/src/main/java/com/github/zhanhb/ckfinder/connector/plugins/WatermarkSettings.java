@@ -11,13 +11,9 @@
  */
 package com.github.zhanhb.ckfinder.connector.plugins;
 
-import com.github.zhanhb.ckfinder.connector.configuration.IConfiguration;
-import com.github.zhanhb.ckfinder.connector.data.PluginInfo;
-import com.github.zhanhb.ckfinder.connector.data.PluginParam;
 import lombok.Builder;
 import lombok.Getter;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.ResourceLoader;
 
 @Builder(builderClassName = "Builder")
 @Getter
@@ -29,45 +25,6 @@ public class WatermarkSettings {
   public static final String QUALITY = "quality";
   public static final String MARGIN_BOTTOM = "marginBottom";
   public static final String MARGIN_RIGHT = "marginRight";
-
-  /**
-   * @param configuration
-   * @param resourceLoader
-   * @return
-   * @throws Exception
-   */
-  public static WatermarkSettings createFromConfiguration(IConfiguration configuration, ResourceLoader resourceLoader) throws Exception {
-    Builder settings = WatermarkSettings.builder();
-
-    for (PluginInfo pluginInfo : configuration.getPlugins()) {
-      if (WATERMARK.equals(pluginInfo.getName())) {
-        for (PluginParam param : pluginInfo.getParams()) {
-          final String name = param.getName();
-          final String value = param.getValue();
-          switch (name) {
-            case SOURCE:
-              settings.source(resourceLoader.getResource(value));
-              break;
-            case TRANSPARENCY:
-              settings.transparency(Float.parseFloat(value));
-              break;
-            case QUALITY:
-              final int parseInt = Integer.parseInt(value);
-              final int name1 = parseInt % 101;
-              final float name2 = name1 / 100f;
-              settings.quality(name2);
-              break;
-            case MARGIN_BOTTOM:
-              settings.marginBottom(Integer.parseInt(value));
-              break;
-            case MARGIN_RIGHT:
-              settings.marginRight(Integer.parseInt(value));
-          }
-        }
-      }
-    }
-    return settings.build();
-  }
 
   private final Resource source;
   private final float transparency;

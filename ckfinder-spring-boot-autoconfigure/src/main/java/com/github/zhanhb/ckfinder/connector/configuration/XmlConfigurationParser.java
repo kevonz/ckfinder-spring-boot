@@ -48,6 +48,12 @@ import static com.github.zhanhb.ckfinder.connector.configuration.IConfiguration.
 import static com.github.zhanhb.ckfinder.connector.configuration.IConfiguration.DEFAULT_IMG_QUALITY;
 import static com.github.zhanhb.ckfinder.connector.configuration.IConfiguration.DEFAULT_IMG_WIDTH;
 import static com.github.zhanhb.ckfinder.connector.configuration.IConfiguration.DEFAULT_THUMB_MAX_WIDTH;
+import static com.github.zhanhb.ckfinder.connector.plugins.WatermarkSettings.MARGIN_BOTTOM;
+import static com.github.zhanhb.ckfinder.connector.plugins.WatermarkSettings.MARGIN_RIGHT;
+import static com.github.zhanhb.ckfinder.connector.plugins.WatermarkSettings.QUALITY;
+import static com.github.zhanhb.ckfinder.connector.plugins.WatermarkSettings.SOURCE;
+import static com.github.zhanhb.ckfinder.connector.plugins.WatermarkSettings.TRANSPARENCY;
+import static com.github.zhanhb.ckfinder.connector.plugins.WatermarkSettings.WATERMARK;
 
 /**
  * Class loads configuration from XML file.
@@ -80,9 +86,7 @@ public enum XmlConfigurationParser {
     Configuration.Builder builder = Configuration.builder();
     String baseFolder = getBaseFolder(basePathBuilder);
     init(builder, resourceLoader, xmlFilePath, baseFolder, basePathBuilder);
-    final WatermarkSettings settings = WatermarkSettings.createFromConfiguration(builder.build(),
-            resourceLoader);
-    return builder.watermarkSettings(settings).build();
+    return builder.build();
   }
 
   /**
@@ -189,7 +193,7 @@ public enum XmlConfigurationParser {
             }
             break;
           case "plugins":
-            setPlugins(builder, childNode);
+            setPlugins(builder, childNode, resourceLoader);
             break;
         }
       }
@@ -552,7 +556,7 @@ public enum XmlConfigurationParser {
    *
    * @param childNode child of XML node 'plugins'.
    */
-  private void setPlugins(Configuration.Builder builder, Node childNode) {
+  private void setPlugins(Configuration.Builder builder, Node childNode, ResourceLoader resourceLoader) {
     Events.Builder eventBuilder = Events.builder();
     NodeList nodeList = childNode.getChildNodes();
     for (int i = 0, j = nodeList.getLength(); i < j; i++) {
@@ -566,9 +570,45 @@ public enum XmlConfigurationParser {
           plugin.registerEventHandlers(eventBuilder);
         } catch (InstantiationException | IllegalAccessException ex) {
         }
+        WatermarkSettings watermarkSettings = checkPluginInfo(pluginInfo, resourceLoader);
+
+        if (watermarkSettings != null) {
+          builder.watermarkSettings(watermarkSettings);
+        }
       }
     }
     builder.events(eventBuilder.build());
+  }
+
+  private WatermarkSettings checkPluginInfo(PluginInfo pluginInfo, ResourceLoader resourceLoader) {
+    if (WATERMARK.equals(pluginInfo.getName())) {
+      WatermarkSettings.Builder settings = WatermarkSettings.builder();
+      for (PluginParam param : pluginInfo.getParams()) {
+        final String name = param.getName();
+        final String value = param.getValue();
+        switch (name) {
+          case SOURCE:
+            settings.source(resourceLoader.getResource(value));
+            break;
+          case TRANSPARENCY:
+            settings.transparency(Float.parseFloat(value));
+            break;
+          case QUALITY:
+            final int parseInt = Integer.parseInt(value);
+            final int name1 = parseInt % 101;
+            final float name2 = name1 / 100f;
+            settings.quality(name2);
+            break;
+          case MARGIN_BOTTOM:
+            settings.marginBottom(Integer.parseInt(value));
+            break;
+          case MARGIN_RIGHT:
+            settings.marginRight(Integer.parseInt(value));
+        }
+      }
+      return settings.build();
+    }
+    return null;
   }
 
   /**
