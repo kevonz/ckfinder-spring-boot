@@ -258,9 +258,10 @@ public class InitCommand extends XMLCommand<XMLArguments> {
     return false;
   }
 
+  @Deprecated
   @Override
-  protected void setCurrentFolderParam(HttpServletRequest request, XMLArguments arguments) {
-    arguments.setCurrentFolder(null);
+  String getCurrentFolderParam(HttpServletRequest request) {
+    return null;
   }
 
 }

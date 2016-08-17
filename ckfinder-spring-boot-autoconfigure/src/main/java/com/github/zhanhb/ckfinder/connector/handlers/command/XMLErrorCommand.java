@@ -104,12 +104,14 @@ public class XMLErrorCommand extends XMLCommand<XMLErrorArguments> {
     return arguments.getConnectorException().isAddCurrentFolder();
   }
 
+  @Deprecated
   @Override
-  protected void setCurrentFolderParam(HttpServletRequest request, XMLErrorArguments arguments) {
+  String getCurrentFolderParam(HttpServletRequest request) {
     String currFolder = request.getParameter("currentFolder");
-    if (!(currFolder == null || currFolder.isEmpty())) {
-      arguments.setCurrentFolder(PathUtils.addSlashToBeginning(PathUtils.addSlashToEnd(currFolder)));
+    if (currFolder != null && !currFolder.isEmpty()) {
+      return PathUtils.addSlashToBeginning(PathUtils.addSlashToEnd(currFolder));
     }
+    return null;
   }
 
 }

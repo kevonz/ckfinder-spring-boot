@@ -95,7 +95,7 @@ public abstract class Command<T extends Arguments> {
     String userRole = session == null ? null : (String) session.getAttribute(configuration.getUserRoleName());
     arguments.setUserRole(userRole);
 
-    setCurrentFolderParam(request, arguments);
+    arguments.setCurrentFolder(getCurrentFolderParam(request));
 
     String currentFolder = arguments.getCurrentFolder();
     checkConnectorEnabled();
@@ -226,12 +226,12 @@ public abstract class Command<T extends Arguments> {
    * @param arguments
    */
   @Deprecated
-  void setCurrentFolderParam(HttpServletRequest request, T arguments) {
+  String getCurrentFolderParam(HttpServletRequest request) {
     String currFolder = request.getParameter("currentFolder");
-    if (currFolder == null || currFolder.isEmpty()) {
-      arguments.setCurrentFolder("/");
+    if (currFolder != null && !currFolder.isEmpty()) {
+      return PathUtils.addSlashToBeginning(PathUtils.addSlashToEnd(currFolder));
     } else {
-      arguments.setCurrentFolder(PathUtils.addSlashToBeginning(PathUtils.addSlashToEnd(currFolder)));
+      return "/";
     }
   }
 

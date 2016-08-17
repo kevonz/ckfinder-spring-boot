@@ -100,12 +100,14 @@ public class ErrorCommand extends Command<ErrorArguments> {
     }
   }
 
+  @Deprecated
   @Override
-  protected void setCurrentFolderParam(HttpServletRequest request, ErrorArguments arguments) {
+  String getCurrentFolderParam(HttpServletRequest request) {
     String currFolder = request.getParameter("currentFolder");
-    if (!(currFolder == null || currFolder.isEmpty())) {
-      arguments.setCurrentFolder(PathUtils.addSlashToBeginning(PathUtils.addSlashToEnd(currFolder)));
+    if (currFolder != null && !currFolder.isEmpty()) {
+      return PathUtils.addSlashToBeginning(PathUtils.addSlashToEnd(currFolder));
     }
+    return null;
   }
 
 }
