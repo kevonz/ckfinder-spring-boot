@@ -389,7 +389,7 @@ public enum XmlConfigurationParser {
           builder.thumbsEnabled(Boolean.parseBoolean(nullNodeToString(childNode)));
           break;
         case "url":
-          builder.thumbsURL(PathUtils.escape(nullNodeToString(childNode).replace(Constants.BASE_URL_PLACEHOLDER,
+          builder.thumbsUrl(PathUtils.escape(nullNodeToString(childNode).replace(Constants.BASE_URL_PLACEHOLDER,
                   basePathBuilder.getBaseUrl())));
           break;
         case "directory":

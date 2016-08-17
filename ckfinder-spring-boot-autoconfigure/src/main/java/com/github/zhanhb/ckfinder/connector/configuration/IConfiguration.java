@@ -102,7 +102,7 @@ public interface IConfiguration {
    *
    * @return thumbs url
    */
-  public String getThumbsURL();
+  public String getThumbsUrl();
 
   /**
    * gets path to thumbs directory.
