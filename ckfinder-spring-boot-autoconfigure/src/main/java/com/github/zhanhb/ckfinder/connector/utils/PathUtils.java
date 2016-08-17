@@ -60,10 +60,10 @@ public class PathUtils {
    * string.
    */
   public static String addSlashToEnd(String string) {
-    if (string != null && !string.endsWith("/")) {
-      return string.concat("/");
+    if (string == null || string.endsWith("/")) {
+      return string;
     }
-    return string;
+    return string.concat("/");
   }
 
   /**

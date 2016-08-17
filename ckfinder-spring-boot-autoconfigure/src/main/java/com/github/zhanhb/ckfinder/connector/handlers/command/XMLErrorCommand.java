@@ -70,9 +70,9 @@ public class XMLErrorCommand extends XMLCommand<XMLErrorArguments> {
    */
   @Override
   protected boolean isRequestPathValid(String reqParam, XMLErrorArguments arguments) {
-    try{
+    try {
       return super.isRequestPathValid(reqParam, arguments);
-    }catch(ConnectorException ex){
+    } catch (ConnectorException ex) {
       return false;
     }
   }

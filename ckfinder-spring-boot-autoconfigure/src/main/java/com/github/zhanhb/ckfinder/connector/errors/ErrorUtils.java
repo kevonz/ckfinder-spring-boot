@@ -33,8 +33,7 @@ public enum ErrorUtils {
    * @return localized error message.
    */
   public String getErrorMsgByLangAndCode(String lang,
-          int errorCode,
-          IConfiguration conf) {
+          int errorCode, IConfiguration conf) {
     try {
       return ResourceBundle.getBundle(ErrorUtils.class.getPackage()
               .getName().concat(".LocalStrings"), new Locale(lang))

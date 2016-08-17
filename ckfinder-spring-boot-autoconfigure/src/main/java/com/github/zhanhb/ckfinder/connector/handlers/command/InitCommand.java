@@ -18,6 +18,7 @@ import com.github.zhanhb.ckfinder.connector.handlers.arguments.XMLArguments;
 import com.github.zhanhb.ckfinder.connector.utils.AccessControl;
 import com.github.zhanhb.ckfinder.connector.utils.FileUtils;
 import com.github.zhanhb.ckfinder.connector.utils.PathUtils;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
@@ -174,7 +175,7 @@ public class InitCommand extends XMLCommand<XMLArguments> {
    * @throws Exception when error occurs
    */
   @SuppressWarnings("CollectionWithoutInitialCapacity")
-  private void createResouceTypesData(Element rootElement, XMLArguments arguments) throws Exception {
+  private void createResouceTypesData(Element rootElement, XMLArguments arguments) throws IOException {
     //resurcetypes
     Element element = arguments.getDocument().createElement("ResourceTypes");
     rootElement.appendChild(element);

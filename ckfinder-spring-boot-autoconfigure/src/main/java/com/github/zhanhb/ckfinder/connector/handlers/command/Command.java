@@ -66,7 +66,8 @@ public abstract class Command<T extends Arguments> {
   }
 
   @Deprecated
-  public void runWithArguments(HttpServletRequest request,
+  @SuppressWarnings("FinalMethod")
+  public final void runWithArguments(HttpServletRequest request,
           HttpServletResponse response, IConfiguration configuration,
           T arguments) throws ConnectorException {
     this.initParams(arguments, request, configuration);
@@ -96,10 +97,12 @@ public abstract class Command<T extends Arguments> {
 
     setCurrentFolderParam(request, arguments);
 
-    if (isConnectorEnabled(arguments) && isRequestPathValid(arguments.getCurrentFolder(), arguments)) {
-      arguments.setCurrentFolder(PathUtils.escape(arguments.getCurrentFolder()));
+    String currentFolder = arguments.getCurrentFolder();
+    if (isConnectorEnabled(arguments) && isRequestPathValid(currentFolder, arguments)) {
+      currentFolder = PathUtils.escape(currentFolder);
+      arguments.setCurrentFolder(currentFolder);
       if (!isHidden(arguments)) {
-        if ((arguments.getCurrentFolder() == null || arguments.getCurrentFolder().isEmpty())
+        if (currentFolder == null || currentFolder.isEmpty()
                 || isCurrFolderExists(arguments, request)) {
           arguments.setType(request.getParameter("type"));
         }
@@ -230,19 +233,6 @@ public abstract class Command<T extends Arguments> {
     } else {
       arguments.setCurrentFolder(PathUtils.addSlashToBeginning(PathUtils.addSlashToEnd(currFolder)));
     }
-  }
-
-  /**
-   * If string provided as parameter is null, this method converts it to empty
-   * string.
-   *
-   * @param s string to check and convert if it is null
-   * @return empty string if parameter was {@code null} or unchanged string if
-   * parameter was nonempty string.
-   */
-  @SuppressWarnings("FinalMethod")
-  protected final String nullToString(String s) {
-    return s == null ? "" : s;
   }
 
 }

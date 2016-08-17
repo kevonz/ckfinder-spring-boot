@@ -28,6 +28,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
@@ -47,7 +48,7 @@ public class ThumbnailCommand extends Command<ThumbnailArguments> {
    * Backup map holding mime types for images just in case if they aren't set in
    * a request
    */
-  private static final HashMap<String, String> imgMimeTypeMap = new HashMap<>(57);
+  private static final Map<String, String> imgMimeTypeMap = new HashMap<>(57);
 
   static {
     imgMimeTypeMap.put(".art", "image/x-jg");
@@ -126,7 +127,7 @@ public class ThumbnailCommand extends Command<ThumbnailArguments> {
             FileUtils.getFileExtension(arguments.getFileName()).toLowerCase());
     String mimeType = sc.getMimeType(tempFileName);
     if (mimeType == null || mimeType.length() == 0) {
-      mimeType = ThumbnailCommand.imgMimeTypeMap.get(arguments.getFileName().toLowerCase().substring(arguments.getFileName().lastIndexOf('.')));
+      mimeType = imgMimeTypeMap.get(arguments.getFileName().substring(arguments.getFileName().lastIndexOf('.')).toLowerCase());
     }
 
     if (mimeType == null) {

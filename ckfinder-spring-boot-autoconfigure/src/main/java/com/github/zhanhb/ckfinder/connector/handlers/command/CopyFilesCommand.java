@@ -227,6 +227,7 @@ public class CopyFilesCommand extends XMLCommand<CopyFilesArguments> implements 
       if (!Files.exists(newDestFile)) {
         // can't be in one if=, because when error in
         // copy file occurs then it will be infinity loop
+        log.debug("prepare copy file '{}' to '{}'", sourceFile, newDestFile);
         return (FileUtils.copyFromSourceToDestFile(sourceFile,
                 newDestFile,
                 false));

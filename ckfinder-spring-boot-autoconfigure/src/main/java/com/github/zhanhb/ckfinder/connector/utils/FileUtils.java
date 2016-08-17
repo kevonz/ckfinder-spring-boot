@@ -464,7 +464,9 @@ public class FileUtils {
    * @return true if there are any allowed and non-hidden subfolders.
    * @throws java.io.IOException
    */
-  public static boolean hasChildren(AccessControl accessControl, String dirPath, Path dir, IConfiguration configuration, String resourceType, String currentUserRole) throws IOException {
+  public static boolean hasChildren(AccessControl accessControl, String dirPath,
+          Path dir, IConfiguration configuration, String resourceType,
+          String currentUserRole) throws IOException {
     try (DirectoryStream<Path> list = Files.newDirectoryStream(dir, Files::isDirectory)) {
       if (list != null) {
         for (Path path : list) {

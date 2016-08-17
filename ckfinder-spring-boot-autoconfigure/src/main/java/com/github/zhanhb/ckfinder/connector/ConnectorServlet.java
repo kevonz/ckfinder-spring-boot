@@ -146,11 +146,10 @@ public class ConnectorServlet extends HttpServlet {
   /**
    * Executes one of connector's predefined commands specified as parameter.
    *
-   * @param commandName string representing command name
+   * @param command command to run, null if not native command
    * @param request current request object
-   * @param respose current response object
+   * @param response current response object
    * @param configuration CKFinder connector configuration
-   * @param isNativeCommand flag indicating whether command is available in
    * enumeration object
    *
    * @throws ConnectorException when command isn't native
@@ -187,8 +186,8 @@ public class ConnectorServlet extends HttpServlet {
    * @param request request
    * @param response response
    * @param configuration connector configuration
-   * @param currentCommand current command
    * @throws ServletException when error handling fails.
+   * @param command current command
    */
   @SuppressWarnings({"BroadCatchBlock", "TooBroadCatch"})
   private void handleError(ConnectorException e, IConfiguration configuration,

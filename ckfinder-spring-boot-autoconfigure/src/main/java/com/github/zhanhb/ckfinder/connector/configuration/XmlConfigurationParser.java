@@ -32,6 +32,7 @@ import java.nio.file.Paths;
 import java.util.StringTokenizer;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
@@ -41,6 +42,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 import static com.github.zhanhb.ckfinder.connector.configuration.IConfiguration.DEFAULT_IMG_HEIGHT;
 import static com.github.zhanhb.ckfinder.connector.configuration.IConfiguration.DEFAULT_IMG_QUALITY;
@@ -72,7 +74,9 @@ public enum XmlConfigurationParser {
    * @return
    * @throws java.lang.Exception
    */
-  public Configuration parse(ResourceLoader resourceLoader, IBasePathBuilder basePathBuilder, String xmlFilePath) throws Exception {
+  public Configuration parse(ResourceLoader resourceLoader,
+          IBasePathBuilder basePathBuilder, String xmlFilePath)
+          throws Exception {
     Configuration.Builder builder = Configuration.builder();
     String baseFolder = getBaseFolder(basePathBuilder);
     init(builder, resourceLoader, xmlFilePath, baseFolder, basePathBuilder);
@@ -86,7 +90,9 @@ public enum XmlConfigurationParser {
    *
    * @throws Exception when error occurs.
    */
-  private void init(Configuration.Builder builder, ResourceLoader resourceLoader, String xmlFilePath, String baseFolder, IBasePathBuilder basePathBuilder) throws Exception {
+  private void init(Configuration.Builder builder, ResourceLoader resourceLoader,
+          String xmlFilePath, String baseFolder, IBasePathBuilder basePathBuilder)
+          throws ConnectorException, IOException, ParserConfigurationException, SAXException {
     Resource resource = getFullConfigPath(resourceLoader, xmlFilePath);
     DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
     DocumentBuilder db = dbf.newDocumentBuilder();
@@ -617,8 +623,7 @@ public enum XmlConfigurationParser {
    * Gets the path to base dir from configuration Crates the base dir folder if
    * it doesn't exists.
    *
-   * @param this connector configuration
-   * @param request request
+   * @param basePathBuilder the basePathBuilder
    * @return path to base dir from conf
    * @throws IOException when error during creating folder occurs
    */

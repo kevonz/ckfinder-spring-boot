@@ -57,7 +57,7 @@ public class ConnectorException extends Exception {
   public ConnectorException(int errorCode, String errorMsg) {
     super(errorMsg, null);
     this.errorCode = errorCode;
-    addCurrentFolder = false;
+    this.addCurrentFolder = false;
   }
 
   /**
@@ -69,7 +69,7 @@ public class ConnectorException extends Exception {
   public ConnectorException(int errorCode, Exception e) {
     super(e.getMessage(), e);
     this.errorCode = errorCode;
-    addCurrentFolder = false;
+    this.addCurrentFolder = false;
   }
 
   /**
@@ -80,11 +80,11 @@ public class ConnectorException extends Exception {
   public ConnectorException(Exception e) {
     super(e.getMessage(), e);
     if (e instanceof ConnectorException) {
-      errorCode = ((ConnectorException) e).getErrorCode();
-      addCurrentFolder = ((ConnectorException) e).isAddCurrentFolder();
+      this.errorCode = ((ConnectorException) e).getErrorCode();
+      this.addCurrentFolder = ((ConnectorException) e).isAddCurrentFolder();
     } else {
-      addCurrentFolder = false;
-      errorCode = Constants.Errors.CKFINDER_CONNECTOR_ERROR_UNKNOWN;
+      this.addCurrentFolder = false;
+      this.errorCode = Constants.Errors.CKFINDER_CONNECTOR_ERROR_UNKNOWN;
     }
   }
 
