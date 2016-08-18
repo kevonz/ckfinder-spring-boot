@@ -96,7 +96,7 @@ public class XMLErrorCommand extends XMLCommand<XMLErrorArguments> {
   }
 
   @Override
-  protected boolean mustAddCurrentFolderNode(XMLErrorArguments arguments) {
+  protected boolean shouldAddCurrentFolderNode(XMLErrorArguments arguments) {
     return arguments.getConnectorException().isAddCurrentFolder();
   }
 

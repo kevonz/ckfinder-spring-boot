@@ -254,7 +254,7 @@ public class InitCommand extends XMLCommand<XMLArguments> {
   }
 
   @Override
-  protected boolean mustAddCurrentFolderNode(XMLArguments arguments) {
+  protected boolean shouldAddCurrentFolderNode(XMLArguments arguments) {
     return false;
   }
 

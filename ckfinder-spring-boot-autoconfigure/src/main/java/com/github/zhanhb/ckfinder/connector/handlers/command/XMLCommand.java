@@ -77,7 +77,7 @@ public abstract class XMLCommand<T extends XMLArguments> extends Command<T> {
     if (arguments.getType() != null && !arguments.getType().isEmpty()) {
       rootElement.setAttribute("resourceType", arguments.getType());
     }
-    if (mustAddCurrentFolderNode(arguments)) {
+    if (shouldAddCurrentFolderNode(arguments)) {
       createCurrentFolderNode(arguments, rootElement);
     }
     XMLCreator.INSTANCE.addErrorCommandToRoot(arguments.getDocument(), rootElement, errorNum, getErrorMsg(arguments));
@@ -147,9 +147,9 @@ public abstract class XMLCommand<T extends XMLArguments> extends Command<T> {
    * response.
    *
    * @param arguments
-   * @return true if must
+   * @return true if should add
    */
-  protected boolean mustAddCurrentFolderNode(T arguments) {
+  protected boolean shouldAddCurrentFolderNode(T arguments) {
     return arguments.getType() != null && arguments.getCurrentFolder() != null;
   }
 
