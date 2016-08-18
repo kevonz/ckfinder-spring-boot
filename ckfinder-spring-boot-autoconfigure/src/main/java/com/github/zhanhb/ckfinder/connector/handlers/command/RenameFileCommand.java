@@ -61,10 +61,9 @@ public class RenameFileCommand extends XMLCommand<RenameFileArguments> implement
    *
    * @param arguments
    * @return error code or 0 if it's correct.
-   * @throws java.io.IOException
    */
   @Override
-  protected int getDataForXml(RenameFileArguments arguments) throws IOException {
+  protected int getDataForXml(RenameFileArguments arguments) {
     log.trace("getDataForXml");
 
     try {

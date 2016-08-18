@@ -63,7 +63,7 @@ public class GetFilesCommand extends XMLCommand<GetFilesArguments> {
   }
 
   @Override
-  protected void createXMLChildNodes(int errorNum, Element rootElement, GetFilesArguments arguments) throws IOException {
+  protected void createXMLChildNodes(int errorNum, Element rootElement, GetFilesArguments arguments) {
     if (errorNum == Constants.Errors.CKFINDER_CONNECTOR_ERROR_NONE) {
       createFilesData(rootElement, arguments);
     }
@@ -74,10 +74,9 @@ public class GetFilesCommand extends XMLCommand<GetFilesArguments> {
    *
    * @param arguments
    * @return 0 if ok, otherwise error code
-   * @throws java.io.IOException
    */
   @Override
-  protected int getDataForXml(GetFilesArguments arguments) throws IOException {
+  protected int getDataForXml(GetFilesArguments arguments) {
     try {
       checkTypeExists(arguments.getType());
     } catch (ConnectorException ex) {
@@ -100,7 +99,7 @@ public class GetFilesCommand extends XMLCommand<GetFilesArguments> {
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_FOLDER_NOT_FOUND;
       }
       arguments.setFiles(FileUtils.findChildrensList(dir, false));
-    } catch (SecurityException e) {
+    } catch (IOException | SecurityException e) {
       log.error("", e);
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_ACCESS_DENIED;
     }
@@ -129,22 +128,25 @@ public class GetFilesCommand extends XMLCommand<GetFilesArguments> {
    *
    * @param rootElement root element from XML.
    */
-  private void createFilesData(Element rootElement, GetFilesArguments arguments) throws IOException {
+  private void createFilesData(Element rootElement, GetFilesArguments arguments) {
     Element element = arguments.getDocument().createElement("Files");
     for (String filePath : arguments.getFiles()) {
       Path file = Paths.get(arguments.getFullCurrentPath(), filePath);
       if (Files.exists(file)) {
-        XmlElementData.Builder elementData = XmlElementData.builder().name("File");
-        elementData.attribute(new XmlAttribute("name", filePath))
-                .attribute(new XmlAttribute("date", FileUtils.parseLastModifDate(file)))
-                .attribute(new XmlAttribute("size", getSize(file)));
-        if (ImageUtils.isImageExtension(file) && isAddThumbsAttr(arguments)) {
-          String attr = createThumbAttr(file, arguments);
-          if (!attr.isEmpty()) {
-            elementData.attribute(new XmlAttribute("thumb", attr));
+        try {
+          XmlElementData.Builder elementData = XmlElementData.builder().name("File");
+          elementData.attribute(new XmlAttribute("name", filePath))
+                  .attribute(new XmlAttribute("date", FileUtils.parseLastModifDate(file)))
+                  .attribute(new XmlAttribute("size", getSize(file)));
+          if (ImageUtils.isImageExtension(file) && isAddThumbsAttr(arguments)) {
+            String attr = createThumbAttr(file, arguments);
+            if (!attr.isEmpty()) {
+              elementData.attribute(new XmlAttribute("thumb", attr));
+            }
           }
+          elementData.build().addToDocument(arguments.getDocument(), element);
+        } catch (IOException ex) {
         }
-        elementData.build().addToDocument(arguments.getDocument(), element);
       }
     }
     rootElement.appendChild(element);

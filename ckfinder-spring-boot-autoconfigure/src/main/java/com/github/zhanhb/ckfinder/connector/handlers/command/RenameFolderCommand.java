@@ -59,7 +59,7 @@ public class RenameFolderCommand extends XMLCommand<RenameFolderArguments> imple
   }
 
   @Override
-  protected int getDataForXml(RenameFolderArguments arguments) throws IOException {
+  protected int getDataForXml(RenameFolderArguments arguments) {
 
     try {
       checkRequestPathValid(arguments.getNewFolderName());

@@ -39,7 +39,7 @@ public class GetFoldersCommand extends XMLCommand<GetFoldersArguments> {
   }
 
   @Override
-  protected void createXMLChildNodes(int errorNum, Element rootElement, GetFoldersArguments arguments) throws IOException {
+  protected void createXMLChildNodes(int errorNum, Element rootElement, GetFoldersArguments arguments) {
     if (errorNum == Constants.Errors.CKFINDER_CONNECTOR_ERROR_NONE) {
       createFoldersData(rootElement, arguments);
     }
@@ -50,10 +50,9 @@ public class GetFoldersCommand extends XMLCommand<GetFoldersArguments> {
    *
    * @param arguments
    * @return 0 if everything went ok or error code otherwise
-   * @throws java.io.IOException
    */
   @Override
-  protected int getDataForXml(GetFoldersArguments arguments) throws IOException {
+  protected int getDataForXml(GetFoldersArguments arguments) {
     try {
       checkTypeExists(arguments.getType());
     } catch (ConnectorException ex) {
@@ -78,7 +77,7 @@ public class GetFoldersCommand extends XMLCommand<GetFoldersArguments> {
       }
 
       arguments.setDirectories(FileUtils.findChildrensList(dir, true));
-    } catch (SecurityException e) {
+    } catch (IOException | SecurityException e) {
       log.error("", e);
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_ACCESS_DENIED;
     }
@@ -107,7 +106,7 @@ public class GetFoldersCommand extends XMLCommand<GetFoldersArguments> {
    *
    * @param rootElement root element in XML document
    */
-  private void createFoldersData(Element rootElement, GetFoldersArguments arguments) throws IOException {
+  private void createFoldersData(Element rootElement, GetFoldersArguments arguments) {
     Element element = arguments.getDocument().createElement("Folders");
     for (String dirPath : arguments.getDirectories()) {
       Path dir = Paths.get(this.getConfiguration().getTypes().get(arguments.getType()).getPath(),
