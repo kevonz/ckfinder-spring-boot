@@ -14,6 +14,7 @@ package com.github.zhanhb.ckfinder.connector.configuration;
 import com.github.zhanhb.ckfinder.connector.data.PluginInfo;
 import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.Setter;
 
 /**
  * Base class for plugins.
@@ -21,6 +22,7 @@ import lombok.Getter;
 public abstract class Plugin {
 
   @Getter(AccessLevel.PROTECTED)
+  @Setter(AccessLevel.PACKAGE)
   private PluginInfo pluginInfo;
 
   /**
@@ -29,13 +31,5 @@ public abstract class Plugin {
    * @param eventHandler available event handlers.
    */
   protected abstract void registerEventHandlers(Events.Builder eventHandler);
-
-  /**
-   * @param pluginInfo the pluginInfo to set
-   */
-  @SuppressWarnings("FinalMethod")
-  public final void setPluginInfo(PluginInfo pluginInfo) {
-    this.pluginInfo = pluginInfo;
-  }
 
 }
