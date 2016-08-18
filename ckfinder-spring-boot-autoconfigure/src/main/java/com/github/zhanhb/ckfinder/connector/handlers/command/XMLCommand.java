@@ -91,6 +91,7 @@ public abstract class XMLCommand<T extends XMLArguments> extends Command<T> {
    * @param arguments
    * @return error message
    */
+  @Deprecated
   String getErrorMsg(T arguments) {
     return null;
   }

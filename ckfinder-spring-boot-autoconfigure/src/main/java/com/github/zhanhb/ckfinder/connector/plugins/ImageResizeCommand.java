@@ -62,9 +62,11 @@ public class ImageResizeCommand extends XMLCommand<ImageResizeArguments> impleme
 
   @Override
   protected int getDataForXml(ImageResizeArguments arguments) {
-    if (!isTypeExists(arguments, arguments.getType())) {
+    try {
+      checkTypeExists(arguments.getType());
+    } catch (ConnectorException ex) {
       arguments.setType(null);
-      return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE;
+      return ex.getErrorCode();
     }
 
     if (!getConfiguration().getAccessControl().hasPermission(arguments.getType(),

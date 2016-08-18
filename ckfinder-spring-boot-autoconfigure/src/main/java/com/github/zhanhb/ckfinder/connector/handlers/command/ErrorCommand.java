@@ -13,11 +13,13 @@ package com.github.zhanhb.ckfinder.connector.handlers.command;
 
 import com.github.zhanhb.ckfinder.connector.configuration.Constants;
 import com.github.zhanhb.ckfinder.connector.configuration.IConfiguration;
-import com.github.zhanhb.ckfinder.connector.data.ResourceType;
 import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
 import com.github.zhanhb.ckfinder.connector.handlers.arguments.ErrorArguments;
 import com.github.zhanhb.ckfinder.connector.utils.PathUtils;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -77,25 +79,25 @@ public class ErrorCommand extends Command<ErrorArguments> {
     }
   }
 
-  @Override
-  protected boolean isTypeExists(ErrorArguments arguments, String type) {
-    ResourceType testType = getConfiguration().getTypes().get(type);
-    if (testType == null) {
-      arguments.setConnectorException(new ConnectorException(
-              Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE, false));
-      return false;
-    }
-    return true;
-  }
-
   @Deprecated
   @Override
   protected boolean isCurrFolderExists(ErrorArguments arguments, HttpServletRequest request)
           throws ConnectorException {
+    String tmpType = request.getParameter("type");
     try {
-      return super.isCurrFolderExists(arguments, request);
+      checkTypeExists(tmpType);
     } catch (ConnectorException ex) {
-      arguments.setConnectorException(ex);
+      arguments.setConnectorException(new ConnectorException(
+              Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE, false));
+      return false;
+    }
+    Path currDir = Paths.get(getConfiguration().getTypes().get(tmpType).getPath(),
+            arguments.getCurrentFolder());
+    if (Files.isDirectory(currDir)) {
+      return true;
+    } else {
+      arguments.setConnectorException(new ConnectorException(
+              Constants.Errors.CKFINDER_CONNECTOR_ERROR_FOLDER_NOT_FOUND));
       return false;
     }
   }

@@ -75,9 +75,11 @@ public class DeleteFilesCommand extends XMLCommand<DeleteFilesArguments> impleme
 
     arguments.setAddDeleteNode(false);
 
-    if (!isTypeExists(arguments, arguments.getType())) {
+    try {
+      checkTypeExists(arguments.getType());
+    } catch (ConnectorException ex) {
       arguments.setType(null);
-      return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE;
+      return ex.getErrorCode();
     }
 
     for (FilePostParam fileItem : arguments.getFiles()) {

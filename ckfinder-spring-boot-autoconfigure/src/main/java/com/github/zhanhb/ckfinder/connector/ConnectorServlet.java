@@ -149,8 +149,7 @@ public class ConnectorServlet extends HttpServlet {
    * @param command command to run, null if not native command
    * @param request current request object
    * @param response current response object
-   * @param configuration CKFinder connector configuration
-   * enumeration object
+   * @param configuration CKFinder connector configuration enumeration object
    *
    * @throws ConnectorException when command isn't native
    * @throws IllegalArgumentException when provided command is not found in

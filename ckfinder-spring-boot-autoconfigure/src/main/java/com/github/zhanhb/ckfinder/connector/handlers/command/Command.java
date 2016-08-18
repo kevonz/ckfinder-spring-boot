@@ -137,18 +137,20 @@ public abstract class Command<T extends Arguments> {
           throws ConnectorException {
     String tmpType = request.getParameter("type");
     if (tmpType != null) {
-      if (isTypeExists(arguments, tmpType)) {
-        Path currDir = Paths.get(getConfiguration().getTypes().get(tmpType).getPath(),
-                arguments.getCurrentFolder());
-        if (!Files.isDirectory(currDir)) {
-          throw new ConnectorException(
-                  Constants.Errors.CKFINDER_CONNECTOR_ERROR_FOLDER_NOT_FOUND,
-                  false);
-        } else {
-          return true;
-        }
+      try {
+        checkTypeExists(tmpType);
+      } catch (ConnectorException ex) {
+        return false;
       }
-      return false;
+      Path currDir = Paths.get(getConfiguration().getTypes().get(tmpType).getPath(),
+              arguments.getCurrentFolder());
+      if (!Files.isDirectory(currDir)) {
+        throw new ConnectorException(
+                Constants.Errors.CKFINDER_CONNECTOR_ERROR_FOLDER_NOT_FOUND,
+                false);
+      } else {
+        return true;
+      }
     }
     return true;
   }
@@ -156,14 +158,17 @@ public abstract class Command<T extends Arguments> {
   /**
    * Checks if type of resource provided as parameter exists.
    *
-   * @param arguments
    * @param type name of the resource type to check if it exists
-   * @return {@code true} if provided type exists, {@code false} otherwise.
+   * @throws com.github.zhanhb.ckfinder.connector.errors.ConnectorException
    */
   @Deprecated
-  protected boolean isTypeExists(T arguments, String type) {
+  @SuppressWarnings("FinalMethod")
+  protected final void checkTypeExists(String type) throws ConnectorException {
     ResourceType testType = getConfiguration().getTypes().get(type);
-    return testType != null;
+    if (testType == null) {
+      throw new ConnectorException(
+              Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE, false);
+    }
   }
 
   /**
@@ -208,6 +213,7 @@ public abstract class Command<T extends Arguments> {
    * @throws ConnectorException if validation error occurs.
    */
   @Deprecated
+  @SuppressWarnings("FinalMethod")
   final void checkRequestPathValid(String reqParam) throws ConnectorException {
     if (reqParam == null || reqParam.isEmpty()) {
       return;

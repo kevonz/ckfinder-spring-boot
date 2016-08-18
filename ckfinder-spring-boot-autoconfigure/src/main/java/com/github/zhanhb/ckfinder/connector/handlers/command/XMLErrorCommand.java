@@ -58,8 +58,12 @@ public class XMLErrorCommand extends XMLCommand<XMLErrorArguments> {
     }
     if (arguments.getConnectorException().isAddCurrentFolder()) {
       String tmpType = request.getParameter("type");
-      if (isTypeExists(arguments, tmpType)) {
+      try {
+        checkTypeExists(tmpType);
         arguments.setType(tmpType);
+      } catch (ConnectorException ex) {
+        arguments.setConnectorException(new ConnectorException(
+                Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE, false));
       }
     }
   }
@@ -73,11 +77,13 @@ public class XMLErrorCommand extends XMLCommand<XMLErrorArguments> {
   protected void createXMLChildNodes(int errorNum, Element rootElement, XMLErrorArguments arguments) {
   }
 
+  @Deprecated
   @Override
   String getErrorMsg(XMLErrorArguments arguments) {
     return arguments.getConnectorException().getMessage();
   }
 
+  @Deprecated
   @Override
   protected boolean isCurrFolderExists(XMLErrorArguments arguments, HttpServletRequest request) {
     try {
@@ -87,16 +93,6 @@ public class XMLErrorCommand extends XMLCommand<XMLErrorArguments> {
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_FOLDER_NOT_FOUND));
       return false;
     }
-  }
-
-  @Override
-  protected boolean isTypeExists(XMLErrorArguments arguments, String type) {
-    boolean typeExists = super.isTypeExists(arguments, type);
-    if (!typeExists) {
-      arguments.setConnectorException(new ConnectorException(
-              Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE, false));
-    }
-    return typeExists;
   }
 
   @Override

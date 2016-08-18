@@ -42,10 +42,11 @@ public final class DownloadFileCommand extends Command<DownloadFileArguments> {
   @Override
   void execute(DownloadFileArguments arguments, HttpServletResponse response)
           throws ConnectorException {
-    if (!isTypeExists(arguments, arguments.getType())) {
+    try {
+      checkTypeExists(arguments.getType());
+    } catch (ConnectorException ex) {
       arguments.setType(null);
-      throw new ConnectorException(
-              Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE, false);
+      throw new ConnectorException(ex.getErrorCode(), false);
     }
 
     Path file = Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath(),

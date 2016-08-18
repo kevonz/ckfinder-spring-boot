@@ -14,6 +14,7 @@ package com.github.zhanhb.ckfinder.connector.handlers.command;
 import com.github.zhanhb.ckfinder.connector.configuration.Constants;
 import com.github.zhanhb.ckfinder.connector.data.XmlAttribute;
 import com.github.zhanhb.ckfinder.connector.data.XmlElementData;
+import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
 import com.github.zhanhb.ckfinder.connector.handlers.arguments.GetFoldersArguments;
 import com.github.zhanhb.ckfinder.connector.utils.AccessControl;
 import com.github.zhanhb.ckfinder.connector.utils.FileUtils;
@@ -53,9 +54,11 @@ public class GetFoldersCommand extends XMLCommand<GetFoldersArguments> {
    */
   @Override
   protected int getDataForXml(GetFoldersArguments arguments) throws IOException {
-    if (!isTypeExists(arguments, arguments.getType())) {
+    try {
+      checkTypeExists(arguments.getType());
+    } catch (ConnectorException ex) {
       arguments.setType(null);
-      return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE;
+      return ex.getErrorCode();
     }
 
     if (!getConfiguration().getAccessControl().hasPermission(arguments.getType(),

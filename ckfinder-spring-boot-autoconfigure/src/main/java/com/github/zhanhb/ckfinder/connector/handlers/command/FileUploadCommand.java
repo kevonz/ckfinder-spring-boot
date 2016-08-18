@@ -396,23 +396,33 @@ public class FileUploadCommand extends Command<FileUploadArguments> implements I
     return (m.find()) ? m.group(0) : "";
   }
 
+  @Deprecated
   @Override
   protected boolean isCurrFolderExists(FileUploadArguments arguments, HttpServletRequest request) {
     try {
-      return super.isCurrFolderExists(arguments, request);
+      String tmpType = request.getParameter("type");
+      if (tmpType != null) {
+        try {
+          checkTypeExists(tmpType);
+        } catch (ConnectorException ex) {
+          arguments.setErrorCode(ex.getErrorCode());
+          return false;
+        }
+        Path currDir = Paths.get(getConfiguration().getTypes().get(tmpType).getPath(),
+                arguments.getCurrentFolder());
+        if (!Files.isDirectory(currDir)) {
+          throw new ConnectorException(
+                  Constants.Errors.CKFINDER_CONNECTOR_ERROR_FOLDER_NOT_FOUND,
+                  false);
+        } else {
+          return true;
+        }
+      }
+      return true;
     } catch (ConnectorException ex) {
       arguments.setErrorCode(ex.getErrorCode());
       return false;
     }
-  }
-
-  @Override
-  protected boolean isTypeExists(FileUploadArguments arguments, String type) {
-    boolean typeExists = super.isTypeExists(arguments, type);
-    if (!typeExists) {
-      arguments.setErrorCode(Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE);
-    }
-    return typeExists;
   }
 
 }
