@@ -103,7 +103,11 @@ public abstract class Command<T extends Arguments> {
 
     currentFolder = PathUtils.escape(currentFolder);
     arguments.setCurrentFolder(currentFolder);
-    checkCurrentDirectoryHidden(arguments.getCurrentFolder());
+    if (FileUtils.isDirectoryHidden(arguments.getCurrentFolder(), getConfiguration())) {
+      throw new ConnectorException(
+              Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST,
+              false);
+    }
 
     if (currentFolder == null || currentFolder.isEmpty()
             || isCurrFolderExists(arguments, request)) {
@@ -168,21 +172,6 @@ public abstract class Command<T extends Arguments> {
     if (testType == null) {
       throw new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE, false);
-    }
-  }
-
-  /**
-   * checks if current folder is hidden.
-   *
-   * @param currentDirectory
-   * @return false if isn't.
-   * @throws ConnectorException when is hidden
-   */
-  private void checkCurrentDirectoryHidden(String currentDirectory) throws ConnectorException {
-    if (FileUtils.isDirectoryHidden(currentDirectory, getConfiguration())) {
-      throw new ConnectorException(
-              Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST,
-              false);
     }
   }
 
