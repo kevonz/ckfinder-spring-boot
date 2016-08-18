@@ -564,12 +564,9 @@ public enum XmlConfigurationParser {
       if (childChildNode.getNodeName().equals("plugin")) {
         PluginInfo pluginInfo = createPluginFromNode(childChildNode);
         builder.plugin(pluginInfo);
-        try {
-          Plugin plugin = pluginInfo.getClassName().newInstance();
-          plugin.setPluginInfo(pluginInfo);
-          plugin.registerEventHandlers(eventBuilder);
-        } catch (InstantiationException | IllegalAccessException ex) {
-        }
+        Plugin plugin = pluginInfo.getPlugin();
+        plugin.setPluginInfo(pluginInfo);
+        plugin.registerEventHandlers(eventBuilder);
         WatermarkSettings watermarkSettings = checkPluginInfo(pluginInfo, resourceLoader);
 
         if (watermarkSettings != null) {
@@ -629,7 +626,11 @@ public enum XmlConfigurationParser {
           info.name(textContent);
           break;
         case "class":
-          info.className(ClassUtils.resolveClassName(textContent, null).asSubclass(Plugin.class));
+          try {
+            info.plugin(ClassUtils.resolveClassName(textContent, null).asSubclass(Plugin.class).newInstance());
+          } catch (InstantiationException | IllegalAccessException ex) {
+            log.error("fail to instance class '{}'", textContent, ex);
+          }
           break;
         case "internal":
           info.internal(Boolean.parseBoolean(textContent));

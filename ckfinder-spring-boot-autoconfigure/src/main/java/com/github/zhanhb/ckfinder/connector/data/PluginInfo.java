@@ -22,7 +22,7 @@ import lombok.Singular;
 public class PluginInfo {
 
   private final String name;
-  private final Class<? extends Plugin> className;
+  private final Plugin plugin;
   @Singular
   private final List<PluginParam> params;
   private final boolean internal;
