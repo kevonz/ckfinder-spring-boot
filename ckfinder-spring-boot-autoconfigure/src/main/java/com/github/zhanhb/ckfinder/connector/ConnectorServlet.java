@@ -188,7 +188,7 @@ public class ConnectorServlet extends HttpServlet {
    * @throws ServletException when error handling fails.
    * @param command current command
    */
-  @SuppressWarnings({"BroadCatchBlock", "TooBroadCatch"})
+  @SuppressWarnings({"BroadCatchBlock", "TooBroadCatch", "deprecation"})
   private void handleError(ConnectorException e, IConfiguration configuration,
           HttpServletRequest request, HttpServletResponse response,
           Command<?> command) throws ServletException {

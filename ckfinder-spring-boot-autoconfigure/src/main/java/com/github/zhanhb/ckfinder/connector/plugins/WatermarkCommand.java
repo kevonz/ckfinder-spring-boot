@@ -14,7 +14,6 @@ package com.github.zhanhb.ckfinder.connector.plugins;
 import com.github.zhanhb.ckfinder.connector.configuration.IConfiguration;
 import com.github.zhanhb.ckfinder.connector.data.AfterFileUploadEventArgs;
 import com.github.zhanhb.ckfinder.connector.data.AfterFileUploadEventHandler;
-import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,7 +30,7 @@ public class WatermarkCommand implements AfterFileUploadEventHandler {
   private static final String DEFAULT_WATERMARK = "/logo.gif";
 
   @Override
-  public boolean runEventHandler(AfterFileUploadEventArgs args, IConfiguration configuration) throws ConnectorException {
+  public boolean runEventHandler(AfterFileUploadEventArgs args, IConfiguration configuration) {
     try {
       WatermarkSettings settings = configuration.getWatermarkSettings();
       final Path originalFile = args.getFile();

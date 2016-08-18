@@ -4,6 +4,7 @@ package com.github.zhanhb.ckfinder.connector.handlers.command;
  *
  * @author zhanhb
  */
+@SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 class ContentDisposition {
 
   // https://tools.ietf.org/html/rfc5987#section-3.2.1

@@ -204,10 +204,8 @@ public abstract class Command<T extends Arguments> {
   @Deprecated
   @SuppressWarnings("FinalMethod")
   final void checkRequestPathValid(String reqParam) throws ConnectorException {
-    if (reqParam == null || reqParam.isEmpty()) {
-      return;
-    }
-    if (Pattern.compile(Constants.INVALID_PATH_REGEX).matcher(reqParam).find()) {
+    if (reqParam != null && !reqParam.isEmpty()
+            && Pattern.compile(Constants.INVALID_PATH_REGEX).matcher(reqParam).find()) {
       throw new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_NAME,
               false);
