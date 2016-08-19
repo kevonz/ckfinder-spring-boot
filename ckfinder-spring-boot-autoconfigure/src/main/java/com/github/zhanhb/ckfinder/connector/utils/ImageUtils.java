@@ -14,7 +14,6 @@ package com.github.zhanhb.ckfinder.connector.utils;
 import com.github.zhanhb.ckfinder.connector.configuration.IConfiguration;
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -76,22 +75,23 @@ public class ImageUtils {
    */
   public static void createThumb(Path orginFile, Path file, IConfiguration conf)
           throws IOException {
+    BufferedImage image;
     try (InputStream is = Files.newInputStream(orginFile)) {
-      BufferedImage image = ImageIO.read(is);
-      if (image != null) {
-        Dimension dimension = createThumbDimension(image,
-                conf.getMaxThumbWidth(), conf.getMaxThumbHeight());
-        FileUtils.createPath(file, true);
-        if (image.getHeight() == dimension.height
-                && image.getWidth() == dimension.width) {
-          writeUntouchedImage(orginFile, file);
-        } else {
-          resizeImage(image, dimension.width, dimension.height,
-                  conf.getThumbsQuality(), file);
-        }
+      image = ImageIO.read(is);
+    }
+    if (image != null) {
+      Dimension dimension = createThumbDimension(image,
+              conf.getMaxThumbWidth(), conf.getMaxThumbHeight());
+      FileUtils.createPath(file, true);
+      if (image.getHeight() == dimension.height
+              && image.getWidth() == dimension.width) {
+        writeUntouchedImage(orginFile, file);
       } else {
-        log.error("Wrong image file");
+        resizeImage(image, dimension.width, dimension.height,
+                conf.getThumbsQuality(), file);
       }
+    } else {
+      log.error("Wrong image file");
     }
   }
 
@@ -99,31 +99,35 @@ public class ImageUtils {
    * Uploads image and if the image size is larger than maximum allowed it
    * resizes the image.
    *
-   * @param stream input stream.
+   * @param part servlet part
    * @param file file name
    * @param fileName name of file
    * @param conf connector configuration
    * @throws IOException when error occurs.
    */
-  public static void createTmpThumb(InputStream stream,
+  public static void createTmpThumb(Part part,
           Path file, String fileName, IConfiguration conf)
           throws IOException {
-    try (BufferedInputStream bufferedIS = new BufferedInputStream(stream)) {
-      bufferedIS.mark(Integer.MAX_VALUE);
-      BufferedImage image = ImageIO.read(bufferedIS);
+    BufferedImage image;
+    try (InputStream stream = part.getInputStream()) {
+      image = ImageIO.read(stream);
       if (image == null) {
         throw new IOException("Wrong file");
       }
-      Dimension dimension = createThumbDimension(image, conf.getImgWidth(),
-              conf.getImgHeight());
-      if (dimension.width == 0 || dimension.height == 0
-              || (image.getHeight() == dimension.height && image.getWidth() == dimension.width)) {
-        bufferedIS.reset();
-        Files.copy(bufferedIS, file, StandardCopyOption.REPLACE_EXISTING);
-      } else {
-        resizeImage(image, dimension.width, dimension.height,
-                conf.getImgQuality(), file);
+    }
+    Dimension dimension = createThumbDimension(image, conf.getImgWidth(),
+            conf.getImgHeight());
+    if (dimension.width == 0 || dimension.height == 0
+            || (image.getHeight() == dimension.height && image.getWidth() == dimension.width)) {
+      try (InputStream stream = part.getInputStream()) {
+        Files.copy(stream, file, StandardCopyOption.REPLACE_EXISTING);
       }
+    } else {
+      resizeImage(image, dimension.width, dimension.height,
+              conf.getImgQuality(), file);
+    }
+    if (log.isTraceEnabled()) {
+      log.trace("thumb size: {}", Files.size(file));
     }
   }
 

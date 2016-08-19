@@ -242,7 +242,7 @@ public class FileUploadCommand extends Command<FileUploadArguments> implements I
       return true;
     } else if (ImageUtils.checkImageSize(item, this.getConfiguration())
             || getConfiguration().isCheckSizeAfterScaling()) {
-      ImageUtils.createTmpThumb(item.getInputStream(), file, getFileItemName(item), this.getConfiguration());
+      ImageUtils.createTmpThumb(item, file, getFileItemName(item), this.getConfiguration());
       if (!getConfiguration().isCheckSizeAfterScaling()
               || FileUtils.isFileSizeInRange(getConfiguration().getTypes().get(arguments.getType()), Files.size(file))) {
         if (getConfiguration().getEvents() != null) {
