@@ -226,21 +226,20 @@ public class MoveFilesCommand extends XMLCommand<MoveFilesArguments> implements 
    */
   private boolean handleAutoRename(Path sourceFile, Path destFile)
           throws IOException {
-    int counter = 1;
-    Path newDestFile;
-    String fileNameWithoutExtension = FileUtils.getFileNameWithoutExtension(destFile.getFileName().toString(), false);
-    while (true) {
+    String fileName = destFile.getFileName().toString();
+    String fileNameWithoutExtension = FileUtils.getFileNameWithoutExtension(fileName, false);
+    String fileExtension = FileUtils.getFileExtension(fileName, false);
+    for (int counter = 1;; counter++) {
       String newFileName = fileNameWithoutExtension
               + "(" + counter + ")."
-              + FileUtils.getFileExtension(destFile.getFileName().toString(), false);
-      newDestFile = destFile.getParent().resolve(newFileName);
+              + fileExtension;
+      Path newDestFile = destFile.resolveSibling(newFileName);
       if (!Files.exists(newDestFile)) {
         // can't be in one if=, because when error in
         // copy file occurs then it will be infinity loop
+        log.debug("prepare move file '{}' to '{}'", sourceFile, newDestFile);
         return (FileUtils.copyFromSourceToDestFile(sourceFile,
                 newDestFile, true));
-      } else {
-        counter++;
       }
     }
   }
