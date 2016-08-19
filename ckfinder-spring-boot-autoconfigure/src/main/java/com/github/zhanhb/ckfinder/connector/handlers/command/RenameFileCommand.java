@@ -114,11 +114,9 @@ public class RenameFileCommand extends XMLCommand<RenameFileArguments> implement
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
     }
 
-    Path dir = Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath(),
-            arguments.getCurrentFolder());
-
-    Path file = dir.resolve(arguments.getFileName());
-    Path newFile = dir.resolve(arguments.getNewFileName());
+    String dirPath = getConfiguration().getTypes().get(arguments.getType()).getPath();
+    Path file = Paths.get(dirPath, arguments.getCurrentFolder(), arguments.getFileName());
+    Path newFile = Paths.get(dirPath, arguments.getCurrentFolder(), arguments.getNewFileName());
 
     try {
       if (!Files.exists(file)) {
@@ -129,10 +127,6 @@ public class RenameFileCommand extends XMLCommand<RenameFileArguments> implement
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_ALREADY_EXIST;
       }
 
-      if (!Files.isWritable(dir) || !Files.isWritable(file)) {
-        log.info("Not writable");
-        return Constants.Errors.CKFINDER_CONNECTOR_ERROR_ACCESS_DENIED;
-      }
       try {
         Files.move(file, newFile);
         arguments.setRenamed(true);

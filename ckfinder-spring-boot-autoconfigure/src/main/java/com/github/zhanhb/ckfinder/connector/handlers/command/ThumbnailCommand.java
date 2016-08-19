@@ -206,13 +206,16 @@ public class ThumbnailCommand extends Command<ThumbnailArguments> {
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_FILE_NOT_FOUND);
     }
 
-    Path typeThumbDir = Paths.get(getConfiguration().getThumbsPath(), arguments.getType());
+    log.debug("configuration thumbsPath: {}", getConfiguration().getThumbsPath());
+    Path fullCurrentDir = Paths.get(getConfiguration().getThumbsPath(), arguments.getType(), arguments.getCurrentFolder());
+    log.debug("typeThumbDir: {}", fullCurrentDir);
 
     try {
-      arguments.setFullCurrentPath(typeThumbDir.resolve(
-              arguments.getCurrentFolder()).toAbsolutePath().toString());
-      if (!Files.exists(typeThumbDir)) {
-        Files.createDirectories(typeThumbDir);
+      String fullCurrentPath = fullCurrentDir.toAbsolutePath().toString();
+      log.debug(fullCurrentPath);
+      arguments.setFullCurrentPath(fullCurrentPath);
+      if (!Files.exists(fullCurrentDir)) {
+        Files.createDirectories(fullCurrentDir);
       }
     } catch (SecurityException e) {
       throw new ConnectorException(
