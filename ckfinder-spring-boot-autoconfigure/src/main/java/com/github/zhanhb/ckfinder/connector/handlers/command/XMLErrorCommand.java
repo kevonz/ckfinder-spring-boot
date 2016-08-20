@@ -41,20 +41,7 @@ public class XMLErrorCommand extends XMLCommand<XMLErrorArguments> {
     try {
       super.initParams(arguments, request, configuration);
     } catch (ConnectorException ex) {
-      switch (ex.getErrorCode()) {
-        case Constants.Errors.CKFINDER_CONNECTOR_ERROR_CONNECTOR_DISABLED:
-          arguments.setConnectorException(new ConnectorException(
-                  Constants.Errors.CKFINDER_CONNECTOR_ERROR_CONNECTOR_DISABLED));
-          break;
-        case Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST:
-          arguments.setConnectorException(new ConnectorException(
-                  Constants.Errors.CKFINDER_CONNECTOR_ERROR_CONNECTOR_DISABLED));
-          break;
-        case Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_NAME:
-          break;
-        default:
-          throw ex;
-      }
+      arguments.setConnectorException(new ConnectorException(ex.getErrorCode()));
     }
     if (arguments.getConnectorException().isAddCurrentFolder()) {
       String tmpType = request.getParameter("type");
@@ -62,8 +49,7 @@ public class XMLErrorCommand extends XMLCommand<XMLErrorArguments> {
         checkTypeExists(tmpType);
         arguments.setType(tmpType);
       } catch (ConnectorException ex) {
-        arguments.setConnectorException(new ConnectorException(
-                Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE, false));
+        arguments.setConnectorException(new ConnectorException(ex.getErrorCode()));
       }
     }
   }
