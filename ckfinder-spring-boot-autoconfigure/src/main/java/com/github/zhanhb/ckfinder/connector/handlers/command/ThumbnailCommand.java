@@ -117,7 +117,8 @@ public class ThumbnailCommand extends Command<ThumbnailArguments> {
    * @param response currect response object
    * @return mime type of the image.
    */
-  private String getMimeTypeOfImage(ServletContext sc, HttpServletResponse response, ThumbnailArguments arguments) {
+  private String getMimeTypeOfImage(ServletContext sc,
+          HttpServletResponse response, ThumbnailArguments arguments) {
     String fileName = arguments.getFileName();
     if (fileName == null || fileName.length() == 0) {
       response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);

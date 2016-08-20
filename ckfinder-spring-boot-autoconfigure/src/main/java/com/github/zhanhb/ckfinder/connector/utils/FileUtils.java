@@ -81,16 +81,18 @@ public class FileUtils {
    * @param shortExtensionMode
    * @return file extension
    */
+  @Nullable
+  @SuppressWarnings("NestedAssignment")
   public static String getFileExtension(String fileName, boolean shortExtensionMode) {
     if (shortExtensionMode) {
       return FileUtils.getFileExtension(fileName);
     }
-    if (fileName == null
-            || fileName.indexOf('.') == -1
-            || fileName.indexOf('.') == fileName.length() - 1) {
+    int indexOf;
+    if (fileName == null || (indexOf = fileName.indexOf('.')) == -1
+            || indexOf == fileName.length() - 1) {
       return null;
     }
-    return fileName.substring(fileName.indexOf('.') + 1);
+    return fileName.substring(indexOf + 1);
   }
 
   /**
@@ -99,13 +101,15 @@ public class FileUtils {
    * @param fileName name of file.
    * @return file extension
    */
+  @Nullable
+  @SuppressWarnings("NestedAssignment")
   public static String getFileExtension(String fileName) {
-    if (fileName == null
-            || fileName.lastIndexOf('.') == -1
-            || fileName.lastIndexOf('.') == fileName.length() - 1) {
+    int lastIndexOf;
+    if (fileName == null || (lastIndexOf = fileName.lastIndexOf('.')) == -1
+            || lastIndexOf == fileName.length() - 1) {
       return null;
     }
-    return fileName.substring(fileName.lastIndexOf('.') + 1);
+    return fileName.substring(lastIndexOf + 1);
   }
 
   /**
@@ -115,15 +119,18 @@ public class FileUtils {
    * @param shortExtensionMode
    * @return file extension
    */
+  @Nullable
+  @SuppressWarnings("NestedAssignment")
   public static String getFileNameWithoutExtension(String fileName, boolean shortExtensionMode) {
     if (shortExtensionMode) {
       return FileUtils.getFileNameWithoutExtension(fileName);
     }
 
-    if (fileName == null || fileName.indexOf('.') == -1) {
+    int indexOf;
+    if (fileName == null || (indexOf = fileName.indexOf('.')) == -1) {
       return null;
     }
-    return fileName.substring(0, fileName.indexOf('.'));
+    return fileName.substring(0, indexOf);
   }
 
   /**
@@ -133,11 +140,13 @@ public class FileUtils {
    * @return file extension
    */
   @Nullable
+  @SuppressWarnings("NestedAssignment")
   public static String getFileNameWithoutExtension(String fileName) {
-    if (fileName == null || fileName.lastIndexOf('.') == -1) {
+    int lastIndexOf;
+    if (fileName == null || (lastIndexOf = fileName.lastIndexOf('.')) == -1) {
       return null;
     }
-    return fileName.substring(0, fileName.lastIndexOf('.'));
+    return fileName.substring(0, lastIndexOf);
   }
 
   /**
@@ -529,7 +538,7 @@ public class FileUtils {
   }
 
   public static String backupWithBackSlash(String fileName, String toReplace) {
-    return fileName.replaceAll(toReplace, "\\\\" + Matcher.quoteReplacement(toReplace));
+    return fileName.replace(toReplace, "\\" + toReplace);
   }
 
   private static class EncodingMapHolder {

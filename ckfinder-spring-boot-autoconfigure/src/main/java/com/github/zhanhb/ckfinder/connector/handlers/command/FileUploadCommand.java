@@ -209,7 +209,9 @@ public class FileUploadCommand extends Command<FileUploadArguments> implements I
       return false;
     } catch (Exception e) {
       String message = e.getMessage();
-      if (message != null && message.toLowerCase().contains("sizelimit") || message.contains("size limit")) {
+      if (message != null
+              && (message.toLowerCase().contains("sizelimit")
+              || message.contains("size limit"))) {
         log.info("", e);
         arguments.setErrorCode(Constants.Errors.CKFINDER_CONNECTOR_ERROR_UPLOADED_TOO_BIG);
         return false;

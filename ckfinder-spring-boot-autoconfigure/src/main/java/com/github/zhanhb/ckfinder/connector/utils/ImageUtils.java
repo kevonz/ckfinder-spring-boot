@@ -195,7 +195,7 @@ public class ImageUtils {
    */
   public static boolean isImageExtension(Path file) {
     if (file != null) {
-      String fileExt = FileUtils.getFileExtension(file.getFileName().toString().toLowerCase());
+      String fileExt = FileUtils.getFileExtension(file.getFileName().toString()).toLowerCase();
       return (fileExt != null) ? ALLOWED_EXT.contains(fileExt) : false;
     } else {
       return false;
@@ -223,7 +223,11 @@ public class ImageUtils {
       }
       bi = ImageIO.read(stream);
     }
-    return bi != null && (bi.getHeight() <= maxHeight && bi.getWidth() <= maxWidth);
+    if (bi != null) {
+      log.debug("image size: {} {}", bi.getWidth(), bi.getHeight());
+      return (bi.getHeight() <= maxHeight && bi.getWidth() <= maxWidth);
+    }
+    return false;
   }
 
   /**

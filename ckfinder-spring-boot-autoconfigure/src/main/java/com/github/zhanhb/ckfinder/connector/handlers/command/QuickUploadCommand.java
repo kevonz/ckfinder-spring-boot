@@ -52,7 +52,9 @@ public class QuickUploadCommand extends FileUploadCommand {
   }
 
   @Override
-  protected void handleOnUploadCompleteCallFuncResponse(Writer writer, String errorMsg, String path, FileUploadArguments arguments) throws IOException {
+  protected void handleOnUploadCompleteCallFuncResponse(Writer writer,
+          String errorMsg, String path, FileUploadArguments arguments)
+          throws IOException {
     if (arguments.getResponseType() != null && arguments.getResponseType().equalsIgnoreCase("json")) {
       handleJSONResponse(writer, errorMsg, path, arguments);
     } else {
