@@ -70,7 +70,6 @@ public class ConnectorServlet extends HttpServlet {
   protected void doGet(HttpServletRequest request,
           HttpServletResponse response) throws ServletException,
           IOException {
-    request.setCharacterEncoding("UTF-8");
     processRequest(request, response, false);
   }
 
@@ -86,7 +85,6 @@ public class ConnectorServlet extends HttpServlet {
   protected void doPost(HttpServletRequest request,
           HttpServletResponse response) throws ServletException,
           IOException {
-    request.setCharacterEncoding("UTF-8");
     processRequest(request, response, true);
   }
 
@@ -100,7 +98,8 @@ public class ConnectorServlet extends HttpServlet {
    */
   private void processRequest(HttpServletRequest request,
           HttpServletResponse response, boolean post)
-          throws ServletException {
+          throws ServletException, IOException {
+    request.setCharacterEncoding("UTF-8");
     String commandName = request.getParameter("command");
     Command<?> command = null;
 
@@ -155,7 +154,9 @@ public class ConnectorServlet extends HttpServlet {
    * @throws IllegalArgumentException when provided command is not found in
    * enumeration object
    */
-  private void executeCommand(Command<?> command, HttpServletRequest request, HttpServletResponse response, IConfiguration configuration) throws IllegalArgumentException, ConnectorException {
+  private void executeCommand(Command<?> command, HttpServletRequest request,
+          HttpServletResponse response, IConfiguration configuration)
+          throws ConnectorException, IOException {
     if (command != null) {
       command.runCommand(request, response, configuration);
     } else {

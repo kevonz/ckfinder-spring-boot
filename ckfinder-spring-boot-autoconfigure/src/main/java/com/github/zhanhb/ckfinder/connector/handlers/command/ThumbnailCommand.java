@@ -140,7 +140,7 @@ public class ThumbnailCommand extends Command<ThumbnailArguments> {
 
   @Override
   @SuppressWarnings("FinalMethod")
-  final void execute(ThumbnailArguments arguments, HttpServletResponse response) throws ConnectorException, IOException {
+  final void execute(ThumbnailArguments arguments, HttpServletResponse response) throws ConnectorException {
     validate(arguments);
     createThumb(arguments);
     if (setResponseHeadersAfterCreatingFile(response, arguments)) {
@@ -177,7 +177,7 @@ public class ThumbnailCommand extends Command<ThumbnailArguments> {
    *
    * @throws ConnectorException when validation fails.
    */
-  private void validate(ThumbnailArguments arguments) throws ConnectorException, IOException {
+  private void validate(ThumbnailArguments arguments) throws ConnectorException {
     if (!this.getConfiguration().isThumbsEnabled()) {
       throw new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_THUMBNAILS_DISABLED);
@@ -217,7 +217,7 @@ public class ThumbnailCommand extends Command<ThumbnailArguments> {
       if (!Files.exists(fullCurrentDir)) {
         Files.createDirectories(fullCurrentDir);
       }
-    } catch (SecurityException e) {
+    } catch (IOException | SecurityException e) {
       throw new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_ACCESS_DENIED, e);
     }
@@ -232,12 +232,16 @@ public class ThumbnailCommand extends Command<ThumbnailArguments> {
    */
   @SuppressWarnings({"BroadCatchBlock", "TooBroadCatch"})
   private void createThumb(ThumbnailArguments arguments) throws ConnectorException {
+    log.debug("ThumbnailCommand.createThumb()");
+    log.debug("{}", arguments.getFullCurrentPath());
     Path thumbFile = Paths.get(arguments.getFullCurrentPath(), arguments.getFileName());
+    log.debug("thumbFile: {}", thumbFile);
     arguments.setThumbFile(thumbFile);
     try {
       if (!Files.exists(thumbFile)) {
         Path orginFile = Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath(),
                 arguments.getCurrentFolder(), arguments.getFileName());
+        log.debug("orginFile: {}", orginFile);
         if (!Files.exists(orginFile)) {
           throw new ConnectorException(
                   Constants.Errors.CKFINDER_CONNECTOR_ERROR_FILE_NOT_FOUND);
@@ -270,7 +274,7 @@ public class ThumbnailCommand extends Command<ThumbnailArguments> {
    * @throws ConnectorException when access is denied.
    */
   private boolean setResponseHeadersAfterCreatingFile(HttpServletResponse response,
-          ThumbnailArguments arguments) throws ConnectorException, IOException {
+          ThumbnailArguments arguments) throws ConnectorException {
     // Set content size
     Path file = Paths.get(arguments.getFullCurrentPath(), arguments.getFileName());
     try {
@@ -288,7 +292,7 @@ public class ThumbnailCommand extends Command<ThumbnailArguments> {
       response.setContentLengthLong(Files.size(file));
 
       return true;
-    } catch (SecurityException e) {
+    } catch (IOException | SecurityException e) {
       throw new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_ACCESS_DENIED, e);
     }

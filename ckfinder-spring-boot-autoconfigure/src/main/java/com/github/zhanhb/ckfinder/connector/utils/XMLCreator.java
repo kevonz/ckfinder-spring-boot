@@ -54,13 +54,12 @@ public enum XMLCreator {
 
   }
 
-  public void writeTo(Document document, Writer writer) throws ConnectorException {
+  public void writeTo(Document document, Writer writer) {
     try {
       Transformer serializer = TransformerFactory.newInstance().newTransformer();
       serializer.transform(new DOMSource(document), new StreamResult(writer));
     } catch (TransformerException e) {
-      throw new ConnectorException(
-              Constants.Errors.CKFINDER_CONNECTOR_ERROR_ACCESS_DENIED, e);
+      throw new IllegalStateException("fail to instance xml transformer", e);
     }
   }
 

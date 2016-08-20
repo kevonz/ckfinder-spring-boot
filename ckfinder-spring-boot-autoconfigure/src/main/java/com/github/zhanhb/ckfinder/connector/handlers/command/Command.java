@@ -60,7 +60,7 @@ public abstract class Command<T extends Arguments> {
   @SuppressWarnings("FinalMethod")
   public final void runCommand(HttpServletRequest request,
           HttpServletResponse response, IConfiguration configuration)
-          throws ConnectorException {
+          throws ConnectorException, IOException {
     T arguments = argumentsSupplier.get();
     runWithArguments(request, response, configuration, arguments);
   }
@@ -69,15 +69,11 @@ public abstract class Command<T extends Arguments> {
   @SuppressWarnings("FinalMethod")
   public final void runWithArguments(HttpServletRequest request,
           HttpServletResponse response, IConfiguration configuration,
-          T arguments) throws ConnectorException {
-    this.initParams(arguments, request, configuration);
-    try {
-      setResponseHeader(request, response, arguments);
-      execute(arguments, response);
-    } catch (IOException e) {
-      throw new ConnectorException(
-              Constants.Errors.CKFINDER_CONNECTOR_ERROR_ACCESS_DENIED, e);
-    }
+          T arguments) throws ConnectorException, IOException {
+    initParams(arguments, request, configuration);
+
+    setResponseHeader(request, response, arguments);
+    execute(arguments, response);
   }
 
   /**

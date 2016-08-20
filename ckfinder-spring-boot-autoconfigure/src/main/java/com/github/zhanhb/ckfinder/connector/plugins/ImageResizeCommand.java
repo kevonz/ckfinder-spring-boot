@@ -48,7 +48,7 @@ public class ImageResizeCommand extends XMLCommand<ImageResizeArguments> impleme
 
   @Override
   public boolean runEventHandler(BeforeExecuteCommandEventArgs args, IConfiguration configuration)
-          throws ConnectorException {
+          throws ConnectorException, IOException {
     if ("ImageResize".equals(args.getCommand())) {
       this.runCommand(args.getRequest(), args.getResponse(), configuration);
       return false;

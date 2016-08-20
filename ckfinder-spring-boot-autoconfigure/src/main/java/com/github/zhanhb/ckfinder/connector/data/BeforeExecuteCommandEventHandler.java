@@ -17,6 +17,7 @@ package com.github.zhanhb.ckfinder.connector.data;
 
 import com.github.zhanhb.ckfinder.connector.configuration.IConfiguration;
 import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
+import java.io.IOException;
 
 /**
  *
@@ -25,6 +26,7 @@ import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
 public interface BeforeExecuteCommandEventHandler extends IEventHandler<BeforeExecuteCommandEventArgs> {
 
   @Override
-  public boolean runEventHandler(BeforeExecuteCommandEventArgs args, IConfiguration configuration) throws ConnectorException;
+  public boolean runEventHandler(BeforeExecuteCommandEventArgs args, IConfiguration configuration)
+          throws ConnectorException, IOException;
 
 }

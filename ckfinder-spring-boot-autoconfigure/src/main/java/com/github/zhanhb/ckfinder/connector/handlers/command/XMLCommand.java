@@ -11,7 +11,6 @@
  */
 package com.github.zhanhb.ckfinder.connector.handlers.command;
 
-import com.github.zhanhb.ckfinder.connector.configuration.Constants;
 import com.github.zhanhb.ckfinder.connector.configuration.IConfiguration;
 import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
 import com.github.zhanhb.ckfinder.connector.handlers.arguments.XMLArguments;
@@ -55,14 +54,10 @@ public abstract class XMLCommand<T extends XMLArguments> extends Command<T> {
    */
   @Override
   @SuppressWarnings("FinalMethod")
-  final void execute(T arguments, HttpServletResponse response) throws ConnectorException {
+  final void execute(T arguments, HttpServletResponse response) throws IOException {
     try (PrintWriter out = response.getWriter()) {
       createXMLResponse(arguments, getDataForXml(arguments));
       XMLCreator.INSTANCE.writeTo(arguments.getDocument(), out);
-    } catch (ConnectorException e) {
-      throw e;
-    } catch (IOException e) {
-      throw new ConnectorException(Constants.Errors.CKFINDER_CONNECTOR_ERROR_ACCESS_DENIED, e);
     }
   }
 

@@ -92,7 +92,7 @@ public class SaveFileCommand extends XMLCommand<SaveFileArguments> implements Be
 
   @Override
   public boolean runEventHandler(BeforeExecuteCommandEventArgs args, IConfiguration configuration)
-          throws ConnectorException {
+          throws ConnectorException, IOException {
     if ("SaveFile".equals(args.getCommand())) {
       this.runCommand(args.getRequest(), args.getResponse(), configuration);
       return false;

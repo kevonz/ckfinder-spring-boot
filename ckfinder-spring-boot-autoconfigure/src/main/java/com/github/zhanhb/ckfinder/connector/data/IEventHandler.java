@@ -13,6 +13,7 @@ package com.github.zhanhb.ckfinder.connector.data;
 
 import com.github.zhanhb.ckfinder.connector.configuration.IConfiguration;
 import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
+import java.io.IOException;
 
 /**
  * Plugin event interface.
@@ -29,6 +30,7 @@ public interface IEventHandler<T> {
    * @return false if break executing command.
    * @throws ConnectorException when error occurs.
    */
-  public boolean runEventHandler(T args, IConfiguration configuration) throws ConnectorException;
+  public boolean runEventHandler(T args, IConfiguration configuration)
+          throws ConnectorException, IOException;
 
 }
