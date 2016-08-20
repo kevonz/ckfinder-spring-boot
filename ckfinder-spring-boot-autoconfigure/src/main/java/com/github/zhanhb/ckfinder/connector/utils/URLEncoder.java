@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.zhanhb.ckfinder.connector.handlers.command;
+package com.github.zhanhb.ckfinder.connector.utils;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;

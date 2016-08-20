@@ -17,8 +17,6 @@ import com.github.zhanhb.ckfinder.connector.data.ResourceType;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -32,7 +30,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.StringTokenizer;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -51,6 +48,11 @@ public class FileUtils {
    */
   private static final int MAX_BUFFER_SIZE = 1024;
   private static final Pattern invalidFileNamePatt = Pattern.compile(Constants.INVALID_FILE_NAME_REGEX);
+
+  private static final URLEncoder URI_COMPONENT = new URLEncoder("-_.*!'()~");
+  // https://tools.ietf.org/html/rfc5987#section-3.2.1
+  // we will encoding + for some browser will decode + to a space
+  private static final URLEncoder CONTENT_DISPOSITION = new URLEncoder("!#$&-.^_`|~");
 
   /**
    * Gets list of children folder or files for dir, according to searchDirs
@@ -507,12 +509,12 @@ public class FileUtils {
     return cfileName;
   }
 
-  public static String encodeURIComponent(String fileName) throws UnsupportedEncodingException {
-    String fileNameHelper = URLEncoder.encode(fileName, "utf-8");
-    for (Map.Entry<String, String> entry : EncodingMapHolder.encodingMap.entrySet()) {
-      fileNameHelper = fileNameHelper.replace(entry.getKey(), entry.getValue());
-    }
-    return fileNameHelper;
+  public static String encodeURIComponent(String fileName) {
+    return URI_COMPONENT.encode(fileName);
+  }
+
+  public static String encodeContentDisposition(String fileName) {
+    return CONTENT_DISPOSITION.encode(fileName);
   }
 
   public static boolean isFolderNameInvalid(String folderName, IConfiguration configuration) {

@@ -1,5 +1,7 @@
 package com.github.zhanhb.ckfinder.connector.handlers.command;
 
+import com.github.zhanhb.ckfinder.connector.utils.FileUtils;
+
 /**
  *
  * @author zhanhb
@@ -7,17 +9,13 @@ package com.github.zhanhb.ckfinder.connector.handlers.command;
 @SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 class ContentDisposition {
 
-  // https://tools.ietf.org/html/rfc5987#section-3.2.1
-  // we will encoding + for some browser will decode + to a space
-  private static final URLEncoder CONTENT_DISPOSITION = new URLEncoder("!#$&-.^_`|~");
-
   static String getContentDisposition(String type, String filename) {
     if (filename == null || filename.length() == 0) {
       return type;
     } else if (isToken(filename)) { // already a token
       return type + "; filename=" + filename;
     } else {
-      String encoded = CONTENT_DISPOSITION.encode(filename);
+      String encoded = FileUtils.encodeContentDisposition(filename);
       return type + "; filename=\"" + encoded + "\"; filename*=utf-8''" + encoded;
     }
   }
