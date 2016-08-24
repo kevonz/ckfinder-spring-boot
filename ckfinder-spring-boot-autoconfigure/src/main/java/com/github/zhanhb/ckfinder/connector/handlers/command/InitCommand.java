@@ -92,6 +92,7 @@ public class InitCommand extends XMLCommand<XMLArguments> {
     }
     element.setAttribute("imgWidth", String.valueOf(getConfiguration().getImgWidth()));
     element.setAttribute("imgHeight", String.valueOf(getConfiguration().getImgHeight()));
+    element.setAttribute("csrfProtection", String.valueOf(getConfiguration().isEnableCsrfProtection()));
     if (getConfiguration().getPlugins().size() > 0) {
       element.setAttribute("plugins", getPlugins());
     }

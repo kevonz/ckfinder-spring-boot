@@ -66,6 +66,7 @@ public class Configuration implements IConfiguration {
   private final Events events;
   private final WatermarkSettings watermarkSettings;
   private final AccessControl accessControl;
+  private final boolean enableCsrfProtection;
 
   @SuppressWarnings("PublicInnerClass")
   public static class Builder {

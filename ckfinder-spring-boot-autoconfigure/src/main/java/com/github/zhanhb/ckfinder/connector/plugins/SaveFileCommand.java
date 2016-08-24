@@ -42,6 +42,9 @@ public class SaveFileCommand extends XMLCommand<SaveFileArguments> implements Be
 
   @Override
   protected int getDataForXml(SaveFileArguments arguments) {
+    if (getConfiguration().isEnableCsrfProtection() && !checkCsrfToken(arguments.getRequest(), null)) {
+      return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
+    }
 
     try {
       checkTypeExists(arguments.getType());
@@ -108,6 +111,7 @@ public class SaveFileCommand extends XMLCommand<SaveFileArguments> implements Be
     arguments.setType(request.getParameter("type"));
     arguments.setFileContent(request.getParameter("content"));
     arguments.setFileName(request.getParameter("fileName"));
+    arguments.setRequest(request);
   }
 
 }
