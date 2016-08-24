@@ -59,13 +59,13 @@ public class WatermarkCommand implements AfterFileUploadEventHandler {
   private BufferedImage getWatermakImage(WatermarkSettings settings) throws IOException {
     final Resource source = settings.getSource();
     final BufferedImage watermark;
-    if (source == null) {
-      watermark = ImageIO.read(getClass().getResourceAsStream(DEFAULT_WATERMARK));
-    } else {
-      try (InputStream is = source.getInputStream()) {
-        watermark = ImageIO.read(is);
-      }
+
+    try (InputStream is = source == null
+            ? getClass().getResourceAsStream(DEFAULT_WATERMARK)
+            : source.getInputStream()) {
+      watermark = ImageIO.read(is);
     }
+
     return watermark;
   }
 
