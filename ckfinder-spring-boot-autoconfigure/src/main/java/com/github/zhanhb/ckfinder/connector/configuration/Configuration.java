@@ -21,6 +21,7 @@ import java.util.Set;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Singular;
+import lombok.ToString;
 
 @Builder(builderClassName = "Builder")
 @Getter
@@ -29,6 +30,7 @@ import lombok.Singular;
   "ReturnOfCollectionOrArrayField",
   "FinalMethod"
 })
+@ToString
 public class Configuration implements IConfiguration {
 
   private final boolean enabled;

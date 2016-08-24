@@ -28,7 +28,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
-import java.util.StringTokenizer;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -147,15 +147,15 @@ public class ImageResizeCommand extends XMLCommand<ImageResizeArguments> impleme
       String fileNameWithoutExt = FileUtils.getFileNameWithoutExtension(arguments.getFileName());
       String fileExt = FileUtils.getFileExtension(arguments.getFileName());
       for (String size : SIZES) {
-        if (arguments.getSizesFromReq().get(size) != null
-                && arguments.getSizesFromReq().get(size).equals("1")) {
-          String thumbName = fileNameWithoutExt + ("_") + size + "." + fileExt;
+        if ("1".equals(arguments.getSizesFromReq().get(size))) {
+          String thumbName = fileNameWithoutExt + "_" + size + "." + fileExt;
           Path thumbFile = Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath(),
                   arguments.getCurrentFolder(), thumbName);
           for (PluginParam param : pluginInfo.getParams()) {
             if ((size + "Thumb").equals(param.getName())) {
-              if (checkParamSize(param.getValue())) {
-                String[] params = parseValue(param.getValue());
+              Matcher matcher = Pattern.compile("(\\d+)x(\\d+)").matcher(param.getValue());
+              if (matcher.matches()) {
+                String[] params = new String[]{matcher.group(1), matcher.group(2)};
                 try {
                   ImageUtils.createResizedImage(file, thumbFile, Integer.parseInt(params[0]),
                           Integer.parseInt(params[1]), getConfiguration().getImgQuality());
@@ -174,15 +174,6 @@ public class ImageResizeCommand extends XMLCommand<ImageResizeArguments> impleme
     }
 
     return Constants.Errors.CKFINDER_CONNECTOR_ERROR_NONE;
-  }
-
-  private String[] parseValue(String value) {
-    StringTokenizer st = new StringTokenizer(value, "x");
-    return new String[]{st.nextToken(), st.nextToken()};
-  }
-
-  private boolean checkParamSize(String value) {
-    return Pattern.matches("(\\d)+x(\\d)+", value);
   }
 
   @Override

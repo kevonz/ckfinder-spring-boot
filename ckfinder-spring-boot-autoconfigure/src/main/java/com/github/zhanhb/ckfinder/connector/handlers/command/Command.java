@@ -62,6 +62,7 @@ public abstract class Command<T extends Arguments> {
    * @param response response
    * @param configuration connector configuration
    * @throws ConnectorException when error occurred.
+   * @throws java.io.IOException
    */
   @SuppressWarnings("FinalMethod")
   public final void runCommand(HttpServletRequest request,

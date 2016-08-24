@@ -479,7 +479,7 @@ public enum XmlConfigurationParser {
    */
   private ResourceType createTypeFromXml(String typeName,
           NodeList childNodes, IBasePathBuilder basePathBuilder) throws IOException, ConnectorException {
-    ResourceType.Builder builder = ResourceType.builder().name(typeName).allowedExtensions("").deniedExtensions("");
+    ResourceType.Builder builder = ResourceType.builder().name(typeName);
     String path = Constants.BASE_DIR_PLACEHOLDER + "/" + typeName.toLowerCase() + "/";
     String url = Constants.BASE_URL_PLACEHOLDER + "/" + typeName.toLowerCase() + "/";
 

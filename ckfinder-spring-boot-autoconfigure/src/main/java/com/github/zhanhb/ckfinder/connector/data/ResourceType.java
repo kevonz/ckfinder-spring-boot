@@ -50,4 +50,14 @@ public class ResourceType {
   @NonNull
   private final String deniedExtensions;
 
+  @SuppressWarnings("PublicInnerClass")
+  public static class Builder {
+
+    Builder() {
+      allowedExtensions = "";
+      deniedExtensions = "";
+    }
+
+  }
+
 }
