@@ -55,8 +55,8 @@ public abstract class XMLCommand<T extends XMLArguments> extends Command<T> {
   @Override
   @SuppressWarnings("FinalMethod")
   final void execute(T arguments, HttpServletResponse response) throws IOException {
+    createXMLResponse(arguments, getDataForXml(arguments));
     try (PrintWriter out = response.getWriter()) {
-      createXMLResponse(arguments, getDataForXml(arguments));
       XMLCreator.INSTANCE.writeTo(arguments.getDocument(), out);
     }
   }
