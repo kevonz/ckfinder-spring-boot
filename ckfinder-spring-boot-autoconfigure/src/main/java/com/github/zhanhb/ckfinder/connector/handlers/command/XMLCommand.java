@@ -131,8 +131,8 @@ public abstract class XMLCommand<T extends XMLArguments> extends Command<T> {
   @Override
   protected void initParams(T arguments, HttpServletRequest request, IConfiguration configuration)
           throws ConnectorException {
-    super.initParams(arguments, request, configuration);
     arguments.setDocument(XMLCreator.INSTANCE.createDocument());
+    super.initParams(arguments, request, configuration);
   }
 
   /**
