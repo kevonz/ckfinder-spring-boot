@@ -14,8 +14,7 @@ package com.github.zhanhb.ckfinder.connector.plugins;
 import com.github.zhanhb.ckfinder.connector.configuration.IConfiguration;
 import com.github.zhanhb.ckfinder.connector.data.InitCommandEventArgs;
 import com.github.zhanhb.ckfinder.connector.data.InitCommandEventHandler;
-import com.github.zhanhb.ckfinder.connector.data.PluginInfo;
-import com.github.zhanhb.ckfinder.connector.data.PluginParam;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.w3c.dom.Element;
@@ -26,7 +25,8 @@ import org.w3c.dom.NodeList;
 @RequiredArgsConstructor
 public class ImageResizeInitCommandEventHandler implements InitCommandEventHandler {
 
-  private final PluginInfo pluginInfo;
+  private final String name;
+  private final Map<String, String> params;
 
   @Override
   public boolean runEventHandler(InitCommandEventArgs args, IConfiguration arg1) {
@@ -34,9 +34,11 @@ public class ImageResizeInitCommandEventHandler implements InitCommandEventHandl
     NodeList list = args.getRootElement().getElementsByTagName("PluginsInfo");
     if (list.getLength() > 0) {
       Node node = list.item(0);
-      Element pluginElem = args.getDocument().createElement(pluginInfo.getName());
-      for (PluginParam param : pluginInfo.getParams()) {
-        pluginElem.setAttribute(param.getName(), param.getValue());
+      Element pluginElem = args.getDocument().createElement(name);
+      for (Map.Entry<String, String> entry : params.entrySet()) {
+        String key = entry.getKey();
+        String value = entry.getValue();
+        pluginElem.setAttribute(key, value);
       }
       node.appendChild(pluginElem);
     }

@@ -11,9 +11,7 @@
  */
 package com.github.zhanhb.ckfinder.connector.configuration;
 
-import com.github.zhanhb.ckfinder.connector.data.PluginInfo;
 import com.github.zhanhb.ckfinder.connector.data.ResourceType;
-import com.github.zhanhb.ckfinder.connector.plugins.WatermarkSettings;
 import com.github.zhanhb.ckfinder.connector.utils.AccessControl;
 import java.util.Collection;
 import java.util.List;
@@ -59,7 +57,7 @@ public class Configuration implements IConfiguration {
   private final boolean checkSizeAfterScaling;
   private final String userRoleName;
   @Singular
-  private final List<PluginInfo> plugins;
+  private final List<String> publicPluginNames;
   private final boolean secureImageUploads;
   @Singular
   private final List<String> htmlExtensions;
@@ -67,7 +65,6 @@ public class Configuration implements IConfiguration {
   private final Set<String> defaultResourceTypes;
   private final boolean disallowUnsafeCharacters;
   private final Events events;
-  private final WatermarkSettings watermarkSettings;
   private final AccessControl accessControl;
   private final boolean enableCsrfProtection;
 

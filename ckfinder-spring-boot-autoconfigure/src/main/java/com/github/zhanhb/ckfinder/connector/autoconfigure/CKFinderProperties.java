@@ -40,20 +40,20 @@ public class CKFinderProperties {
   private Integer imgWidth;
   private Integer imgHeight;
   private Float imgQuality;
-  private String[] defaultResourceTypes;
-  private Type[] types;
+  private String[] defaultResourceTypes = {};
+  private Type[] types = {};
   private String userRoleSessionVar;
-  private AccessControl[] accessControls;
+  private AccessControl[] accessControls = {};
   private Thumbs thumbs = new Thumbs();
   private Boolean disallowUnsafeCharacters;
   private Boolean checkDoubleExtension;
   private Boolean checkSizeAfterScaling;
   private Boolean secureImageUploads;
-  private String[] htmlExtensions;
+  private String[] htmlExtensions = {};
   private Boolean forceAscii;
   private Boolean enableCsrfProtection;
-  private String[] hideFolders;
-  private String[] hideFiles;
+  private String[] hideFolders = {};
+  private String[] hideFiles = {};
   private Watermark watermark = new Watermark();
   private ImageResize imageResize = new ImageResize();
 

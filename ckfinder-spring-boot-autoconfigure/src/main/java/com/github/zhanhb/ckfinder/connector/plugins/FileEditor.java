@@ -16,6 +16,10 @@ import com.github.zhanhb.ckfinder.connector.configuration.Plugin;
 
 public class FileEditor extends Plugin {
 
+  public FileEditor() {
+    super("fileeditor", false);
+  }
+
   @Override
   public void registerEventHandlers(Events.Builder events) {
     events.beforeExecuteCommandEventHandler(new SaveFileCommand());

@@ -19,20 +19,22 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import javax.imageio.ImageIO;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.coobird.thumbnailator.Thumbnails;
 import net.coobird.thumbnailator.name.Rename;
 import org.springframework.core.io.Resource;
 
+@RequiredArgsConstructor
 @Slf4j
 public class WatermarkCommand implements AfterFileUploadEventHandler {
 
   private static final String DEFAULT_WATERMARK = "/logo.gif";
+  private final WatermarkSettings settings;
 
   @Override
   public boolean runEventHandler(AfterFileUploadEventArgs args, IConfiguration configuration) {
     try {
-      WatermarkSettings settings = configuration.getWatermarkSettings();
       final Path originalFile = args.getFile();
       final WatermarkPosition position = new WatermarkPosition(settings.getMarginBottom(), settings.getMarginRight());
 

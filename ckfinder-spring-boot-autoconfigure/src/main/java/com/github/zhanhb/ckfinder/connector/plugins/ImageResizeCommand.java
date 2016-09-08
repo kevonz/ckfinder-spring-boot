@@ -15,8 +15,6 @@ import com.github.zhanhb.ckfinder.connector.configuration.Constants;
 import com.github.zhanhb.ckfinder.connector.configuration.IConfiguration;
 import com.github.zhanhb.ckfinder.connector.data.BeforeExecuteCommandEventArgs;
 import com.github.zhanhb.ckfinder.connector.data.BeforeExecuteCommandEventHandler;
-import com.github.zhanhb.ckfinder.connector.data.PluginInfo;
-import com.github.zhanhb.ckfinder.connector.data.PluginParam;
 import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
 import com.github.zhanhb.ckfinder.connector.handlers.arguments.ImageResizeArguments;
 import com.github.zhanhb.ckfinder.connector.handlers.command.XMLCommand;
@@ -28,6 +26,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
@@ -39,11 +38,11 @@ public class ImageResizeCommand extends XMLCommand<ImageResizeArguments> impleme
 
   private static final String[] SIZES = {"small", "medium", "large"};
 
-  private final PluginInfo pluginInfo;
+  private final Map<String, String> pluginParams;
 
-  public ImageResizeCommand(PluginInfo pluginInfo) {
+  public ImageResizeCommand(Map<String, String> params) {
     super(ImageResizeArguments::new);
-    this.pluginInfo = pluginInfo;
+    this.pluginParams = params;
   }
 
   @Override
@@ -151,18 +150,17 @@ public class ImageResizeCommand extends XMLCommand<ImageResizeArguments> impleme
           String thumbName = fileNameWithoutExt + "_" + size + "." + fileExt;
           Path thumbFile = Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath(),
                   arguments.getCurrentFolder(), thumbName);
-          for (PluginParam param : pluginInfo.getParams()) {
-            if ((size + "Thumb").equals(param.getName())) {
-              Matcher matcher = Pattern.compile("(\\d+)x(\\d+)").matcher(param.getValue());
-              if (matcher.matches()) {
-                String[] params = new String[]{matcher.group(1), matcher.group(2)};
-                try {
-                  ImageUtils.createResizedImage(file, thumbFile, Integer.parseInt(params[0]),
-                          Integer.parseInt(params[1]), getConfiguration().getImgQuality());
-                } catch (IOException e) {
-                  log.error("", e);
-                  return Constants.Errors.CKFINDER_CONNECTOR_ERROR_ACCESS_DENIED;
-                }
+          String value = pluginParams.get(size + "Thumb");
+          if (value != null) {
+            Matcher matcher = Pattern.compile("(\\d+)x(\\d+)").matcher(value);
+            if (matcher.matches()) {
+              String[] params = new String[]{matcher.group(1), matcher.group(2)};
+              try {
+                ImageUtils.createResizedImage(file, thumbFile, Integer.parseInt(params[0]),
+                        Integer.parseInt(params[1]), getConfiguration().getImgQuality());
+              } catch (IOException e) {
+                log.error("", e);
+                return Constants.Errors.CKFINDER_CONNECTOR_ERROR_ACCESS_DENIED;
               }
             }
           }

@@ -17,9 +17,11 @@ package com.github.zhanhb.ckfinder.connector.configuration;
 
 import com.github.zhanhb.ckfinder.connector.data.AccessControlLevel;
 import com.github.zhanhb.ckfinder.connector.data.PluginInfo;
-import com.github.zhanhb.ckfinder.connector.data.PluginParam;
 import com.github.zhanhb.ckfinder.connector.data.ResourceType;
 import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
+import com.github.zhanhb.ckfinder.connector.plugins.FileEditor;
+import com.github.zhanhb.ckfinder.connector.plugins.ImageResize;
+import com.github.zhanhb.ckfinder.connector.plugins.Watermark;
 import com.github.zhanhb.ckfinder.connector.plugins.WatermarkSettings;
 import com.github.zhanhb.ckfinder.connector.utils.AccessControl;
 import com.github.zhanhb.ckfinder.connector.utils.FileUtils;
@@ -29,6 +31,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Map;
 import java.util.StringTokenizer;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -36,7 +39,6 @@ import javax.xml.parsers.ParserConfigurationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
-import org.springframework.util.ClassUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
@@ -53,7 +55,6 @@ import static com.github.zhanhb.ckfinder.connector.plugins.WatermarkSettings.MAR
 import static com.github.zhanhb.ckfinder.connector.plugins.WatermarkSettings.QUALITY;
 import static com.github.zhanhb.ckfinder.connector.plugins.WatermarkSettings.SOURCE;
 import static com.github.zhanhb.ckfinder.connector.plugins.WatermarkSettings.TRANSPARENCY;
-import static com.github.zhanhb.ckfinder.connector.plugins.WatermarkSettings.WATERMARK;
 
 /**
  * Class loads configuration from XML file.
@@ -566,16 +567,29 @@ public enum XmlConfigurationParser {
     NodeList nodeList = childNode.getChildNodes();
     for (int i = 0, j = nodeList.getLength(); i < j; i++) {
       Node childChildNode = nodeList.item(i);
-      if (childChildNode.getNodeName().equals("plugin")) {
+      if ("plugin".equals(childChildNode.getNodeName())) {
         PluginInfo pluginInfo = createPluginFromNode(childChildNode);
-        builder.plugin(pluginInfo);
-        Plugin plugin = pluginInfo.getPlugin();
-        plugin.setPluginInfo(pluginInfo);
-        plugin.registerEventHandlers(eventBuilder);
-        WatermarkSettings watermarkSettings = checkPluginInfo(pluginInfo, resourceLoader);
-
-        if (watermarkSettings != null) {
-          builder.watermarkSettings(watermarkSettings);
+        String name = pluginInfo.getName();
+        if (name != null) {
+          Plugin plugin;
+          switch (name) {
+            case "imageresize":
+              plugin = new ImageResize(pluginInfo.getParams());
+              break;
+            case "watermark":
+              WatermarkSettings watermarkSettings = checkPluginInfo(pluginInfo, resourceLoader);
+              plugin = new Watermark(watermarkSettings);
+              break;
+            case "fileeditor":
+              plugin = new FileEditor();
+              break;
+            default:
+              continue;
+          }
+          plugin.registerEventHandlers(eventBuilder);
+          if (!plugin.isInternal()) {
+            builder.publicPluginName(name);
+          }
         }
       }
     }
@@ -583,34 +597,31 @@ public enum XmlConfigurationParser {
   }
 
   private WatermarkSettings checkPluginInfo(PluginInfo pluginInfo, ResourceLoader resourceLoader) {
-    if (WATERMARK.equals(pluginInfo.getName())) {
-      WatermarkSettings.Builder settings = WatermarkSettings.builder();
-      for (PluginParam param : pluginInfo.getParams()) {
-        final String name = param.getName();
-        final String value = param.getValue();
-        switch (name) {
-          case SOURCE:
-            settings.source(resourceLoader.getResource(value));
-            break;
-          case TRANSPARENCY:
-            settings.transparency(Float.parseFloat(value));
-            break;
-          case QUALITY:
-            final int parseInt = Integer.parseInt(value);
-            final int name1 = parseInt % 101;
-            final float name2 = name1 / 100f;
-            settings.quality(name2);
-            break;
-          case MARGIN_BOTTOM:
-            settings.marginBottom(Integer.parseInt(value));
-            break;
-          case MARGIN_RIGHT:
-            settings.marginRight(Integer.parseInt(value));
-        }
+    WatermarkSettings.Builder settings = WatermarkSettings.builder();
+    for (Map.Entry<String, String> entry : pluginInfo.getParams().entrySet()) {
+      final String name = entry.getKey();
+      final String value = entry.getValue();
+      switch (name) {
+        case SOURCE:
+          settings.source(resourceLoader.getResource(value));
+          break;
+        case TRANSPARENCY:
+          settings.transparency(Float.parseFloat(value));
+          break;
+        case QUALITY:
+          final int parseInt = Integer.parseInt(value);
+          final int name1 = parseInt % 101;
+          final float name2 = name1 / 100f;
+          settings.quality(name2);
+          break;
+        case MARGIN_BOTTOM:
+          settings.marginBottom(Integer.parseInt(value));
+          break;
+        case MARGIN_RIGHT:
+          settings.marginRight(Integer.parseInt(value));
       }
-      return settings.build();
     }
-    return null;
+    return settings.build();
   }
 
   /**
@@ -620,7 +631,7 @@ public enum XmlConfigurationParser {
    * @return PluginInfo data
    */
   private PluginInfo createPluginFromNode(Node element) {
-    PluginInfo.Builder info = PluginInfo.builder();
+    PluginInfo.Builder builder = PluginInfo.builder();
     NodeList list = element.getChildNodes();
     for (int i = 0, l = list.getLength(); i < l; i++) {
       Node childElem = list.item(i);
@@ -628,17 +639,7 @@ public enum XmlConfigurationParser {
       String textContent = nullNodeToString(childElem);
       switch (nodeName) {
         case "name":
-          info.name(textContent);
-          break;
-        case "class":
-          try {
-            info.plugin(ClassUtils.resolveClassName(textContent, null).asSubclass(Plugin.class).newInstance());
-          } catch (InstantiationException | IllegalAccessException ex) {
-            log.error("fail to instance class '{}'", textContent, ex);
-          }
-          break;
-        case "internal":
-          info.internal(Boolean.parseBoolean(textContent));
+          builder.name(textContent);
           break;
         case "params":
           NodeList paramLlist = childElem.getChildNodes();
@@ -657,12 +658,12 @@ public enum XmlConfigurationParser {
                   value = nullNodeToString(item);
                 }
               }
-              info.param(new PluginParam(name, value));
+              builder.param(name, value);
             }
           }
       }
     }
-    return info.build();
+    return builder.build();
   }
 
   /**

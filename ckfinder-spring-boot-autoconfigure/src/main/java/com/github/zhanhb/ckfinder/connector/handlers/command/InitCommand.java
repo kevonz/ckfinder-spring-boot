@@ -93,7 +93,8 @@ public class InitCommand extends XMLCommand<XMLArguments> {
     element.setAttribute("imgWidth", String.valueOf(getConfiguration().getImgWidth()));
     element.setAttribute("imgHeight", String.valueOf(getConfiguration().getImgHeight()));
     element.setAttribute("csrfProtection", String.valueOf(getConfiguration().isEnableCsrfProtection()));
-    if (getConfiguration().getPlugins().size() > 0) {
+    String plugins = getPlugins();
+    if (plugins.length() > 0) {
       element.setAttribute("plugins", getPlugins());
     }
     rootElement.appendChild(element);
@@ -105,9 +106,7 @@ public class InitCommand extends XMLCommand<XMLArguments> {
    * @return plugins names.
    */
   private String getPlugins() {
-    return getConfiguration().getPlugins().stream()
-            .filter(item -> !item.isInternal())
-            .map(item -> item.getName())
+    return getConfiguration().getPublicPluginNames().stream()
             .collect(Collectors.joining(","));
   }
 
