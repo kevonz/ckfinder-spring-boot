@@ -15,6 +15,7 @@ import com.github.zhanhb.ckfinder.connector.data.PluginInfo;
 import com.github.zhanhb.ckfinder.connector.data.ResourceType;
 import com.github.zhanhb.ckfinder.connector.plugins.WatermarkSettings;
 import com.github.zhanhb.ckfinder.connector.utils.AccessControl;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -86,6 +87,14 @@ public class Configuration implements IConfiguration {
       maxThumbHeight = DEFAULT_THUMB_MAX_HEIGHT;
       maxThumbWidth = DEFAULT_THUMB_MAX_WIDTH;
       userRoleName = "";
+    }
+
+    public Builder eventsFromPlugins(Collection<? extends Plugin> plugins) {
+      Events.Builder eventsBuilder = Events.builder();
+      for (Plugin plugin : plugins) {
+        plugin.registerEventHandlers(eventsBuilder);
+      }
+      return events(eventsBuilder.build());
     }
   }
 

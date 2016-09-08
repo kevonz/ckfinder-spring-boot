@@ -15,8 +15,7 @@
  */
 package com.github.zhanhb.ckfinder.connector.autoconfigure;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.Properties;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -41,18 +40,22 @@ public class CKFinderProperties {
   private Integer imgWidth;
   private Integer imgHeight;
   private Float imgQuality;
-  private String defaultResourceTypes;
-  private List<Type> types = Collections.emptyList();
+  private String[] defaultResourceTypes;
+  private Type[] types;
+  private String userRoleSessionVar;
+  private AccessControl[] accessControls;
   private Thumbs thumbs = new Thumbs();
   private Boolean disallowUnsafeCharacters;
   private Boolean checkDoubleExtension;
   private Boolean checkSizeAfterScaling;
   private Boolean secureImageUploads;
-  private String htmlExtensions;
+  private String[] htmlExtensions;
   private Boolean forceAscii;
   private Boolean enableCsrfProtection;
-  private String hideFolders;
-  private String hideFiles;
+  private String[] hideFolders;
+  private String[] hideFiles;
+  private Watermark watermark = new Watermark();
+  private ImageResize imageResize = new ImageResize();
 
   @Getter
   @Setter
@@ -78,6 +81,51 @@ public class CKFinderProperties {
     private Integer maxHeight;
     private Integer maxWidth;
     private Float quality;
+
+  }
+
+  @Getter
+  @Setter
+  public static class AccessControl {
+
+    private String role;
+
+    private String resourceType;
+    private String folder;
+    private boolean folderView;
+    private boolean folderCreate;
+    private boolean folderRename;
+    private boolean folderDelete;
+    private boolean fileView;
+    private boolean fileUpload;
+    private boolean fileRename;
+    private boolean fileDelete;
+
+  }
+
+  @Getter
+  @Setter
+  public static class ImageResize {
+
+    private Boolean enabled;
+    private Properties params;
+    private String name;
+
+    public void getName() {
+    }
+
+  }
+
+  @Getter
+  @Setter
+  public static class Watermark {
+
+    private Boolean enabled;
+    private String source;
+    private Float transparency;
+    private Float quality;
+    private Integer marginBottom;
+    private Integer marginRight;
 
   }
 
