@@ -80,6 +80,7 @@
     <slf4j.version>1.7.21</slf4j.version>
     <spring-boot.version>1.4.0.RELEASE</spring-boot.version>
     <spring.version>4.3.2.RELEASE</spring.version>
+    <thumbnailator.version>0.4.8</thumbnailator.version>
   </properties>
 
   <dependencyManagement>
@@ -98,6 +99,11 @@
         <groupId>javax.servlet</groupId>
         <artifactId>javax.servlet-api</artifactId>
         <version>${servlet-api.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>net.coobird</groupId>
+        <artifactId>thumbnailator</artifactId>
+        <version>${thumbnailator.version}</version>
       </dependency>
       <dependency>
         <groupId>org.projectlombok</groupId>
@@ -131,6 +137,11 @@
         <version>${spring.version}</version>
         <type>pom</type>
         <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot</artifactId>
+        <version>${spring-boot.version}</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
