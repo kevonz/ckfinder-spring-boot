@@ -89,7 +89,6 @@ public class CKFinderProperties {
   public static class AccessControl {
 
     private String role;
-
     private String resourceType;
     private String folder;
     private boolean folderView;
@@ -109,10 +108,6 @@ public class CKFinderProperties {
 
     private Boolean enabled;
     private Properties params;
-    private String name;
-
-    public void getName() {
-    }
 
   }
 

@@ -17,6 +17,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Singular;
@@ -91,7 +92,7 @@ public class Configuration implements IConfiguration {
       for (Plugin plugin : plugins) {
         plugin.registerEventHandlers(eventsBuilder);
       }
-      return events(eventsBuilder.build());
+      return events(eventsBuilder.build()).publicPluginNames(plugins.stream().filter(plugin -> !plugin.isInternal()).map(plugin -> plugin.getName()).collect(Collectors.toList()));
     }
   }
 

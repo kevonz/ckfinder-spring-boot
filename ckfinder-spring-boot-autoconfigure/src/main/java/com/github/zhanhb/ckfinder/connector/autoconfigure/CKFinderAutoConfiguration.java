@@ -37,7 +37,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
 import javax.servlet.ServletContext;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -189,7 +188,6 @@ public class CKFinderAutoConfiguration {
         builder.hiddenFiles(Arrays.asList(properties.getHideFiles()));
       }
       builder.eventsFromPlugins(plugins);
-      LoggerFactory.getLogger(CKFinderAutoConfiguration.class).info("builder:{}", builder);
       return builder.build();
     }
 
@@ -297,6 +295,7 @@ public class CKFinderAutoConfiguration {
   }
 
   @Configuration
+  @ConditionalOnMissingBean(Watermark.class)
   @ConditionalOnProperty(prefix = CKFinderProperties.CKFINDER_PREFIX + ".watermark", name = "enabled", havingValue = "true", matchIfMissing = false)
   public static class DefaultWatermarkConfiguration {
 
@@ -306,8 +305,7 @@ public class CKFinderAutoConfiguration {
     private ResourceLoader resourceLoader;
 
     @Bean
-    @ConditionalOnMissingBean
-    public WatermarkSettings watermarkSettings() {
+    public Watermark watermark(WatermarkSettings watermarkSettings) {
       CKFinderProperties.Watermark watermark = properties.getWatermark();
       WatermarkSettings.Builder builder = WatermarkSettings.builder();
       if (watermark.getMarginBottom() != null) {
@@ -325,13 +323,7 @@ public class CKFinderAutoConfiguration {
       if (watermark.getTransparency() != null) {
         builder.transparency(watermark.getTransparency());
       }
-      return builder.build();
-    }
-
-    @Bean
-    @ConditionalOnMissingBean
-    public Watermark watermark(WatermarkSettings watermarkSettings) {
-      return new Watermark(watermarkSettings);
+      return new Watermark(builder.build());
     }
   }
 
