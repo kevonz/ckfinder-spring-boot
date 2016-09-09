@@ -282,7 +282,7 @@ public class CKFinderAutoConfiguration {
       CKFinderProperties.ImageResize imageResize = properties.getImageResize();
       Properties params = imageResize.getParams();
       PluginInfo.Builder pluginInfoBuilder = PluginInfo.builder();
-      if (params != null) {
+      if (params != null && !params.isEmpty()) {
         for (Map.Entry<Object, Object> entry : params.entrySet()) {
           String key = (String) entry.getKey();
           String value = (String) entry.getValue();

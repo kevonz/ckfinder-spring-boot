@@ -31,6 +31,8 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 import javax.xml.parsers.DocumentBuilder;
@@ -563,8 +565,8 @@ public enum XmlConfigurationParser {
    * @param childNode child of XML node 'plugins'.
    */
   private void setPlugins(Configuration.Builder builder, Node childNode, ResourceLoader resourceLoader) {
-    Events.Builder eventBuilder = Events.builder();
     NodeList nodeList = childNode.getChildNodes();
+    List<Plugin> plugins = new ArrayList<>(4);
     for (int i = 0, j = nodeList.getLength(); i < j; i++) {
       Node childChildNode = nodeList.item(i);
       if ("plugin".equals(childChildNode.getNodeName())) {
@@ -586,14 +588,11 @@ public enum XmlConfigurationParser {
             default:
               continue;
           }
-          plugin.registerEventHandlers(eventBuilder);
-          if (!plugin.isInternal()) {
-            builder.publicPluginName(name);
-          }
+          plugins.add(plugin);
         }
       }
     }
-    builder.events(eventBuilder.build());
+    builder.eventsFromPlugins(plugins);
   }
 
   private WatermarkSettings checkPluginInfo(PluginInfo pluginInfo, ResourceLoader resourceLoader) {

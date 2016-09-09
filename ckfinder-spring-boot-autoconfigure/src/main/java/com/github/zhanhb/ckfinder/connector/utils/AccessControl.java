@@ -87,15 +87,15 @@ public final class AccessControl {
    * @return mask value
    */
   public int checkACLForRole(String resourceType, String folder, String currentUserRole) {
-    CheckEntry[] ce = new CheckEntry[currentUserRole != null ? 4 : 2];
-
-    ce[0] = new CheckEntry("*", "*");
-    ce[1] = new CheckEntry("*", resourceType);
-
-    if (currentUserRole != null) {
-      ce[2] = new CheckEntry(currentUserRole, "*");
-      ce[3] = new CheckEntry(currentUserRole, resourceType);
-    }
+    final CheckEntry[] ce = currentUserRole != null ? new CheckEntry[]{
+      new CheckEntry("*", "*"),
+      new CheckEntry("*", resourceType),
+      new CheckEntry(currentUserRole, "*"),
+      new CheckEntry(currentUserRole, resourceType)
+    } : new CheckEntry[]{
+      new CheckEntry("*", "*"),
+      new CheckEntry("*", resourceType)
+    };
 
     int acl = 0;
     for (CheckEntry checkEntry : ce) {
