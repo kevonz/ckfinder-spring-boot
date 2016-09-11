@@ -11,6 +11,7 @@
  */
 package com.github.zhanhb.ckfinder.connector.plugins;
 
+import com.github.zhanhb.ckfinder.connector.ConnectorServlet;
 import com.github.zhanhb.ckfinder.connector.configuration.IConfiguration;
 import com.github.zhanhb.ckfinder.connector.data.AfterFileUploadEventArgs;
 import com.github.zhanhb.ckfinder.connector.data.AfterFileUploadEventHandler;
@@ -29,7 +30,7 @@ import org.springframework.core.io.Resource;
 @Slf4j
 public class WatermarkCommand implements AfterFileUploadEventHandler {
 
-  private static final String DEFAULT_WATERMARK = "/logo.gif";
+  private static final String DEFAULT_WATERMARK = "logo.gif";
   private final WatermarkSettings settings;
 
   @Override
@@ -63,7 +64,7 @@ public class WatermarkCommand implements AfterFileUploadEventHandler {
     final BufferedImage watermark;
 
     try (InputStream is = source == null
-            ? getClass().getResourceAsStream(DEFAULT_WATERMARK)
+            ? ConnectorServlet.class.getResourceAsStream(DEFAULT_WATERMARK)
             : source.getInputStream()) {
       watermark = ImageIO.read(is);
     }

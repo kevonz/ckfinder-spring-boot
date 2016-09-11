@@ -1,5 +1,5 @@
 ckfinder:
-  enabled: false
+  enabled: true
   base-dir:
   base-url:
   license-key:
@@ -12,34 +12,34 @@ ckfinder:
     - name: Files
       url: '%BASE_URL%files/'
       directory: '%BASE_DIR%/files'
-      maxSize: 0
-      allowedExtensions: 7z,aiff,asf,avi,bmp,csv,doc,docx,fla,flv,gif,gz,gzip,jpeg,jpg,mid,mov,mp3,mp4,mpc,mpeg,mpg,ods,odt,pdf,png,ppt,pptx,pxd,qt,ram,rar,rm,rmi,rmvb,rtf,sdc,sitd,swf,sxc,sxw,tar,tgz,tif,tiff,txt,vsd,wav,wma,wmv,xls,xlsx,zip
-      deniedExtensions: exe,jsp,jspx,asp,aspx
+      max-size: 0
+      allowed-extensions: 7z,aiff,asf,avi,bmp,csv,doc,docx,fla,flv,gif,gz,gzip,jpeg,jpg,mid,mov,mp3,mp4,mpc,mpeg,mpg,ods,odt,pdf,png,ppt,pptx,pxd,qt,ram,rar,rm,rmi,rmvb,rtf,sdc,sitd,swf,sxc,sxw,tar,tgz,tif,tiff,txt,vsd,wav,wma,wmv,xls,xlsx,zip
+      denied-extensions: exe,jsp,jspx,asp,aspx
     - name: Images
       url: '%BASE_URL%images/'
       directory: '%BASE_DIR%/images'
-      maxSize: 0
-      allowedExtensions: bmp,gif,jpeg,jpg,png
-      deniedExtensions:
+      max-size: 0
+      allowed-extensions: bmp,gif,jpeg,jpg,png
+      denied-extensions:
 #    - name: Flash
 #      url: '%BASE_URL%flash/'
 #      directory: '%BASE_DIR%/flash'
-#      maxSize: 0
-#      allowedExtensions: swf,flv
-#      deniedExtensions:
-  user-role-session-var:
+#      max-size: 0
+#      allowed-extensions: swf,flv
+#      denied-extensions:
+  user-role-session-var: CKFinder_UserRole
   access-controls:
   - role: '*'
-    resourceType: '*'
+    resource-type: '*'
     folder: /
-    folderView: true
-    folderCreate: true
-    folderRename: true
-    folderDelete: true
-    fileView: true
-    fileUpload: true
-    fileRename: true
-    fileDelete: true
+    folder-view: true
+    folder-create: true
+    folder-rename: true
+    folder-delete: true
+    file-view: true
+    file-upload: true
+    file-rename: true
+    file-delete: true
   thumbs:
     enabled: true
     url: '%BASE_URL%_thumbs/'
@@ -55,5 +55,13 @@ ckfinder:
   html-extensions: html,htm,xml,js
   force-ascii: false
   enable-csrf-protection: true
-  hide-folders:
-  hide-files:
+  hide-folders: '.*,CVS'
+  hide-files: '.*'
+  watermark:
+    enabled: false
+    margin-bottom: 0
+    quality: 0.1
+    transparency: 0.1
+    source: classpath:/com/github/zhanhb/ckfinder/connector/logo.gif
+  image-resize:
+    enabled: true
