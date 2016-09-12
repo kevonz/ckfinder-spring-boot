@@ -91,24 +91,27 @@ public class CKFinderAutoConfiguration {
     @Bean
     public AccessControl defaultAccessControl() {
       AccessControl.Builder accessControlBuilder = AccessControl.builder();
-      for (CKFinderProperties.AccessControl accessControl : properties.getAccessControls()) {
-        String role = accessControl.getRole();
-        String resourceType = accessControl.getResourceType();
-        String folder = accessControl.getFolder();
-        int mask = 0;
-        mask = calc(mask, accessControl.isFileDelete(), AccessControl.CKFINDER_CONNECTOR_ACL_FILE_DELETE);
-        mask = calc(mask, accessControl.isFileRename(), AccessControl.CKFINDER_CONNECTOR_ACL_FILE_RENAME);
-        mask = calc(mask, accessControl.isFileUpload(), AccessControl.CKFINDER_CONNECTOR_ACL_FILE_UPLOAD);
-        mask = calc(mask, accessControl.isFileView(), AccessControl.CKFINDER_CONNECTOR_ACL_FILE_VIEW);
-        mask = calc(mask, accessControl.isFolderCreate(), AccessControl.CKFINDER_CONNECTOR_ACL_FOLDER_CREATE);
-        mask = calc(mask, accessControl.isFolderDelete(), AccessControl.CKFINDER_CONNECTOR_ACL_FOLDER_DELETE);
-        mask = calc(mask, accessControl.isFolderRename(), AccessControl.CKFINDER_CONNECTOR_ACL_FOLDER_RENAME);
-        mask = calc(mask, accessControl.isFolderView(), AccessControl.CKFINDER_CONNECTOR_ACL_FOLDER_VIEW);
+      CKFinderProperties.AccessControl[] accessControls = properties.getAccessControls();
+      if (accessControls != null) {
+        for (CKFinderProperties.AccessControl accessControl : accessControls) {
+          String role = accessControl.getRole();
+          String resourceType = accessControl.getResourceType();
+          String folder = accessControl.getFolder();
+          int mask = 0;
+          mask = calc(mask, accessControl.isFileDelete(), AccessControl.CKFINDER_CONNECTOR_ACL_FILE_DELETE);
+          mask = calc(mask, accessControl.isFileRename(), AccessControl.CKFINDER_CONNECTOR_ACL_FILE_RENAME);
+          mask = calc(mask, accessControl.isFileUpload(), AccessControl.CKFINDER_CONNECTOR_ACL_FILE_UPLOAD);
+          mask = calc(mask, accessControl.isFileView(), AccessControl.CKFINDER_CONNECTOR_ACL_FILE_VIEW);
+          mask = calc(mask, accessControl.isFolderCreate(), AccessControl.CKFINDER_CONNECTOR_ACL_FOLDER_CREATE);
+          mask = calc(mask, accessControl.isFolderDelete(), AccessControl.CKFINDER_CONNECTOR_ACL_FOLDER_DELETE);
+          mask = calc(mask, accessControl.isFolderRename(), AccessControl.CKFINDER_CONNECTOR_ACL_FOLDER_RENAME);
+          mask = calc(mask, accessControl.isFolderView(), AccessControl.CKFINDER_CONNECTOR_ACL_FOLDER_VIEW);
 
-        AccessControlLevel accessControlLevel = AccessControlLevel
-                .builder().role(role).resourceType(resourceType).folder(folder)
-                .mask(mask).build();
-        accessControlBuilder.aclEntry(accessControlLevel);
+          AccessControlLevel accessControlLevel = AccessControlLevel
+                  .builder().role(role).resourceType(resourceType).folder(folder)
+                  .mask(mask).build();
+          accessControlBuilder.aclEntry(accessControlLevel);
+        }
       }
       return accessControlBuilder.build();
     }
