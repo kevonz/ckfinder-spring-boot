@@ -106,13 +106,6 @@ public interface IConfiguration {
    *
    * @return thumbs directory
    */
-  public String getThumbsDir();
-
-  /**
-   * gets path to thumbs directory.
-   *
-   * @return thumbs directory
-   */
   public String getThumbsPath();
 
   /**

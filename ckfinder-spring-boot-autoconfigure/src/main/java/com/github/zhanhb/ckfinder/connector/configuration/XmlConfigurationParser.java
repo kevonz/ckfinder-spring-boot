@@ -412,7 +412,6 @@ public enum XmlConfigurationParser {
           break;
         case "directory":
           String thumbsDir = nullNodeToString(childNode);
-          builder.thumbsDir(thumbsDir);
           Path file = Paths.get(thumbsDir.replace(Constants.BASE_DIR_PLACEHOLDER, baseFolder));
           if (file == null) {
             throw new ConnectorException(Constants.Errors.CKFINDER_CONNECTOR_ERROR_FOLDER_NOT_FOUND,

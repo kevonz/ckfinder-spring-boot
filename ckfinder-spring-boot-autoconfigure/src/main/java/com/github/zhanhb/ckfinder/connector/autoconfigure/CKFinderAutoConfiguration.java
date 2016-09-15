@@ -237,7 +237,6 @@ public class CKFinderAutoConfiguration {
         }
         if (thumbs.getDirectory() != null) {
           String path = thumbs.getDirectory().replace(Constants.BASE_DIR_PLACEHOLDER, baseDir);
-          builder.thumbsDir(path);
           builder.thumbsPath(path);
         }
         if (thumbs.getDirectAccess() != null) {

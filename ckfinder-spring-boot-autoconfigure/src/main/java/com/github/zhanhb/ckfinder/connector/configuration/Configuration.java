@@ -43,7 +43,6 @@ public class Configuration implements IConfiguration {
   private final Map<String, ResourceType> types;
   private final boolean thumbsEnabled;
   private final String thumbsUrl;
-  private final String thumbsDir;
   private final String thumbsPath;
   private final boolean thumbsDirectAccess;
   private final int maxThumbHeight;
@@ -79,7 +78,6 @@ public class Configuration implements IConfiguration {
       imgHeight = DEFAULT_IMG_HEIGHT;
       imgQuality = DEFAULT_IMG_QUALITY;
       thumbsUrl = "";
-      thumbsDir = "";
       thumbsPath = "";
       thumbsQuality = DEFAULT_IMG_QUALITY;
       maxThumbHeight = DEFAULT_THUMB_MAX_HEIGHT;
