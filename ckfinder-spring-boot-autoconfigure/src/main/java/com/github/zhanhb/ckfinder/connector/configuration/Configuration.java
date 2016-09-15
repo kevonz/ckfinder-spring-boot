@@ -11,16 +11,17 @@
  */
 package com.github.zhanhb.ckfinder.connector.configuration;
 
-import com.github.zhanhb.ckfinder.connector.data.PluginInfo;
 import com.github.zhanhb.ckfinder.connector.data.ResourceType;
-import com.github.zhanhb.ckfinder.connector.plugins.WatermarkSettings;
 import com.github.zhanhb.ckfinder.connector.utils.AccessControl;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Singular;
+import lombok.ToString;
 
 @Builder(builderClassName = "Builder")
 @Getter
@@ -29,6 +30,7 @@ import lombok.Singular;
   "ReturnOfCollectionOrArrayField",
   "FinalMethod"
 })
+@ToString
 public class Configuration implements IConfiguration {
 
   private final boolean enabled;
@@ -41,7 +43,6 @@ public class Configuration implements IConfiguration {
   private final Map<String, ResourceType> types;
   private final boolean thumbsEnabled;
   private final String thumbsUrl;
-  private final String thumbsDir;
   private final String thumbsPath;
   private final boolean thumbsDirectAccess;
   private final int maxThumbHeight;
@@ -56,7 +57,7 @@ public class Configuration implements IConfiguration {
   private final boolean checkSizeAfterScaling;
   private final String userRoleName;
   @Singular
-  private final List<PluginInfo> plugins;
+  private final List<String> publicPluginNames;
   private final boolean secureImageUploads;
   @Singular
   private final List<String> htmlExtensions;
@@ -64,8 +65,8 @@ public class Configuration implements IConfiguration {
   private final Set<String> defaultResourceTypes;
   private final boolean disallowUnsafeCharacters;
   private final Events events;
-  private final WatermarkSettings watermarkSettings;
   private final AccessControl accessControl;
+  private final boolean enableCsrfProtection;
 
   @SuppressWarnings("PublicInnerClass")
   public static class Builder {
@@ -77,12 +78,19 @@ public class Configuration implements IConfiguration {
       imgHeight = DEFAULT_IMG_HEIGHT;
       imgQuality = DEFAULT_IMG_QUALITY;
       thumbsUrl = "";
-      thumbsDir = "";
       thumbsPath = "";
       thumbsQuality = DEFAULT_IMG_QUALITY;
       maxThumbHeight = DEFAULT_THUMB_MAX_HEIGHT;
       maxThumbWidth = DEFAULT_THUMB_MAX_WIDTH;
       userRoleName = "";
+    }
+
+    public Builder eventsFromPlugins(Collection<? extends Plugin> plugins) {
+      Events.Builder eventsBuilder = Events.builder();
+      for (Plugin plugin : plugins) {
+        plugin.registerEventHandlers(eventsBuilder);
+      }
+      return events(eventsBuilder.build()).publicPluginNames(plugins.stream().filter(plugin -> !plugin.isInternal()).map(plugin -> plugin.getName()).collect(Collectors.toList()));
     }
   }
 

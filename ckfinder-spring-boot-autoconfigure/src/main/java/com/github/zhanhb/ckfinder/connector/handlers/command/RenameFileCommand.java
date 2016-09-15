@@ -165,6 +165,9 @@ public class RenameFileCommand extends XMLCommand<RenameFileArguments> implement
   protected void initParams(RenameFileArguments arguments, HttpServletRequest request, IConfiguration configuration)
           throws ConnectorException {
     super.initParams(arguments, request, configuration);
+    if (getConfiguration().isEnableCsrfProtection() && !checkCsrfToken(request, null)) {
+      throw new ConnectorException(Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST, "CSRF Attempt");
+    }
     arguments.setFileName(request.getParameter("fileName"));
     arguments.setNewFileName(request.getParameter("newFileName"));
   }

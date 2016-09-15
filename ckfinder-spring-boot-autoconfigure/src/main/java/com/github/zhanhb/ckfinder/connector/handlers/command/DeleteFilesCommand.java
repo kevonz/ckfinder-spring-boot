@@ -168,6 +168,9 @@ public class DeleteFilesCommand extends XMLCommand<DeleteFilesArguments> impleme
   @SuppressWarnings("CollectionWithoutInitialCapacity")
   protected void initParams(DeleteFilesArguments arguments, HttpServletRequest request, IConfiguration configuration) throws ConnectorException {
     super.initParams(arguments, request, configuration);
+    if (getConfiguration().isEnableCsrfProtection() && !checkCsrfToken(request, null)) {
+      throw new ConnectorException(Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST, "CSRF Attempt");
+    }
     arguments.setFiles(new ArrayList<>());
     RequestFileHelper.addFilesListFromRequest(request, arguments.getFiles());
   }

@@ -15,8 +15,6 @@ import com.github.zhanhb.ckfinder.connector.configuration.Constants;
 import com.github.zhanhb.ckfinder.connector.configuration.IConfiguration;
 import com.github.zhanhb.ckfinder.connector.data.BeforeExecuteCommandEventArgs;
 import com.github.zhanhb.ckfinder.connector.data.BeforeExecuteCommandEventHandler;
-import com.github.zhanhb.ckfinder.connector.data.PluginInfo;
-import com.github.zhanhb.ckfinder.connector.data.PluginParam;
 import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
 import com.github.zhanhb.ckfinder.connector.handlers.arguments.ImageResizeArguments;
 import com.github.zhanhb.ckfinder.connector.handlers.command.XMLCommand;
@@ -28,7 +26,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
-import java.util.StringTokenizer;
+import java.util.Map;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -39,11 +38,11 @@ public class ImageResizeCommand extends XMLCommand<ImageResizeArguments> impleme
 
   private static final String[] SIZES = {"small", "medium", "large"};
 
-  private final PluginInfo pluginInfo;
+  private final Map<String, String> pluginParams;
 
-  public ImageResizeCommand(PluginInfo pluginInfo) {
+  public ImageResizeCommand(Map<String, String> params) {
     super(ImageResizeArguments::new);
-    this.pluginInfo = pluginInfo;
+    this.pluginParams = params;
   }
 
   @Override
@@ -62,6 +61,10 @@ public class ImageResizeCommand extends XMLCommand<ImageResizeArguments> impleme
 
   @Override
   protected int getDataForXml(ImageResizeArguments arguments) {
+    if (getConfiguration().isEnableCsrfProtection() && !checkCsrfToken(arguments.getRequest(), null)) {
+      return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
+    }
+
     try {
       checkTypeExists(arguments.getType());
     } catch (ConnectorException ex) {
@@ -143,22 +146,21 @@ public class ImageResizeCommand extends XMLCommand<ImageResizeArguments> impleme
       String fileNameWithoutExt = FileUtils.getFileNameWithoutExtension(arguments.getFileName());
       String fileExt = FileUtils.getFileExtension(arguments.getFileName());
       for (String size : SIZES) {
-        if (arguments.getSizesFromReq().get(size) != null
-                && arguments.getSizesFromReq().get(size).equals("1")) {
-          String thumbName = fileNameWithoutExt + ("_") + size + "." + fileExt;
+        if ("1".equals(arguments.getSizesFromReq().get(size))) {
+          String thumbName = fileNameWithoutExt + "_" + size + "." + fileExt;
           Path thumbFile = Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath(),
                   arguments.getCurrentFolder(), thumbName);
-          for (PluginParam param : pluginInfo.getParams()) {
-            if ((size + "Thumb").equals(param.getName())) {
-              if (checkParamSize(param.getValue())) {
-                String[] params = parseValue(param.getValue());
-                try {
-                  ImageUtils.createResizedImage(file, thumbFile, Integer.parseInt(params[0]),
-                          Integer.parseInt(params[1]), getConfiguration().getImgQuality());
-                } catch (IOException e) {
-                  log.error("", e);
-                  return Constants.Errors.CKFINDER_CONNECTOR_ERROR_ACCESS_DENIED;
-                }
+          String value = pluginParams.get(size + "Thumb");
+          if (value != null) {
+            Matcher matcher = Pattern.compile("(\\d+)x(\\d+)").matcher(value);
+            if (matcher.matches()) {
+              String[] params = new String[]{matcher.group(1), matcher.group(2)};
+              try {
+                ImageUtils.createResizedImage(file, thumbFile, Integer.parseInt(params[0]),
+                        Integer.parseInt(params[1]), getConfiguration().getImgQuality());
+              } catch (IOException e) {
+                log.error("", e);
+                return Constants.Errors.CKFINDER_CONNECTOR_ERROR_ACCESS_DENIED;
               }
             }
           }
@@ -170,15 +172,6 @@ public class ImageResizeCommand extends XMLCommand<ImageResizeArguments> impleme
     }
 
     return Constants.Errors.CKFINDER_CONNECTOR_ERROR_NONE;
-  }
-
-  private String[] parseValue(String value) {
-    StringTokenizer st = new StringTokenizer(value, "x");
-    return new String[]{st.nextToken(), st.nextToken()};
-  }
-
-  private boolean checkParamSize(String value) {
-    return Pattern.matches("(\\d)+x(\\d)+", value);
   }
 
   @Override
@@ -217,7 +210,7 @@ public class ImageResizeCommand extends XMLCommand<ImageResizeArguments> impleme
     for (String size : SIZES) {
       arguments.getSizesFromReq().put(size, request.getParameter(size));
     }
-
+    arguments.setRequest(request);
   }
 
 }

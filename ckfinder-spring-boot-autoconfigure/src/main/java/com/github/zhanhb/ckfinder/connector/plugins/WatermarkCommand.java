@@ -11,6 +11,7 @@
  */
 package com.github.zhanhb.ckfinder.connector.plugins;
 
+import com.github.zhanhb.ckfinder.connector.ConnectorServlet;
 import com.github.zhanhb.ckfinder.connector.configuration.IConfiguration;
 import com.github.zhanhb.ckfinder.connector.data.AfterFileUploadEventArgs;
 import com.github.zhanhb.ckfinder.connector.data.AfterFileUploadEventHandler;
@@ -19,20 +20,22 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import javax.imageio.ImageIO;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.coobird.thumbnailator.Thumbnails;
 import net.coobird.thumbnailator.name.Rename;
 import org.springframework.core.io.Resource;
 
+@RequiredArgsConstructor
 @Slf4j
 public class WatermarkCommand implements AfterFileUploadEventHandler {
 
-  private static final String DEFAULT_WATERMARK = "/logo.gif";
+  private static final String DEFAULT_WATERMARK = "logo.gif";
+  private final WatermarkSettings settings;
 
   @Override
   public boolean runEventHandler(AfterFileUploadEventArgs args, IConfiguration configuration) {
     try {
-      WatermarkSettings settings = configuration.getWatermarkSettings();
       final Path originalFile = args.getFile();
       final WatermarkPosition position = new WatermarkPosition(settings.getMarginBottom(), settings.getMarginRight());
 
@@ -59,13 +62,13 @@ public class WatermarkCommand implements AfterFileUploadEventHandler {
   private BufferedImage getWatermakImage(WatermarkSettings settings) throws IOException {
     final Resource source = settings.getSource();
     final BufferedImage watermark;
-    if (source == null) {
-      watermark = ImageIO.read(getClass().getResourceAsStream(DEFAULT_WATERMARK));
-    } else {
-      try (InputStream is = source.getInputStream()) {
-        watermark = ImageIO.read(is);
-      }
+
+    try (InputStream is = source == null
+            ? ConnectorServlet.class.getResourceAsStream(DEFAULT_WATERMARK)
+            : source.getInputStream()) {
+      watermark = ImageIO.read(is);
     }
+
     return watermark;
   }
 

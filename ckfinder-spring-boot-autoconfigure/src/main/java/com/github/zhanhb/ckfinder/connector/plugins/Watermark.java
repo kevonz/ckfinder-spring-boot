@@ -16,9 +16,16 @@ import com.github.zhanhb.ckfinder.connector.configuration.Plugin;
 
 public class Watermark extends Plugin {
 
+  private final WatermarkSettings watermarkSettings;
+
+  public Watermark(WatermarkSettings watermarkSettings) {
+    super("watermark", true);
+    this.watermarkSettings = watermarkSettings;
+  }
+
   @Override
   public void registerEventHandlers(Events.Builder builder) {
-    builder.afterFileUploadEventHandler(new WatermarkCommand());
+    builder.afterFileUploadEventHandler(new WatermarkCommand(watermarkSettings));
   }
 
 }

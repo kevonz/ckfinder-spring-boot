@@ -12,6 +12,7 @@
 package com.github.zhanhb.ckfinder.connector.handlers.command;
 
 import com.github.zhanhb.ckfinder.connector.configuration.Constants;
+import com.github.zhanhb.ckfinder.connector.configuration.IConfiguration;
 import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
 import com.github.zhanhb.ckfinder.connector.handlers.arguments.XMLArguments;
 import com.github.zhanhb.ckfinder.connector.utils.AccessControl;
@@ -19,6 +20,7 @@ import com.github.zhanhb.ckfinder.connector.utils.FileUtils;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.w3c.dom.Element;
 
@@ -30,6 +32,15 @@ public class DeleteFolderCommand extends XMLCommand<XMLArguments> implements IPo
 
   public DeleteFolderCommand() {
     super(XMLArguments::new);
+  }
+
+  @Override
+  public void initParams(XMLArguments arguments, HttpServletRequest request, IConfiguration configuration)
+          throws ConnectorException {
+    super.initParams(arguments, request, configuration);
+    if (getConfiguration().isEnableCsrfProtection() && !checkCsrfToken(request, null)) {
+      throw new ConnectorException(Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST, "CSRF Attempt");
+    }
   }
 
   @Override

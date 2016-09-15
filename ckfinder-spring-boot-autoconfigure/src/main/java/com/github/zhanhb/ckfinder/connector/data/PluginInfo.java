@@ -11,8 +11,7 @@
  */
 package com.github.zhanhb.ckfinder.connector.data;
 
-import com.github.zhanhb.ckfinder.connector.configuration.Plugin;
-import java.util.List;
+import java.util.Map;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Singular;
@@ -22,9 +21,7 @@ import lombok.Singular;
 public class PluginInfo {
 
   private final String name;
-  private final Plugin plugin;
   @Singular
-  private final List<PluginParam> params;
-  private final boolean internal;
+  private final Map<String, String> params;
 
 }

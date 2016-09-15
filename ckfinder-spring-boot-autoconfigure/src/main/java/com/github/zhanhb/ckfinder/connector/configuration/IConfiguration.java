@@ -11,9 +11,7 @@
  */
 package com.github.zhanhb.ckfinder.connector.configuration;
 
-import com.github.zhanhb.ckfinder.connector.data.PluginInfo;
 import com.github.zhanhb.ckfinder.connector.data.ResourceType;
-import com.github.zhanhb.ckfinder.connector.plugins.WatermarkSettings;
 import com.github.zhanhb.ckfinder.connector.utils.AccessControl;
 import java.util.List;
 import java.util.Map;
@@ -30,7 +28,7 @@ public interface IConfiguration {
   int DEFAULT_THUMB_MAX_HEIGHT = 100;
   float DEFAULT_IMG_QUALITY = 0.8f;
   String DEFAULT_THUMBS_URL = "_thumbs/";
-  String DEFAULT_THUMBS_DIR = "%BASE_DIR%_thumbs/";
+  String DEFAULT_THUMBS_DIR = "%BASE_DIR%/_thumbs/";
   String DEFAULT_BASE_URL = "/userfiles";
 
   /**
@@ -108,13 +106,6 @@ public interface IConfiguration {
    *
    * @return thumbs directory
    */
-  public String getThumbsDir();
-
-  /**
-   * gets path to thumbs directory.
-   *
-   * @return thumbs directory
-   */
   public String getThumbsPath();
 
   /**
@@ -181,6 +172,15 @@ public interface IConfiguration {
   public boolean isDisallowUnsafeCharacters();
 
   /**
+   * Returns flag indicating if Cross-site request forgery (CSRF) protection has
+   * been enabled.
+   *
+   * @return {@code boolean} flag indicating if CSRF protection has been
+   * enabled.
+   */
+  public boolean isEnableCsrfProtection();
+
+  /**
    * flag if check image size after resizing image.
    *
    * @return true if check.
@@ -192,7 +192,7 @@ public interface IConfiguration {
    *
    * @return list of plugins.
    */
-  public List<PluginInfo> getPlugins();
+  public List<String> getPublicPluginNames();
 
   /**
    * gets events.
@@ -227,11 +227,5 @@ public interface IConfiguration {
    * @return the configuration
    */
   public AccessControl getAccessControl();
-
-  /**
-   *
-   * @return the watermarkSettings
-   */
-  public WatermarkSettings getWatermarkSettings();
 
 }

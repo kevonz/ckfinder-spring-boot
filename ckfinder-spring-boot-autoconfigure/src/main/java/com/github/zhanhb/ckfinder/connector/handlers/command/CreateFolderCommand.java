@@ -134,6 +134,9 @@ public class CreateFolderCommand extends XMLCommand<CreateFolderArguments> imple
   protected void initParams(CreateFolderArguments arguments, HttpServletRequest request, IConfiguration configuration)
           throws ConnectorException {
     super.initParams(arguments, request, configuration);
+    if (getConfiguration().isEnableCsrfProtection() && !checkCsrfToken(request, null)) {
+      throw new ConnectorException(Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST, "CSRF Attempt");
+    }
     arguments.setNewFolderName(request.getParameter("NewFolderName"));
   }
 

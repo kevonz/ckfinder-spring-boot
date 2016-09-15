@@ -13,14 +13,22 @@ package com.github.zhanhb.ckfinder.connector.plugins;
 
 import com.github.zhanhb.ckfinder.connector.configuration.Events;
 import com.github.zhanhb.ckfinder.connector.configuration.Plugin;
+import java.util.Map;
 
 public class ImageResize extends Plugin {
 
+  private final Map<String, String> params;
+
+  public ImageResize(Map<String, String> params) {
+    super("imageresize", false);
+    this.params = params;
+  }
+
   @Override
   public void registerEventHandlers(Events.Builder builder) {
-    builder.beforeExecuteCommandEventHandler(new ImageResizeCommand(getPluginInfo()))
+    builder.beforeExecuteCommandEventHandler(new ImageResizeCommand(params))
             .beforeExecuteCommandEventHandler(new ImageResizeInfoCommand())
-            .initCommandEventHandler(new ImageResizeInitCommandEventHandler(getPluginInfo()));
+            .initCommandEventHandler(new ImageResizeInitCommandEventHandler(getName(), params));
   }
 
 }

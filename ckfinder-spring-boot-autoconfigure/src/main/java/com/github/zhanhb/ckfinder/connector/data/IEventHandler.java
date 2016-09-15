@@ -29,6 +29,7 @@ public interface IEventHandler<T> {
    * @param configuration connector configuration
    * @return false if break executing command.
    * @throws ConnectorException when error occurs.
+   * @throws java.io.IOException
    */
   public boolean runEventHandler(T args, IConfiguration configuration)
           throws ConnectorException, IOException;

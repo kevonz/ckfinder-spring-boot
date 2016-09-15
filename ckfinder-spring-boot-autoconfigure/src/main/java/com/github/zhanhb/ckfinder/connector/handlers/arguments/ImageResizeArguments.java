@@ -1,6 +1,7 @@
 package com.github.zhanhb.ckfinder.connector.handlers.arguments;
 
 import java.util.Map;
+import javax.servlet.http.HttpServletRequest;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -22,5 +23,6 @@ public class ImageResizeArguments extends XMLArguments {
   private Integer height;
   private boolean wrongReqSizesParams;
   private Map<String, String> sizesFromReq;
+  private HttpServletRequest request;
 
 }

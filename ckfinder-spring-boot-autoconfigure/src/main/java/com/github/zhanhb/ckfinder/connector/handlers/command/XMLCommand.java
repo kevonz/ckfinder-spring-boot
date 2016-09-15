@@ -20,6 +20,7 @@ import java.io.PrintWriter;
 import java.util.function.Supplier;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 /**
@@ -55,8 +56,8 @@ public abstract class XMLCommand<T extends XMLArguments> extends Command<T> {
   @Override
   @SuppressWarnings("FinalMethod")
   final void execute(T arguments, HttpServletResponse response) throws IOException {
+    createXMLResponse(arguments, getDataForXml(arguments));
     try (PrintWriter out = response.getWriter()) {
-      createXMLResponse(arguments, getDataForXml(arguments));
       XMLCreator.INSTANCE.writeTo(arguments.getDocument(), out);
     }
   }
@@ -68,16 +69,17 @@ public abstract class XMLCommand<T extends XMLArguments> extends Command<T> {
    * @throws ConnectorException to handle in error handler.
    */
   private void createXMLResponse(T arguments, int errorNum) {
-    Element rootElement = arguments.getDocument().createElement("Connector");
+    Document document = arguments.getDocument();
+    Element rootElement = document.createElement("Connector");
     if (arguments.getType() != null && !arguments.getType().isEmpty()) {
       rootElement.setAttribute("resourceType", arguments.getType());
     }
     if (shouldAddCurrentFolderNode(arguments)) {
       createCurrentFolderNode(arguments, rootElement);
     }
-    XMLCreator.INSTANCE.addErrorCommandToRoot(arguments.getDocument(), rootElement, errorNum, getErrorMsg(arguments));
+    XMLCreator.INSTANCE.addErrorCommandToRoot(document, rootElement, errorNum, getErrorMsg(arguments));
     createXMLChildNodes(errorNum, rootElement, arguments);
-    arguments.getDocument().appendChild(rootElement);
+    document.appendChild(rootElement);
   }
 
   /**
@@ -131,8 +133,8 @@ public abstract class XMLCommand<T extends XMLArguments> extends Command<T> {
   @Override
   protected void initParams(T arguments, HttpServletRequest request, IConfiguration configuration)
           throws ConnectorException {
-    super.initParams(arguments, request, configuration);
     arguments.setDocument(XMLCreator.INSTANCE.createDocument());
+    super.initParams(arguments, request, configuration);
   }
 
   /**
