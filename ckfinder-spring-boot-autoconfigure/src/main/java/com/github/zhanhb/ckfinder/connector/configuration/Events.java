@@ -22,6 +22,7 @@ import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
 import java.util.List;
 import lombok.Builder;
 import lombok.Singular;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -29,6 +30,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Builder(builderClassName = "Builder")
 @Slf4j
+@ToString
 public class Events {
 
   @SuppressWarnings({"BroadCatchBlock", "TooBroadCatch"})

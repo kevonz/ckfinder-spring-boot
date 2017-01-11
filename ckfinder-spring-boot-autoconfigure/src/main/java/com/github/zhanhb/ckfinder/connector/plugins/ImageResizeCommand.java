@@ -56,7 +56,7 @@ public class ImageResizeCommand extends XMLCommand<ImageResizeArguments> impleme
   }
 
   @Override
-  protected void createXMLChildNodes(int arg0, Element arg1, ImageResizeArguments arguments) {
+  protected void createXMLChildNodes(int errorNum, Element rootElement, ImageResizeArguments arguments) {
   }
 
   @Override

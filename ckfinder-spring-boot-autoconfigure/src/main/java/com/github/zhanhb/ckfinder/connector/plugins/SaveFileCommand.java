@@ -37,7 +37,7 @@ public class SaveFileCommand extends XMLCommand<SaveFileArguments> implements Be
   }
 
   @Override
-  protected void createXMLChildNodes(int arg0, Element arg1, SaveFileArguments arguments) {
+  protected void createXMLChildNodes(int errorNum, Element rootElement, SaveFileArguments arguments) {
   }
 
   @Override

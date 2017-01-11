@@ -89,7 +89,7 @@ public class DeleteFilesCommand extends XMLCommand<DeleteFilesArguments> impleme
 
       if (fileItem.getFolder() == null || fileItem.getFolder().isEmpty()
               || Pattern.compile(Constants.INVALID_PATH_REGEX).matcher(
-              fileItem.getFolder()).find()) {
+                      fileItem.getFolder()).find()) {
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
       }
 

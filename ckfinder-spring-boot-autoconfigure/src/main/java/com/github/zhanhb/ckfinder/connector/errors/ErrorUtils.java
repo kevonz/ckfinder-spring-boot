@@ -24,6 +24,9 @@ public enum ErrorUtils {
 
   INSTANCE;
 
+  private static final String BUNDLE_NAME = ErrorUtils.class.getPackage()
+          .getName().concat(".LocalStrings");
+
   /**
    * Gets error message by locale code.
    *
@@ -35,8 +38,7 @@ public enum ErrorUtils {
   public String getErrorMsgByLangAndCode(String lang,
           int errorCode, IConfiguration conf) {
     try {
-      return ResourceBundle.getBundle(ErrorUtils.class.getPackage()
-              .getName().concat(".LocalStrings"), new Locale(lang))
+      return ResourceBundle.getBundle(BUNDLE_NAME, new Locale(lang))
               .getString(Integer.toString(errorCode));
     } catch (RuntimeException ex) {
       log.error("", ex);

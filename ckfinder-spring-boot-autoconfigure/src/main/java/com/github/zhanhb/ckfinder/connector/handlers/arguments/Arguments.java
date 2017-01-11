@@ -9,7 +9,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-public class Arguments {
+public abstract class Arguments {
 
   private String userRole;
   private String currentFolder;
