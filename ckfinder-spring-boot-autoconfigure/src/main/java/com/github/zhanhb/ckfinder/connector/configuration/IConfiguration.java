@@ -192,7 +192,7 @@ public interface IConfiguration {
    *
    * @return list of plugins.
    */
-  public List<String> getPublicPluginNames();
+  public String getPublicPluginNames();
 
   /**
    * gets events.

@@ -25,7 +25,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.w3c.dom.Element;
@@ -106,8 +105,7 @@ public class InitCommand extends XMLCommand<XMLArguments> {
    * @return plugins names.
    */
   private String getPlugins() {
-    return getConfiguration().getPublicPluginNames().stream()
-            .collect(Collectors.joining(","));
+    return getConfiguration().getPublicPluginNames();
   }
 
   /**

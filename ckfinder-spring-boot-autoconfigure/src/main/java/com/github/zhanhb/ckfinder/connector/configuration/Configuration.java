@@ -56,8 +56,7 @@ public class Configuration implements IConfiguration {
   private final boolean forceAscii;
   private final boolean checkSizeAfterScaling;
   private final String userRoleName;
-  @Singular
-  private final List<String> publicPluginNames;
+  private final String publicPluginNames;
   private final boolean secureImageUploads;
   @Singular
   private final List<String> htmlExtensions;
@@ -90,7 +89,8 @@ public class Configuration implements IConfiguration {
       for (Plugin plugin : plugins) {
         plugin.registerEventHandlers(eventsBuilder);
       }
-      return events(eventsBuilder.build()).publicPluginNames(plugins.stream().filter(plugin -> !plugin.isInternal()).map(plugin -> plugin.getName()).collect(Collectors.toList()));
+      String pluginNames = plugins.stream().filter(plugin -> !plugin.isInternal()).map(plugin -> plugin.getName()).collect(Collectors.joining(", "));
+      return events(eventsBuilder.build()).publicPluginNames(pluginNames);
     }
   }
 
