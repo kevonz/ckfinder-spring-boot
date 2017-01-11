@@ -17,4 +17,14 @@
       <goal>build-helper:remove-project-artifact</goal>
     </goals>
   </action>
+  <action>
+    <actionName>rebuild</actionName>
+    <packagings>
+      <packaging>*</packaging>
+    </packagings>
+    <goals>
+      <goal>clean</goal>
+      <goal>package</goal>
+    </goals>
+  </action>
 </actions>

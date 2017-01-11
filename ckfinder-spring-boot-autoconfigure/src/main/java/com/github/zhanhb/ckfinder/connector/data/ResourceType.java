@@ -12,14 +12,14 @@
 package com.github.zhanhb.ckfinder.connector.data;
 
 import lombok.Builder;
-import lombok.Getter;
 import lombok.NonNull;
+import lombok.Value;
 
 /**
  * Resource type entity.
  */
 @Builder(builderClassName = "Builder")
-@Getter
+@Value
 public class ResourceType {
 
   /**

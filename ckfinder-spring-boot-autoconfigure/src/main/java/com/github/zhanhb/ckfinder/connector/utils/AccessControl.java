@@ -18,12 +18,14 @@ import java.util.stream.Collectors;
 import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import lombok.Singular;
+import lombok.ToString;
 
 /**
  * Class to generate ACL values.
  */
 @Builder(builderClassName = "Builder")
 @SuppressWarnings({"FinalClass", "AccessingNonPublicFieldOfAnotherObject"})
+@ToString
 public final class AccessControl {
 
   /**

@@ -19,53 +19,52 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.Builder;
-import lombok.Getter;
 import lombok.Singular;
-import lombok.ToString;
+import lombok.Value;
 
 @Builder(builderClassName = "Builder")
-@Getter
 @SuppressWarnings({
   "CollectionWithoutInitialCapacity",
   "ReturnOfCollectionOrArrayField",
-  "FinalMethod"
+  "FinalMethod",
+  "FinalClass"
 })
-@ToString
+@Value
 public class Configuration implements IConfiguration {
 
-  private final boolean enabled;
-  private final String licenseName;
-  private final String licenseKey;
-  private final int imgWidth;
-  private final int imgHeight;
-  private final float imgQuality;
+  private boolean enabled;
+  private String licenseName;
+  private String licenseKey;
+  private int imgWidth;
+  private int imgHeight;
+  private float imgQuality;
   @Singular
-  private final Map<String, ResourceType> types;
-  private final boolean thumbsEnabled;
-  private final String thumbsUrl;
-  private final String thumbsPath;
-  private final boolean thumbsDirectAccess;
-  private final int maxThumbHeight;
-  private final int maxThumbWidth;
-  private final float thumbsQuality;
+  private Map<String, ResourceType> types;
+  private boolean thumbsEnabled;
+  private String thumbsUrl;
+  private String thumbsPath;
+  private boolean thumbsDirectAccess;
+  private int maxThumbHeight;
+  private int maxThumbWidth;
+  private float thumbsQuality;
   @Singular
-  private final List<String> hiddenFolders;
+  private List<String> hiddenFolders;
   @Singular
-  private final List<String> hiddenFiles;
-  private final boolean checkDoubleFileExtensions;
-  private final boolean forceAscii;
-  private final boolean checkSizeAfterScaling;
-  private final String userRoleName;
-  private final String publicPluginNames;
-  private final boolean secureImageUploads;
+  private List<String> hiddenFiles;
+  private boolean checkDoubleFileExtensions;
+  private boolean forceAscii;
+  private boolean checkSizeAfterScaling;
+  private String userRoleName;
+  private String publicPluginNames;
+  private boolean secureImageUploads;
   @Singular
-  private final List<String> htmlExtensions;
+  private List<String> htmlExtensions;
   @Singular
-  private final Set<String> defaultResourceTypes;
-  private final boolean disallowUnsafeCharacters;
-  private final Events events;
-  private final AccessControl accessControl;
-  private final boolean enableCsrfProtection;
+  private Set<String> defaultResourceTypes;
+  private boolean disallowUnsafeCharacters;
+  private Events events;
+  private AccessControl accessControl;
+  private boolean enableCsrfProtection;
 
   @SuppressWarnings("PublicInnerClass")
   public static class Builder {
