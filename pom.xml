@@ -65,7 +65,7 @@
     <resource.delimiter>@</resource.delimiter>
     <servlet-api.version>3.1.0</servlet-api.version>
     <slf4j.version>1.7.21</slf4j.version>
-    <spring-boot.version>1.4.2.RELEASE</spring-boot.version>
+    <spring-boot.version>1.4.3.RELEASE</spring-boot.version>
     <spring.version>4.3.5.RELEASE</spring.version>
     <thumbnailator.version>0.4.8</thumbnailator.version>
   </properties>
