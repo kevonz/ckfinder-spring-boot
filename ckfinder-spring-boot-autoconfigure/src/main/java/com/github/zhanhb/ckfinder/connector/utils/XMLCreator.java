@@ -108,16 +108,20 @@ public enum XMLCreator {
    * add all error nodes from saved list to xml.
    *
    * @param arguments
-   * @param errorsNode XML errors node
+   * @param rootElement XML root element
    */
-  public void addErrors(XMLArguments arguments, Element errorsNode) {
-    for (ErrorNode item : arguments.getErrorList()) {
-      Element childElem = arguments.getDocument().createElement("Error");
-      childElem.setAttribute("code", String.valueOf(item.getErrorCode()));
-      childElem.setAttribute("name", item.getName());
-      childElem.setAttribute("type", item.getType());
-      childElem.setAttribute("folder", item.getFolder());
-      errorsNode.appendChild(childElem);
+  public void addErrors(XMLArguments arguments, Element rootElement) {
+    if (hasErrors(arguments)) {
+      Element errorsNode = arguments.getDocument().createElement("Errors");
+      for (ErrorNode item : arguments.getErrorList()) {
+        Element childElem = arguments.getDocument().createElement("Error");
+        childElem.setAttribute("code", String.valueOf(item.getErrorCode()));
+        childElem.setAttribute("name", item.getName());
+        childElem.setAttribute("type", item.getType());
+        childElem.setAttribute("folder", item.getFolder());
+        errorsNode.appendChild(childElem);
+      }
+      rootElement.appendChild(errorsNode);
     }
   }
 

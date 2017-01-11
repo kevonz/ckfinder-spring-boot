@@ -41,11 +41,7 @@ public class CopyFilesCommand extends XMLCommand<CopyFilesArguments> implements 
 
   @Override
   protected void createXMLChildNodes(int errorNum, Element rootElement, CopyFilesArguments arguments) {
-    if (XMLCreator.INSTANCE.hasErrors(arguments)) {
-      Element errorsNode = arguments.getDocument().createElement("Errors");
-      XMLCreator.INSTANCE.addErrors(arguments, errorsNode);
-      rootElement.appendChild(errorsNode);
-    }
+    XMLCreator.INSTANCE.addErrors(arguments, rootElement);
 
     if (arguments.isAddCopyNode()) {
       createCopyFielsNode(rootElement, arguments);

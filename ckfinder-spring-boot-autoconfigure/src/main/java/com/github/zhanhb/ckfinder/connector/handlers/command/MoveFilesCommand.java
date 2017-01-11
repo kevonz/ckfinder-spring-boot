@@ -41,11 +41,7 @@ public class MoveFilesCommand extends XMLCommand<MoveFilesArguments> implements 
 
   @Override
   protected void createXMLChildNodes(int errorNum, Element rootElement, MoveFilesArguments arguments) {
-    if (XMLCreator.INSTANCE.hasErrors(arguments)) {
-      Element errorsNode = arguments.getDocument().createElement("Errors");
-      XMLCreator.INSTANCE.addErrors(arguments, errorsNode);
-      rootElement.appendChild(errorsNode);
-    }
+    XMLCreator.INSTANCE.addErrors(arguments, rootElement);
 
     if (arguments.isAddMoveNode()) {
       createMoveFielsNode(rootElement, arguments);
