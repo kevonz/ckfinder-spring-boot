@@ -16,6 +16,8 @@ import com.github.zhanhb.ckfinder.connector.configuration.IConfiguration;
 import com.github.zhanhb.ckfinder.connector.data.FilePostParam;
 import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
 import com.github.zhanhb.ckfinder.connector.handlers.arguments.CopyFilesArguments;
+import com.github.zhanhb.ckfinder.connector.handlers.response.Connector;
+import com.github.zhanhb.ckfinder.connector.handlers.response.CopyFiles;
 import com.github.zhanhb.ckfinder.connector.utils.AccessControl;
 import com.github.zhanhb.ckfinder.connector.utils.FileUtils;
 import com.github.zhanhb.ckfinder.connector.utils.XMLCreator;
@@ -27,7 +29,6 @@ import java.util.ArrayList;
 import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-import org.w3c.dom.Element;
 
 /**
  * Class to handle <code>CopyFiles</code> command.
@@ -40,7 +41,7 @@ public class CopyFilesCommand extends XMLCommand<CopyFilesArguments> implements 
   }
 
   @Override
-  protected void createXMLChildNodes(int errorNum, Element rootElement, CopyFilesArguments arguments) {
+  protected void createXMLChildNodes(int errorNum, Connector.Builder rootElement, CopyFilesArguments arguments) {
     XMLCreator.INSTANCE.addErrors(arguments, rootElement);
 
     if (arguments.isAddCopyNode()) {
@@ -53,12 +54,11 @@ public class CopyFilesCommand extends XMLCommand<CopyFilesArguments> implements 
    *
    * @param rootElement XML root node.
    */
-  private void createCopyFielsNode(Element rootElement, CopyFilesArguments arguments) {
-    Element element = arguments.getDocument().createElement("CopyFiles");
-    element.setAttribute("copied", String.valueOf(arguments.getFilesCopied()));
-    element.setAttribute("copiedTotal", String.valueOf(arguments.getCopiedAll()
-            + arguments.getFilesCopied()));
-    rootElement.appendChild(element);
+  private void createCopyFielsNode(Connector.Builder rootElement, CopyFilesArguments arguments) {
+    rootElement.copyFiles(CopyFiles.builder()
+            .copied(arguments.getFilesCopied())
+            .copiedTotal(arguments.getCopiedAll() + arguments.getFilesCopied())
+            .build());
   }
 
   @Override

@@ -14,14 +14,14 @@ package com.github.zhanhb.ckfinder.connector.handlers.command;
 import com.github.zhanhb.ckfinder.connector.configuration.IConfiguration;
 import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
 import com.github.zhanhb.ckfinder.connector.handlers.arguments.XMLArguments;
+import com.github.zhanhb.ckfinder.connector.handlers.response.Connector;
+import com.github.zhanhb.ckfinder.connector.handlers.response.CurrentFolder;
 import com.github.zhanhb.ckfinder.connector.utils.XMLCreator;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.function.Supplier;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 
 /**
  * Base class to handle XML commands.
@@ -58,7 +58,7 @@ public abstract class XMLCommand<T extends XMLArguments> extends Command<T> {
   final void execute(T arguments, HttpServletResponse response) throws IOException {
     createXMLResponse(arguments, getDataForXml(arguments));
     try (PrintWriter out = response.getWriter()) {
-      XMLCreator.INSTANCE.writeTo(arguments.getDocument(), out);
+      XMLCreator.INSTANCE.writeTo(arguments.getConnector().build(), out);
     }
   }
 
@@ -69,17 +69,15 @@ public abstract class XMLCommand<T extends XMLArguments> extends Command<T> {
    * @throws ConnectorException to handle in error handler.
    */
   private void createXMLResponse(T arguments, int errorNum) {
-    Document document = arguments.getDocument();
-    Element rootElement = document.createElement("Connector");
+    Connector.Builder rootElement = arguments.getConnector();
     if (arguments.getType() != null && !arguments.getType().isEmpty()) {
-      rootElement.setAttribute("resourceType", arguments.getType());
+      rootElement.resourceType(arguments.getType());
     }
     if (shouldAddCurrentFolderNode(arguments)) {
       createCurrentFolderNode(arguments, rootElement);
     }
-    XMLCreator.INSTANCE.addErrorCommandToRoot(document, rootElement, errorNum, getErrorMsg(arguments));
+    XMLCreator.INSTANCE.addErrorCommandToRoot(rootElement, errorNum, getErrorMsg(arguments));
     createXMLChildNodes(errorNum, rootElement, arguments);
-    document.appendChild(rootElement);
   }
 
   /**
@@ -100,7 +98,7 @@ public abstract class XMLCommand<T extends XMLArguments> extends Command<T> {
    * @param rootElement XML root node
    * @param arguments
    */
-  protected abstract void createXMLChildNodes(int errorNum, Element rootElement, T arguments);
+  protected abstract void createXMLChildNodes(int errorNum, Connector.Builder rootElement, T arguments);
 
   /**
    * gets all necessary data to create XML response.
@@ -121,19 +119,19 @@ public abstract class XMLCommand<T extends XMLArguments> extends Command<T> {
    * @param rootElement XML root node.
    */
   @SuppressWarnings("FinalMethod")
-  protected final void createCurrentFolderNode(T arguments, Element rootElement) {
-    Element element = arguments.getDocument().createElement("CurrentFolder");
-    element.setAttribute("path", arguments.getCurrentFolder());
-    element.setAttribute("url", getConfiguration().getTypes().get(arguments.getType()).getUrl()
-            + arguments.getCurrentFolder());
-    element.setAttribute("acl", String.valueOf(getConfiguration().getAccessControl().checkACLForRole(arguments.getType(), arguments.getCurrentFolder(), arguments.getUserRole())));
-    rootElement.appendChild(element);
+  protected final void createCurrentFolderNode(T arguments, Connector.Builder rootElement) {
+    rootElement.currentFolder(CurrentFolder.builder()
+            .path(arguments.getCurrentFolder())
+            .url(getConfiguration().getTypes().get(arguments.getType()).getUrl()
+                    + arguments.getCurrentFolder())
+            .acl(getConfiguration().getAccessControl().checkACLForRole(arguments.getType(), arguments.getCurrentFolder(), arguments.getUserRole()))
+            .build());
   }
 
   @Override
   protected void initParams(T arguments, HttpServletRequest request, IConfiguration configuration)
           throws ConnectorException {
-    arguments.setDocument(XMLCreator.INSTANCE.createDocument());
+    arguments.setConnector(Connector.builder());
     super.initParams(arguments, request, configuration);
   }
 

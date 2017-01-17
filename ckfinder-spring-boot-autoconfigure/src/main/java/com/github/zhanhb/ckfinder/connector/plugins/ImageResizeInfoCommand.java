@@ -18,6 +18,8 @@ import com.github.zhanhb.ckfinder.connector.data.BeforeExecuteCommandEventHandle
 import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
 import com.github.zhanhb.ckfinder.connector.handlers.arguments.ImageResizeInfoArguments;
 import com.github.zhanhb.ckfinder.connector.handlers.command.XMLCommand;
+import com.github.zhanhb.ckfinder.connector.handlers.response.Connector;
+import com.github.zhanhb.ckfinder.connector.handlers.response.ImageInfo;
 import com.github.zhanhb.ckfinder.connector.utils.AccessControl;
 import com.github.zhanhb.ckfinder.connector.utils.FileUtils;
 import java.awt.image.BufferedImage;
@@ -29,7 +31,6 @@ import java.nio.file.Paths;
 import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-import org.w3c.dom.Element;
 
 @Slf4j
 public class ImageResizeInfoCommand extends XMLCommand<ImageResizeInfoArguments> implements BeforeExecuteCommandEventHandler {
@@ -50,17 +51,17 @@ public class ImageResizeInfoCommand extends XMLCommand<ImageResizeInfoArguments>
   }
 
   @Override
-  protected void createXMLChildNodes(int errorNum, Element rootElement, ImageResizeInfoArguments arguments) {
+  protected void createXMLChildNodes(int errorNum, Connector.Builder rootElement, ImageResizeInfoArguments arguments) {
     if (errorNum == Constants.Errors.CKFINDER_CONNECTOR_ERROR_NONE) {
       createImageInfoNode(rootElement, arguments);
     }
   }
 
-  private void createImageInfoNode(Element rootElement, ImageResizeInfoArguments arguments) {
-    Element element = arguments.getDocument().createElement("ImageInfo");
-    element.setAttribute("width", String.valueOf(arguments.getImageWidth()));
-    element.setAttribute("height", String.valueOf(arguments.getImageHeight()));
-    rootElement.appendChild(element);
+  private void createImageInfoNode(Connector.Builder rootElement, ImageResizeInfoArguments arguments) {
+    ImageInfo.Builder element = ImageInfo.builder();
+    element.width(arguments.getImageWidth())
+            .height(arguments.getImageHeight());
+    rootElement.imageInfo(element.build());
   }
 
   @Override

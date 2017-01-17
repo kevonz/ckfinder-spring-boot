@@ -15,6 +15,9 @@ import com.github.zhanhb.ckfinder.connector.configuration.Constants;
 import com.github.zhanhb.ckfinder.connector.data.InitCommandEventArgs;
 import com.github.zhanhb.ckfinder.connector.data.ResourceType;
 import com.github.zhanhb.ckfinder.connector.handlers.arguments.XMLArguments;
+import com.github.zhanhb.ckfinder.connector.handlers.response.Connector;
+import com.github.zhanhb.ckfinder.connector.handlers.response.ConnectorInfo;
+import com.github.zhanhb.ckfinder.connector.handlers.response.ResourceTypes;
 import com.github.zhanhb.ckfinder.connector.utils.AccessControl;
 import com.github.zhanhb.ckfinder.connector.utils.FileUtils;
 import com.github.zhanhb.ckfinder.connector.utils.PathUtils;
@@ -27,7 +30,6 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-import org.w3c.dom.Element;
 
 /**
  * Class to handle <code>Init</code> command.
@@ -58,7 +60,7 @@ public class InitCommand extends XMLCommand<XMLArguments> {
   }
 
   @Override
-  protected void createXMLChildNodes(int errorNum, Element rootElement, XMLArguments arguments) {
+  protected void createXMLChildNodes(int errorNum, Connector.Builder rootElement, XMLArguments arguments) {
     if (errorNum == Constants.Errors.CKFINDER_CONNECTOR_ERROR_NONE) {
       createConnectorData(rootElement, arguments);
       try {
@@ -75,28 +77,28 @@ public class InitCommand extends XMLCommand<XMLArguments> {
    *
    * @param rootElement root element in XML
    */
-  private void createConnectorData(Element rootElement, XMLArguments arguments) {
+  private void createConnectorData(Connector.Builder rootElement, XMLArguments arguments) {
     // connector info
-    Element element = arguments.getDocument().createElement("ConnectorInfo");
-    element.setAttribute("enabled", String.valueOf(getConfiguration().isEnabled()));
-    element.setAttribute("s", getLicenseName());
-    element.setAttribute("c", createLicenseKey(getConfiguration().getLicenseKey()));
-    element.setAttribute("thumbsEnabled", String.valueOf(getConfiguration().isThumbsEnabled()));
-    element.setAttribute("uploadCheckImages", getConfiguration().isCheckSizeAfterScaling() ? "false" : "true");
+    ConnectorInfo.Builder element = ConnectorInfo.builder();
+    element.enabled(getConfiguration().isEnabled());
+    element.licenseName(getLicenseName());
+    element.licenseKey(createLicenseKey(getConfiguration().getLicenseKey()));
+    element.thumbsEnabled(getConfiguration().isThumbsEnabled());
+    element.uploadCheckImages(!getConfiguration().isCheckSizeAfterScaling());
     if (getConfiguration().isThumbsEnabled()) {
-      element.setAttribute("thumbsUrl", getConfiguration().getThumbsUrl());
-      element.setAttribute("thumbsDirectAccess", String.valueOf(getConfiguration().isThumbsDirectAccess()));
-      element.setAttribute("thumbsWidth", String.valueOf(getConfiguration().getMaxThumbWidth()));
-      element.setAttribute("thumbsHeight", String.valueOf(getConfiguration().getMaxThumbHeight()));
+      element.thumbsUrl(getConfiguration().getThumbsUrl());
+      element.thumbsDirectAccess(getConfiguration().isThumbsDirectAccess());
+      element.thumbsWidth(getConfiguration().getMaxThumbWidth());
+      element.thumbsHeight(getConfiguration().getMaxThumbHeight());
     }
-    element.setAttribute("imgWidth", String.valueOf(getConfiguration().getImgWidth()));
-    element.setAttribute("imgHeight", String.valueOf(getConfiguration().getImgHeight()));
-    element.setAttribute("csrfProtection", String.valueOf(getConfiguration().isEnableCsrfProtection()));
+    element.imgWidth(getConfiguration().getImgWidth());
+    element.imgHeight(getConfiguration().getImgHeight());
+    element.csrfProtection(getConfiguration().isEnableCsrfProtection());
     String plugins = getPlugins();
     if (plugins.length() > 0) {
-      element.setAttribute("plugins", getPlugins());
+      element.plugins(getPlugins());
     }
-    rootElement.appendChild(element);
+    rootElement.connectorInfo(element.build());
   }
 
   /**
@@ -157,11 +159,9 @@ public class InitCommand extends XMLCommand<XMLArguments> {
    *
    * @param rootElement root element in XML
    */
-  private void createPluginsData(Element rootElement, XMLArguments arguments) {
-    Element element = arguments.getDocument().createElement("PluginsInfo");
-    rootElement.appendChild(element);
+  private void createPluginsData(Connector.Builder rootElement, XMLArguments arguments) {
     if (getConfiguration().getEvents() != null) {
-      InitCommandEventArgs args = new InitCommandEventArgs(arguments.getDocument(), rootElement);
+      InitCommandEventArgs args = new InitCommandEventArgs(rootElement);
       getConfiguration().getEvents().runInitCommand(args, getConfiguration());
     }
   }
@@ -173,11 +173,9 @@ public class InitCommand extends XMLCommand<XMLArguments> {
    * @throws Exception when error occurs
    */
   @SuppressWarnings("CollectionWithoutInitialCapacity")
-  private void createResouceTypesData(Element rootElement, XMLArguments arguments) throws IOException {
+  private void createResouceTypesData(Connector.Builder rootElement, XMLArguments arguments) throws IOException {
     //resurcetypes
-    Element element = arguments.getDocument().createElement("ResourceTypes");
-    rootElement.appendChild(element);
-
+    ResourceTypes.Builder resourceTypes = ResourceTypes.builder();
     Set<String> types;
     if (arguments.getType() != null && !arguments.getType().isEmpty()) {
       types = new LinkedHashSet<>();
@@ -192,24 +190,22 @@ public class InitCommand extends XMLCommand<XMLArguments> {
               && getConfiguration().getAccessControl().hasPermission(key, "/", arguments.getUserRole(),
                       AccessControl.CKFINDER_CONNECTOR_ACL_FOLDER_VIEW)) {
 
-        Element childElement = arguments.getDocument().
-                createElement("ResourceType");
-        childElement.setAttribute("name", resourceType.getName());
-        childElement.setAttribute("acl", String.valueOf(getConfiguration().getAccessControl().checkACLForRole(key, "/", arguments.getUserRole())));
-        childElement.setAttribute("hash", randomHash(
+        com.github.zhanhb.ckfinder.connector.handlers.response.ResourceType.Builder childElement = com.github.zhanhb.ckfinder.connector.handlers.response.ResourceType.builder();
+        childElement.name(resourceType.getName());
+        childElement.acl(getConfiguration().getAccessControl().checkACLForRole(key, "/", arguments.getUserRole()));
+        childElement.hash(randomHash(
                 resourceType.getPath()));
-        childElement.setAttribute("allowedExtensions",
-                resourceType.getAllowedExtensions());
-        childElement.setAttribute("deniedExtensions",
-                resourceType.getDeniedExtensions());
-        childElement.setAttribute("url", resourceType.getUrl() + "/");
+        childElement.allowedExtensions(resourceType.getAllowedExtensions());
+        childElement.deniedExtensions(resourceType.getDeniedExtensions());
+        childElement.url(resourceType.getUrl() + "/");
         long maxSize = resourceType.getMaxSize();
-        childElement.setAttribute("maxSize", maxSize > 0 ? Long.toString(maxSize) : "0");
+        childElement.maxSize(maxSize > 0 ? maxSize : 0);
         boolean hasChildren = FileUtils.hasChildren(getConfiguration().getAccessControl(), "/", Paths.get(PathUtils.escape(resourceType.getPath())), getConfiguration(), resourceType.getName(), arguments.getUserRole());
-        childElement.setAttribute("hasChildren", String.valueOf(hasChildren));
-        element.appendChild(childElement);
+        childElement.hasChildren(hasChildren);
+        resourceTypes.resourceType(childElement.build());
       }
     }
+    rootElement.resourceTypes(resourceTypes.build());
   }
 
   /**

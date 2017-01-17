@@ -15,9 +15,9 @@ import com.github.zhanhb.ckfinder.connector.configuration.Constants;
 import com.github.zhanhb.ckfinder.connector.configuration.IConfiguration;
 import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
 import com.github.zhanhb.ckfinder.connector.handlers.arguments.XMLErrorArguments;
+import com.github.zhanhb.ckfinder.connector.handlers.response.Connector;
 import com.github.zhanhb.ckfinder.connector.utils.PathUtils;
 import javax.servlet.http.HttpServletRequest;
-import org.w3c.dom.Element;
 
 /**
  * Class to handle errors from commands returning XML response.
@@ -60,7 +60,7 @@ public class XMLErrorCommand extends XMLCommand<XMLErrorArguments> {
   }
 
   @Override
-  protected void createXMLChildNodes(int errorNum, Element rootElement, XMLErrorArguments arguments) {
+  protected void createXMLChildNodes(int errorNum, Connector.Builder rootElement, XMLErrorArguments arguments) {
   }
 
   @Deprecated

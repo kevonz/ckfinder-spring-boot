@@ -15,6 +15,8 @@ import com.github.zhanhb.ckfinder.connector.configuration.Constants;
 import com.github.zhanhb.ckfinder.connector.configuration.IConfiguration;
 import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
 import com.github.zhanhb.ckfinder.connector.handlers.arguments.RenameFileArguments;
+import com.github.zhanhb.ckfinder.connector.handlers.response.Connector;
+import com.github.zhanhb.ckfinder.connector.handlers.response.RenamedFile;
 import com.github.zhanhb.ckfinder.connector.utils.AccessControl;
 import com.github.zhanhb.ckfinder.connector.utils.FileUtils;
 import java.io.IOException;
@@ -23,7 +25,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-import org.w3c.dom.Element;
 
 /**
  * Class to handle <code>RenameFile</code> command.
@@ -36,7 +37,7 @@ public class RenameFileCommand extends XMLCommand<RenameFileArguments> implement
   }
 
   @Override
-  protected void createXMLChildNodes(int errorNum, Element rootElement, RenameFileArguments arguments) {
+  protected void createXMLChildNodes(int errorNum, Connector.Builder rootElement, RenameFileArguments arguments) {
     if (arguments.isAddRenameNode()) {
       createRenamedFileNode(rootElement, arguments);
     }
@@ -47,13 +48,12 @@ public class RenameFileCommand extends XMLCommand<RenameFileArguments> implement
    *
    * @param rootElement XML root node
    */
-  private void createRenamedFileNode(Element rootElement, RenameFileArguments arguments) {
-    Element element = arguments.getDocument().createElement("RenamedFile");
-    element.setAttribute("name", arguments.getFileName());
+  private void createRenamedFileNode(Connector.Builder rootElement, RenameFileArguments arguments) {
+    RenamedFile.Builder element = RenamedFile.builder().name(arguments.getFileName());
     if (arguments.isRenamed()) {
-      element.setAttribute("newName", arguments.getNewFileName());
+      element.newName(arguments.getNewFileName());
     }
-    rootElement.appendChild(element);
+    rootElement.renamedFile(element.build());
   }
 
   /**

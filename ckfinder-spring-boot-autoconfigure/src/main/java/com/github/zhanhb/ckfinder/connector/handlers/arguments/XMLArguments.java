@@ -1,10 +1,10 @@
 package com.github.zhanhb.ckfinder.connector.handlers.arguments;
 
+import com.github.zhanhb.ckfinder.connector.handlers.response.Connector;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
-import org.w3c.dom.Document;
 
 /**
  *
@@ -14,7 +14,7 @@ import org.w3c.dom.Document;
 @Setter
 public class XMLArguments extends Arguments {
 
-  private Document document;
+  private Connector.Builder connector;
 
   /**
    *

@@ -28,7 +28,7 @@ public class ImageResize extends Plugin {
   public void registerEventHandlers(Events.Builder builder) {
     builder.beforeExecuteCommandEventHandler(new ImageResizeCommand(params))
             .beforeExecuteCommandEventHandler(new ImageResizeInfoCommand())
-            .initCommandEventHandler(new ImageResizeInitCommandEventHandler(getName(), params));
+            .initCommandEventHandler(new ImageResizeInitCommandEventHandler(params));
   }
 
 }

@@ -125,7 +125,7 @@ public class CKFinderAutoConfiguration {
     @Autowired
     private CKFinderProperties properties;
     @Autowired
-    private IBasePathBuilder defaultPathBuilder;
+    private IBasePathBuilder basePathBuilder;
     @Autowired
     private AccessControl defaultAccessControl;
     @Autowired(required = false)
@@ -195,8 +195,8 @@ public class CKFinderAutoConfiguration {
     }
 
     private void setTypes(com.github.zhanhb.ckfinder.connector.configuration.Configuration.Builder builder) throws IOException {
-      String baseDir = defaultPathBuilder.getBaseDir();
-      String baseUrl = defaultPathBuilder.getBaseUrl();
+      String baseDir = basePathBuilder.getBaseDir();
+      String baseUrl = basePathBuilder.getBaseUrl();
       for (CKFinderProperties.Type type : properties.getTypes()) {
         ResourceType.Builder resourceTypeBuilder = ResourceType.builder();
         final String typeName = type.getName();
@@ -230,8 +230,8 @@ public class CKFinderAutoConfiguration {
     private void setThumbs(com.github.zhanhb.ckfinder.connector.configuration.Configuration.Builder builder) {
       CKFinderProperties.Thumbs thumbs = properties.getThumbs();
       if (thumbs != null) {
-        String baseDir = defaultPathBuilder.getBaseDir();
-        String baseUrl = defaultPathBuilder.getBaseUrl();
+        String baseDir = basePathBuilder.getBaseDir();
+        String baseUrl = basePathBuilder.getBaseUrl();
         if (thumbs.getEnabled() != null) {
           builder.thumbsEnabled(thumbs.getEnabled());
         }
@@ -307,7 +307,7 @@ public class CKFinderAutoConfiguration {
     private ResourceLoader resourceLoader;
 
     @Bean
-    public Watermark watermark(WatermarkSettings watermarkSettings) {
+    public Watermark watermark() {
       CKFinderProperties.Watermark watermark = properties.getWatermark();
       WatermarkSettings.Builder builder = WatermarkSettings.builder();
       if (watermark.getMarginBottom() != null) {

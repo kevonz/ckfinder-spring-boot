@@ -11,11 +11,10 @@
  */
 package com.github.zhanhb.ckfinder.connector.data;
 
+import com.github.zhanhb.ckfinder.connector.handlers.response.Connector;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 
 /**
  * Event data for
@@ -27,7 +26,6 @@ import org.w3c.dom.Element;
 @ToString
 public class InitCommandEventArgs {
 
-  private final Document document;
-  private final Element rootElement;
+  private final Connector.Builder rootElement;
 
 }

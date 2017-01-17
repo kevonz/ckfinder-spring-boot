@@ -13,10 +13,10 @@ package com.github.zhanhb.ckfinder.connector.handlers.command;
 
 import com.github.zhanhb.ckfinder.connector.configuration.Constants;
 import com.github.zhanhb.ckfinder.connector.configuration.IConfiguration;
-import com.github.zhanhb.ckfinder.connector.data.XmlAttribute;
-import com.github.zhanhb.ckfinder.connector.data.XmlElementData;
 import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
 import com.github.zhanhb.ckfinder.connector.handlers.arguments.GetFilesArguments;
+import com.github.zhanhb.ckfinder.connector.handlers.response.Connector;
+import com.github.zhanhb.ckfinder.connector.handlers.response.File;
 import com.github.zhanhb.ckfinder.connector.utils.AccessControl;
 import com.github.zhanhb.ckfinder.connector.utils.FileUtils;
 import com.github.zhanhb.ckfinder.connector.utils.ImageUtils;
@@ -29,7 +29,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-import org.w3c.dom.Element;
 
 /**
  * Class to handle <code>GetFiles</code> command.
@@ -63,7 +62,7 @@ public class GetFilesCommand extends XMLCommand<GetFilesArguments> {
   }
 
   @Override
-  protected void createXMLChildNodes(int errorNum, Element rootElement, GetFilesArguments arguments) {
+  protected void createXMLChildNodes(int errorNum, Connector.Builder rootElement, GetFilesArguments arguments) {
     if (errorNum == Constants.Errors.CKFINDER_CONNECTOR_ERROR_NONE) {
       createFilesData(rootElement, arguments);
     }
@@ -115,7 +114,7 @@ public class GetFilesCommand extends XMLCommand<GetFilesArguments> {
   private void filterListByHiddenAndNotAllowed(GetFilesArguments arguments) {
     List<String> tmpFiles = arguments.getFiles().stream()
             .filter(file -> (FileUtils.checkFileExtension(file, getConfiguration().getTypes().get(arguments.getType())) == 0
-                    && !FileUtils.isFileHidden(file, getConfiguration())))
+            && !FileUtils.isFileHidden(file, getConfiguration())))
             .collect(Collectors.toList());
 
     arguments.getFiles().clear();
@@ -128,28 +127,28 @@ public class GetFilesCommand extends XMLCommand<GetFilesArguments> {
    *
    * @param rootElement root element from XML.
    */
-  private void createFilesData(Element rootElement, GetFilesArguments arguments) {
-    Element element = arguments.getDocument().createElement("Files");
+  private void createFilesData(Connector.Builder rootElement, GetFilesArguments arguments) {
+    com.github.zhanhb.ckfinder.connector.handlers.response.Files.Builder files = com.github.zhanhb.ckfinder.connector.handlers.response.Files.builder();
     for (String filePath : arguments.getFiles()) {
       Path file = Paths.get(arguments.getFullCurrentPath(), filePath);
       if (Files.exists(file)) {
         try {
-          XmlElementData.Builder elementData = XmlElementData.builder().name("File");
-          elementData.attribute(new XmlAttribute("name", filePath))
-                  .attribute(new XmlAttribute("date", FileUtils.parseLastModifDate(file)))
-                  .attribute(new XmlAttribute("size", getSize(file)));
+          File.Builder builder = File.builder()
+                  .name(filePath)
+                  .date(FileUtils.parseLastModifDate(file))
+                  .size(getSize(file));
           if (ImageUtils.isImageExtension(file) && isAddThumbsAttr(arguments)) {
             String attr = createThumbAttr(file, arguments);
             if (!attr.isEmpty()) {
-              elementData.attribute(new XmlAttribute("thumb", attr));
+              builder.thumb(attr);
             }
           }
-          elementData.build().addToDocument(arguments.getDocument(), element);
+          files.file(builder.build());
         } catch (IOException ex) {
         }
       }
     }
-    rootElement.appendChild(element);
+    rootElement.files(files.build());
   }
 
   /**

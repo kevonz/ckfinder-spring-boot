@@ -26,6 +26,11 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>net.coobird</groupId>
       <artifactId>thumbnailator</artifactId>
     </dependency>

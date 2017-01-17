@@ -18,6 +18,7 @@ import com.github.zhanhb.ckfinder.connector.data.BeforeExecuteCommandEventHandle
 import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
 import com.github.zhanhb.ckfinder.connector.handlers.arguments.ImageResizeArguments;
 import com.github.zhanhb.ckfinder.connector.handlers.command.XMLCommand;
+import com.github.zhanhb.ckfinder.connector.handlers.response.Connector;
 import com.github.zhanhb.ckfinder.connector.utils.AccessControl;
 import com.github.zhanhb.ckfinder.connector.utils.FileUtils;
 import com.github.zhanhb.ckfinder.connector.utils.ImageUtils;
@@ -31,7 +32,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-import org.w3c.dom.Element;
 
 @Slf4j
 public class ImageResizeCommand extends XMLCommand<ImageResizeArguments> implements BeforeExecuteCommandEventHandler {
@@ -56,7 +56,7 @@ public class ImageResizeCommand extends XMLCommand<ImageResizeArguments> impleme
   }
 
   @Override
-  protected void createXMLChildNodes(int errorNum, Element rootElement, ImageResizeArguments arguments) {
+  protected void createXMLChildNodes(int errorNum, Connector.Builder rootElement, ImageResizeArguments arguments) {
   }
 
   @Override

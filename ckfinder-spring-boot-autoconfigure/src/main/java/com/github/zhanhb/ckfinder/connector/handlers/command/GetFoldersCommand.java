@@ -12,10 +12,11 @@
 package com.github.zhanhb.ckfinder.connector.handlers.command;
 
 import com.github.zhanhb.ckfinder.connector.configuration.Constants;
-import com.github.zhanhb.ckfinder.connector.data.XmlAttribute;
-import com.github.zhanhb.ckfinder.connector.data.XmlElementData;
 import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
 import com.github.zhanhb.ckfinder.connector.handlers.arguments.GetFoldersArguments;
+import com.github.zhanhb.ckfinder.connector.handlers.response.Connector;
+import com.github.zhanhb.ckfinder.connector.handlers.response.Folder;
+import com.github.zhanhb.ckfinder.connector.handlers.response.Folders;
 import com.github.zhanhb.ckfinder.connector.utils.AccessControl;
 import com.github.zhanhb.ckfinder.connector.utils.FileUtils;
 import java.io.IOException;
@@ -26,7 +27,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
-import org.w3c.dom.Element;
 
 /**
  * Class to handle <code>GetFolders</code> command.
@@ -39,7 +39,7 @@ public class GetFoldersCommand extends XMLCommand<GetFoldersArguments> {
   }
 
   @Override
-  protected void createXMLChildNodes(int errorNum, Element rootElement, GetFoldersArguments arguments) {
+  protected void createXMLChildNodes(int errorNum, Connector.Builder rootElement, GetFoldersArguments arguments) {
     if (errorNum == Constants.Errors.CKFINDER_CONNECTOR_ERROR_NONE) {
       createFoldersData(rootElement, arguments);
     }
@@ -92,8 +92,8 @@ public class GetFoldersCommand extends XMLCommand<GetFoldersArguments> {
   private void filterListByHiddenAndNotAllowed(GetFoldersArguments arguments) {
     List<String> tmpDirs = arguments.getDirectories().stream()
             .filter(dir -> (getConfiguration().getAccessControl().hasPermission(arguments.getType(), arguments.getCurrentFolder() + dir, arguments.getUserRole(),
-                    AccessControl.CKFINDER_CONNECTOR_ACL_FOLDER_VIEW)
-                    && !FileUtils.isDirectoryHidden(dir, getConfiguration())))
+            AccessControl.CKFINDER_CONNECTOR_ACL_FOLDER_VIEW)
+            && !FileUtils.isDirectoryHidden(dir, getConfiguration())))
             .collect(Collectors.toList());
 
     arguments.getDirectories().clear();
@@ -106,30 +106,26 @@ public class GetFoldersCommand extends XMLCommand<GetFoldersArguments> {
    *
    * @param rootElement root element in XML document
    */
-  private void createFoldersData(Element rootElement, GetFoldersArguments arguments) {
-    Element element = arguments.getDocument().createElement("Folders");
+  private void createFoldersData(Connector.Builder rootElement, GetFoldersArguments arguments) {
+    Folders.Builder folders = Folders.builder();
     for (String dirPath : arguments.getDirectories()) {
       Path dir = Paths.get(this.getConfiguration().getTypes().get(arguments.getType()).getPath(),
               arguments.getCurrentFolder(), dirPath);
       if (Files.exists(dir)) {
-        XmlElementData.Builder xmlElementData = XmlElementData.builder().name("Folder");
-        xmlElementData.attribute(new XmlAttribute("name", dirPath));
-
         boolean hasChildren = FileUtils.hasChildren(getConfiguration().getAccessControl(),
                 arguments.getCurrentFolder() + dirPath + "/", dir,
                 getConfiguration(), arguments.getType(), arguments.getUserRole());
-        xmlElementData.attribute(new XmlAttribute("hasChildren",
-                String.valueOf(hasChildren)));
-
-        xmlElementData.attribute(new XmlAttribute("acl",
-                String.valueOf(getConfiguration().getAccessControl()
-                        .checkACLForRole(arguments.getType(),
-                                arguments.getCurrentFolder()
-                                + dirPath, arguments.getUserRole()))));
-        xmlElementData.build().addToDocument(arguments.getDocument(), element);
+        folders.folder(Folder.builder()
+                .name(dirPath)
+                .hasChildren(hasChildren)
+                .acl(
+                        getConfiguration().getAccessControl()
+                                .checkACLForRole(arguments.getType(),
+                                        arguments.getCurrentFolder()
+                                        + dirPath, arguments.getUserRole())).build());
       }
     }
-    rootElement.appendChild(element);
+    rootElement.folders(folders.build());
   }
 
 }

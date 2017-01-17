@@ -16,6 +16,8 @@ import com.github.zhanhb.ckfinder.connector.configuration.IConfiguration;
 import com.github.zhanhb.ckfinder.connector.data.FilePostParam;
 import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
 import com.github.zhanhb.ckfinder.connector.handlers.arguments.DeleteFilesArguments;
+import com.github.zhanhb.ckfinder.connector.handlers.response.Connector;
+import com.github.zhanhb.ckfinder.connector.handlers.response.DeleteFiles;
 import com.github.zhanhb.ckfinder.connector.utils.AccessControl;
 import com.github.zhanhb.ckfinder.connector.utils.FileUtils;
 import com.github.zhanhb.ckfinder.connector.utils.XMLCreator;
@@ -26,7 +28,6 @@ import java.util.ArrayList;
 import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-import org.w3c.dom.Element;
 
 /**
  * Class used to handle <code>DeleteFiles</code> command.
@@ -39,7 +40,7 @@ public class DeleteFilesCommand extends XMLCommand<DeleteFilesArguments> impleme
   }
 
   @Override
-  protected void createXMLChildNodes(int errorNum, Element rootElement, DeleteFilesArguments arguments) {
+  protected void createXMLChildNodes(int errorNum, Connector.Builder rootElement, DeleteFilesArguments arguments) {
     XMLCreator.INSTANCE.addErrors(arguments, rootElement);
 
     if (arguments.isAddDeleteNode()) {
@@ -52,10 +53,10 @@ public class DeleteFilesCommand extends XMLCommand<DeleteFilesArguments> impleme
    *
    * @param rootElement root element in XML response
    */
-  private void createDeleteFielsNode(Element rootElement, DeleteFilesArguments arguments) {
-    Element element = arguments.getDocument().createElement("DeleteFiles");
-    element.setAttribute("deleted", String.valueOf(arguments.getFilesDeleted()));
-    rootElement.appendChild(element);
+  private void createDeleteFielsNode(Connector.Builder rootElement, DeleteFilesArguments arguments) {
+    rootElement.deleteFiles(DeleteFiles.builder()
+            .deleted(arguments.getFilesDeleted())
+            .build());
   }
 
   /**

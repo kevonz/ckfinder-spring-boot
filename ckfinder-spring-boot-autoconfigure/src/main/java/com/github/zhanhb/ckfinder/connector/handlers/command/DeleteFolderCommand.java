@@ -15,6 +15,7 @@ import com.github.zhanhb.ckfinder.connector.configuration.Constants;
 import com.github.zhanhb.ckfinder.connector.configuration.IConfiguration;
 import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
 import com.github.zhanhb.ckfinder.connector.handlers.arguments.XMLArguments;
+import com.github.zhanhb.ckfinder.connector.handlers.response.Connector;
 import com.github.zhanhb.ckfinder.connector.utils.AccessControl;
 import com.github.zhanhb.ckfinder.connector.utils.FileUtils;
 import java.nio.file.Files;
@@ -22,7 +23,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-import org.w3c.dom.Element;
 
 /**
  * Class to handle <code>DeleteFolder</code> command.
@@ -44,7 +44,7 @@ public class DeleteFolderCommand extends XMLCommand<XMLArguments> implements IPo
   }
 
   @Override
-  protected void createXMLChildNodes(int errorNum, Element rootElement, XMLArguments arguments) {
+  protected void createXMLChildNodes(int errorNum, Connector.Builder rootElement, XMLArguments arguments) {
   }
 
   /**

@@ -15,6 +15,8 @@ import com.github.zhanhb.ckfinder.connector.configuration.Constants;
 import com.github.zhanhb.ckfinder.connector.configuration.IConfiguration;
 import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
 import com.github.zhanhb.ckfinder.connector.handlers.arguments.CreateFolderArguments;
+import com.github.zhanhb.ckfinder.connector.handlers.response.Connector;
+import com.github.zhanhb.ckfinder.connector.handlers.response.NewFolder;
 import com.github.zhanhb.ckfinder.connector.utils.AccessControl;
 import com.github.zhanhb.ckfinder.connector.utils.FileUtils;
 import java.io.IOException;
@@ -23,7 +25,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-import org.w3c.dom.Element;
 
 /**
  * Class to handle <code>CreateFolder</code> command.
@@ -36,7 +37,7 @@ public class CreateFolderCommand extends XMLCommand<CreateFolderArguments> imple
   }
 
   @Override
-  protected void createXMLChildNodes(int errorNum, Element rootElement, CreateFolderArguments arguments) {
+  protected void createXMLChildNodes(int errorNum, Connector.Builder rootElement, CreateFolderArguments arguments) {
     if (errorNum == Constants.Errors.CKFINDER_CONNECTOR_ERROR_NONE) {
       createNewFolderElement(rootElement, arguments);
     }
@@ -47,10 +48,10 @@ public class CreateFolderCommand extends XMLCommand<CreateFolderArguments> imple
    *
    * @param rootElement XML root element.
    */
-  private void createNewFolderElement(Element rootElement, CreateFolderArguments arguments) {
-    Element element = arguments.getDocument().createElement("NewFolder");
-    element.setAttribute("name", arguments.getNewFolderName());
-    rootElement.appendChild(element);
+  private void createNewFolderElement(Connector.Builder rootElement, CreateFolderArguments arguments) {
+    rootElement.newFolder(NewFolder.builder()
+            .name(arguments.getNewFolderName())
+            .build());
   }
 
   /**

@@ -15,6 +15,8 @@ import com.github.zhanhb.ckfinder.connector.configuration.Constants;
 import com.github.zhanhb.ckfinder.connector.configuration.IConfiguration;
 import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
 import com.github.zhanhb.ckfinder.connector.handlers.arguments.RenameFolderArguments;
+import com.github.zhanhb.ckfinder.connector.handlers.response.Connector;
+import com.github.zhanhb.ckfinder.connector.handlers.response.RenamedFolder;
 import com.github.zhanhb.ckfinder.connector.utils.AccessControl;
 import com.github.zhanhb.ckfinder.connector.utils.FileUtils;
 import com.github.zhanhb.ckfinder.connector.utils.PathUtils;
@@ -24,7 +26,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-import org.w3c.dom.Element;
 
 /**
  * Class to handle <code>RenameFolder</code> command.
@@ -37,7 +38,7 @@ public class RenameFolderCommand extends XMLCommand<RenameFolderArguments> imple
   }
 
   @Override
-  protected void createXMLChildNodes(int errorNum, Element rootElement, RenameFolderArguments arguments) {
+  protected void createXMLChildNodes(int errorNum, Connector.Builder rootElement, RenameFolderArguments arguments) {
     if (errorNum == Constants.Errors.CKFINDER_CONNECTOR_ERROR_NONE) {
       createRenamedFolderNode(rootElement, arguments);
     }
@@ -49,13 +50,12 @@ public class RenameFolderCommand extends XMLCommand<RenameFolderArguments> imple
    *
    * @param rootElement XML root element.
    */
-  private void createRenamedFolderNode(Element rootElement, RenameFolderArguments arguments) {
-    Element element = arguments.getDocument().createElement("RenamedFolder");
-    element.setAttribute("newName", arguments.getNewFolderName());
-    element.setAttribute("newPath", arguments.getNewFolderPath());
-    element.setAttribute("newUrl", getConfiguration().getTypes().get(arguments.getType()).getUrl() + arguments.getNewFolderPath());
-    rootElement.appendChild(element);
-
+  private void createRenamedFolderNode(Connector.Builder rootElement, RenameFolderArguments arguments) {
+    rootElement.renamedFolder(RenamedFolder.builder()
+            .newName(arguments.getNewFolderName())
+            .newPath(arguments.getNewFolderPath())
+            .newUrl(getConfiguration().getTypes().get(arguments.getType()).getUrl() + arguments.getNewFolderPath())
+            .build());
   }
 
   @Override

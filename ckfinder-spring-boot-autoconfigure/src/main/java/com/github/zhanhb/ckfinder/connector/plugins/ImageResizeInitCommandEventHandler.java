@@ -14,34 +14,30 @@ package com.github.zhanhb.ckfinder.connector.plugins;
 import com.github.zhanhb.ckfinder.connector.configuration.IConfiguration;
 import com.github.zhanhb.ckfinder.connector.data.InitCommandEventArgs;
 import com.github.zhanhb.ckfinder.connector.data.InitCommandEventHandler;
+import com.github.zhanhb.ckfinder.connector.handlers.response.ImageResizeInfo;
+import com.github.zhanhb.ckfinder.connector.handlers.response.PluginsInfos;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 @Slf4j
 @RequiredArgsConstructor
 public class ImageResizeInitCommandEventHandler implements InitCommandEventHandler {
 
-  private final String name;
   private final Map<String, String> params;
 
   @Override
   public boolean runEventHandler(InitCommandEventArgs args, IConfiguration arg1) {
     log.debug("runEventHandler: {} {}", args, arg1);
-    NodeList list = args.getRootElement().getElementsByTagName("PluginsInfo");
-    if (list.getLength() > 0) {
-      Node node = list.item(0);
-      Element pluginElem = args.getDocument().createElement(name);
-      for (Map.Entry<String, String> entry : params.entrySet()) {
-        String key = entry.getKey();
-        String value = entry.getValue();
-        pluginElem.setAttribute(key, value);
-      }
-      node.appendChild(pluginElem);
+    ImageResizeInfo.Builder builder = ImageResizeInfo.builder();
+    for (Map.Entry<String, String> entry : params.entrySet()) {
+      String key = entry.getKey();
+      String value = entry.getValue();
+      builder.attr(key, value);
     }
+    args.getRootElement().pluginsInfos(
+            PluginsInfos.builder().pluginsInfo(builder.build()).build()
+    );
     return false;
   }
 

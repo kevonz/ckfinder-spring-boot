@@ -88,7 +88,8 @@ public class Configuration implements IConfiguration {
       for (Plugin plugin : plugins) {
         plugin.registerEventHandlers(eventsBuilder);
       }
-      String pluginNames = plugins.stream().filter(plugin -> !plugin.isInternal()).map(plugin -> plugin.getName()).collect(Collectors.joining(","));
+      String pluginNames = plugins.stream().filter(plugin -> !plugin.isInternal())
+              .map(plugin -> plugin.getName()).collect(Collectors.joining(","));
       return events(eventsBuilder.build()).publicPluginNames(pluginNames);
     }
   }

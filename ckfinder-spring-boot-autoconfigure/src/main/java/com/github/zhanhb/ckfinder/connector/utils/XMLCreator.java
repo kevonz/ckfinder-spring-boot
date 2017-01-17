@@ -11,20 +11,15 @@
  */
 package com.github.zhanhb.ckfinder.connector.utils;
 
-import com.github.zhanhb.ckfinder.connector.configuration.Constants;
-import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
 import com.github.zhanhb.ckfinder.connector.handlers.arguments.ErrorNode;
 import com.github.zhanhb.ckfinder.connector.handlers.arguments.XMLArguments;
+import com.github.zhanhb.ckfinder.connector.handlers.response.Connector;
+import com.github.zhanhb.ckfinder.connector.handlers.response.DetailError;
+import com.github.zhanhb.ckfinder.connector.handlers.response.Error;
+import com.github.zhanhb.ckfinder.connector.handlers.response.Errors;
 import java.io.Writer;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
 
 /**
  * Class to create XML document.
@@ -32,33 +27,10 @@ import org.w3c.dom.Element;
 public enum XMLCreator {
   INSTANCE;
 
-  /**
-   * Creates document.
-   *
-   * @return
-   * @throws ConnectorException if a DocumentBuilder cannot be created which
-   * satisfies the configuration requested.
-   */
-  @SuppressWarnings({"UseSpecificCatch", "BroadCatchBlock", "TooBroadCatch"})
-  public Document createDocument() throws ConnectorException {
+  public void writeTo(Connector connector, Writer writer) {
     try {
-      DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-      DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
-      Document document = documentBuilder.newDocument();
-      document.setXmlStandalone(true);
-      return document;
-    } catch (Exception e) {
-      throw new ConnectorException(
-              Constants.Errors.CKFINDER_CONNECTOR_ERROR_ACCESS_DENIED, e);
-    }
-
-  }
-
-  public void writeTo(Document document, Writer writer) {
-    try {
-      Transformer serializer = TransformerFactory.newInstance().newTransformer();
-      serializer.transform(new DOMSource(document), new StreamResult(writer));
-    } catch (TransformerException e) {
+      JAXBContext.newInstance(Connector.class).createMarshaller().marshal(connector, writer);
+    } catch (JAXBException e) {
       throw new IllegalStateException("fail to instance xml transformer", e);
     }
   }
@@ -66,19 +38,14 @@ public enum XMLCreator {
   /**
    * adds error node to root element with error code.
    *
-   * @param document
    * @param rootElement XML root node.
    * @param errorNum error code number.
    * @param errorText error text.
    */
-  public void addErrorCommandToRoot(Document document, Element rootElement, int errorNum, String errorText) {
-    // errors
-    Element element = document.createElement("Error");
-    element.setAttribute("number", String.valueOf(errorNum));
-    if (errorText != null) {
-      element.setTextContent(errorText);
-    }
-    rootElement.appendChild(element);
+  public void addErrorCommandToRoot(Connector.Builder rootElement, int errorNum, String errorText) {
+    rootElement.error(Error.builder()
+            .number(errorNum)
+            .value(errorText).build());
   }
 
   /**
@@ -110,18 +77,19 @@ public enum XMLCreator {
    * @param arguments
    * @param rootElement XML root element
    */
-  public void addErrors(XMLArguments arguments, Element rootElement) {
+  public void addErrors(XMLArguments arguments, Connector.Builder rootElement) {
     if (hasErrors(arguments)) {
-      Element errorsNode = arguments.getDocument().createElement("Errors");
+      Errors.Builder errorsNode = Errors.builder();
       for (ErrorNode item : arguments.getErrorList()) {
-        Element childElem = arguments.getDocument().createElement("Error");
-        childElem.setAttribute("code", String.valueOf(item.getErrorCode()));
-        childElem.setAttribute("name", item.getName());
-        childElem.setAttribute("type", item.getType());
-        childElem.setAttribute("folder", item.getFolder());
-        errorsNode.appendChild(childElem);
+        DetailError childElem = DetailError.builder()
+                .code(item.getErrorCode())
+                .name(item.getName())
+                .type(item.getType())
+                .folder(item.getFolder())
+                .build();
+        errorsNode.error(childElem);
       }
-      rootElement.appendChild(errorsNode);
+      rootElement.errors(errorsNode.build());
     }
   }
 

@@ -16,6 +16,8 @@ import com.github.zhanhb.ckfinder.connector.configuration.IConfiguration;
 import com.github.zhanhb.ckfinder.connector.data.FilePostParam;
 import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
 import com.github.zhanhb.ckfinder.connector.handlers.arguments.MoveFilesArguments;
+import com.github.zhanhb.ckfinder.connector.handlers.response.Connector;
+import com.github.zhanhb.ckfinder.connector.handlers.response.MoveFiles;
 import com.github.zhanhb.ckfinder.connector.utils.AccessControl;
 import com.github.zhanhb.ckfinder.connector.utils.FileUtils;
 import com.github.zhanhb.ckfinder.connector.utils.XMLCreator;
@@ -27,7 +29,6 @@ import java.util.ArrayList;
 import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-import org.w3c.dom.Element;
 
 /**
  * Class to handle <code>MoveFiles</code> command.
@@ -40,7 +41,7 @@ public class MoveFilesCommand extends XMLCommand<MoveFilesArguments> implements 
   }
 
   @Override
-  protected void createXMLChildNodes(int errorNum, Element rootElement, MoveFilesArguments arguments) {
+  protected void createXMLChildNodes(int errorNum, Connector.Builder rootElement, MoveFilesArguments arguments) {
     XMLCreator.INSTANCE.addErrors(arguments, rootElement);
 
     if (arguments.isAddMoveNode()) {
@@ -53,12 +54,11 @@ public class MoveFilesCommand extends XMLCommand<MoveFilesArguments> implements 
    *
    * @param rootElement XML root element.
    */
-  private void createMoveFielsNode(Element rootElement, MoveFilesArguments arguments) {
-    Element element = arguments.getDocument().createElement("MoveFiles");
-    element.setAttribute("moved", String.valueOf(arguments.getFilesMoved()));
-    element.setAttribute("movedTotal",
-            String.valueOf(arguments.getMovedAll() + arguments.getFilesMoved()));
-    rootElement.appendChild(element);
+  private void createMoveFielsNode(Connector.Builder rootElement, MoveFilesArguments arguments) {
+    rootElement.moveFiles(MoveFiles.builder()
+            .moved(arguments.getFilesMoved())
+            .movedTotal(arguments.getMovedAll() + arguments.getFilesMoved())
+            .build());
   }
 
   @Override
