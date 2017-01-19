@@ -248,11 +248,13 @@ public abstract class Command<T extends Arguments> {
 
     Cookie[] cookies = request.getCookies();
     String cookieToken = "";
-    for (Cookie cookie : cookies) {
-      if (cookie.getName().equals(tokenCookieName)) {
-        cookieToken = cookie.getValue();
-        cookieToken = cookieToken != null ? cookieToken.trim() : "";
-        break;
+    if (cookies != null) {
+      for (Cookie cookie : cookies) {
+        if (cookie.getName().equals(tokenCookieName)) {
+          cookieToken = cookie.getValue();
+          cookieToken = cookieToken != null ? cookieToken.trim() : "";
+          break;
+        }
       }
     }
 
