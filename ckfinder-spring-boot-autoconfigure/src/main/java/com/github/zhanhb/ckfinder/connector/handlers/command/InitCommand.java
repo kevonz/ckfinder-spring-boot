@@ -134,8 +134,7 @@ public class InitCommand extends XMLCommand<XMLArguments> {
    */
   private String createLicenseKey(String licenseKey) {
     if (validateLicenseKey(licenseKey)) {
-      @SuppressWarnings("StringBufferWithoutInitialCapacity")
-      StringBuilder sb = new StringBuilder();
+      StringBuilder sb = new StringBuilder(LICENSE_CHARS.length);
       for (int i : LICENSE_CHARS) {
         sb.append(licenseKey.charAt(i));
       }
@@ -232,8 +231,7 @@ public class InitCommand extends XMLCommand<XMLArguments> {
       MessageDigest algorithm = MessageDigest.getInstance("SHA-256");
       byte[] messageDigest = algorithm.digest(folder.getBytes("UTF8"));
 
-      @SuppressWarnings("StringBufferWithoutInitialCapacity")
-      StringBuilder hexString = new StringBuilder();
+      StringBuilder hexString = new StringBuilder(messageDigest.length << 1);
 
       for (int i = 0; i < messageDigest.length; i++) {
         hexString.append(Integer.toString((messageDigest[i] & 0xff) + 0x100, 16).substring(1));

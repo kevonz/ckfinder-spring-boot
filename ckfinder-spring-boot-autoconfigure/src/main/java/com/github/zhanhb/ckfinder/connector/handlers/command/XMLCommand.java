@@ -17,6 +17,7 @@ import com.github.zhanhb.ckfinder.connector.handlers.arguments.XMLArguments;
 import com.github.zhanhb.ckfinder.connector.handlers.response.Connector;
 import com.github.zhanhb.ckfinder.connector.handlers.response.CurrentFolder;
 import com.github.zhanhb.ckfinder.connector.utils.XMLCreator;
+import com.github.zhanhb.ckfinder.connector.handlers.response.Error;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.function.Supplier;
@@ -76,19 +77,8 @@ public abstract class XMLCommand<T extends XMLArguments> extends Command<T> {
     if (shouldAddCurrentFolderNode(arguments)) {
       createCurrentFolderNode(arguments, rootElement);
     }
-    XMLCreator.INSTANCE.addErrorCommandToRoot(rootElement, errorNum, getErrorMsg(arguments));
+    rootElement.error(Error.builder().number(errorNum).build());
     createXMLChildNodes(errorNum, rootElement, arguments);
-  }
-
-  /**
-   * gets error message if needed.
-   *
-   * @param arguments
-   * @return error message
-   */
-  @Deprecated
-  String getErrorMsg(T arguments) {
-    return null;
   }
 
   /**

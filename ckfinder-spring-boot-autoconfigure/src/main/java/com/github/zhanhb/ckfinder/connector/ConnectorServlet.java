@@ -16,15 +16,13 @@ import com.github.zhanhb.ckfinder.connector.configuration.Events;
 import com.github.zhanhb.ckfinder.connector.configuration.IConfiguration;
 import com.github.zhanhb.ckfinder.connector.data.BeforeExecuteCommandEventArgs;
 import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
-import com.github.zhanhb.ckfinder.connector.handlers.arguments.ErrorArguments;
-import com.github.zhanhb.ckfinder.connector.handlers.arguments.XMLErrorArguments;
 import com.github.zhanhb.ckfinder.connector.handlers.command.Command;
 import com.github.zhanhb.ckfinder.connector.handlers.command.CopyFilesCommand;
 import com.github.zhanhb.ckfinder.connector.handlers.command.CreateFolderCommand;
 import com.github.zhanhb.ckfinder.connector.handlers.command.DeleteFilesCommand;
 import com.github.zhanhb.ckfinder.connector.handlers.command.DeleteFolderCommand;
 import com.github.zhanhb.ckfinder.connector.handlers.command.DownloadFileCommand;
-import com.github.zhanhb.ckfinder.connector.handlers.command.ErrorCommand;
+import com.github.zhanhb.ckfinder.connector.handlers.command.ErrorHandler;
 import com.github.zhanhb.ckfinder.connector.handlers.command.FileUploadCommand;
 import com.github.zhanhb.ckfinder.connector.handlers.command.GetFilesCommand;
 import com.github.zhanhb.ckfinder.connector.handlers.command.GetFoldersCommand;
@@ -36,7 +34,7 @@ import com.github.zhanhb.ckfinder.connector.handlers.command.RenameFileCommand;
 import com.github.zhanhb.ckfinder.connector.handlers.command.RenameFolderCommand;
 import com.github.zhanhb.ckfinder.connector.handlers.command.ThumbnailCommand;
 import com.github.zhanhb.ckfinder.connector.handlers.command.XMLCommand;
-import com.github.zhanhb.ckfinder.connector.handlers.command.XMLErrorCommand;
+import com.github.zhanhb.ckfinder.connector.handlers.command.XMLErrorHandler;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -116,18 +114,20 @@ public class ConnectorServlet extends HttpServlet {
       if (command != null) {
         // checks if command should go via POST request or it's a post request
         // and it's not upload command
-        if ((command instanceof IPostCommand || post)
-                && !"FILEUPLOAD".equals(commandUpperCase)
-                && !"QUICKUPLOAD".equals(commandUpperCase)) {
+        Class<?> commandClass = command.getClass();
+        if ((IPostCommand.class.isAssignableFrom(commandClass) || post)
+                && !FileUploadCommand.class.isAssignableFrom(commandClass)) {
           checkPostRequest(request);
         }
-      } else {
-        commandName = null;
-        command = null;
+      }
+
+      if (!configuration.isEnabled()) {
+        throw new ConnectorException(
+                Constants.Errors.CKFINDER_CONNECTOR_ERROR_CONNECTOR_DISABLED, false);
       }
 
       Events events = configuration.getEvents();
-      log.debug("{} {}", commandName, events);
+      log.debug("{} {}", command, events);
       if (events == null || events.runBeforeExecuteCommand(args, configuration)) {
         executeCommand(command, request, response, configuration);
       }
@@ -189,24 +189,13 @@ public class ConnectorServlet extends HttpServlet {
    * @throws ServletException when error handling fails.
    * @param command current command
    */
-  @SuppressWarnings({"BroadCatchBlock", "TooBroadCatch", "deprecation"})
   private void handleError(ConnectorException e, IConfiguration configuration,
           HttpServletRequest request, HttpServletResponse response,
-          Command<?> command) throws ServletException {
-    try {
-      if (command == null || command instanceof XMLCommand) {
-        XMLErrorCommand cmd = XMLErrorCommand.getInstance();
-        XMLErrorArguments args = cmd.getArgumentsSupplier().get();
-        args.setConnectorException(e);
-        cmd.runWithArguments(request, response, configuration, args);
-      } else {
-        ErrorCommand cmd = ErrorCommand.getInstance();
-        ErrorArguments args = cmd.getArgumentsSupplier().get();
-        args.setConnectorException(e);
-        cmd.runWithArguments(request, response, configuration, args);
-      }
-    } catch (Exception ex) {
-      throw new ServletException(ex);
+          Command<?> command) throws ServletException, IOException {
+    if (command == null || command instanceof XMLCommand) {
+      XMLErrorHandler.INSTANCE.handleException(request, response, configuration, e);
+    } else {
+      ErrorHandler.INSTANCE.handleException(request, response, configuration, e);
     }
   }
 

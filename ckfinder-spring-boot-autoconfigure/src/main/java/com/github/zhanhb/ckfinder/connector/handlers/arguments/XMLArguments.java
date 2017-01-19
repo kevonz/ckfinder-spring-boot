@@ -1,6 +1,7 @@
 package com.github.zhanhb.ckfinder.connector.handlers.arguments;
 
 import com.github.zhanhb.ckfinder.connector.handlers.response.Connector;
+import com.github.zhanhb.ckfinder.connector.handlers.response.DetailError;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
@@ -20,6 +21,6 @@ public class XMLArguments extends Arguments {
    *
    * errors list.
    */
-  private final List<ErrorNode> errorList = new ArrayList<>(4);
+  private final List<DetailError> errorList = new ArrayList<>(4);
 
 }
