@@ -40,7 +40,7 @@ import javax.servlet.http.Part;
  * Utils for files.
  *
  */
-@SuppressWarnings("UtilityClassWithoutPrivateConstructor")
+@SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "NestedAssignment"})
 public class FileUtils {
 
   /**
@@ -82,7 +82,6 @@ public class FileUtils {
    * @return file extension
    */
   @Nullable
-  @SuppressWarnings("NestedAssignment")
   public static String getFileExtension(String fileName, boolean shortExtensionMode) {
     if (shortExtensionMode) {
       return FileUtils.getFileExtension(fileName);
@@ -102,7 +101,6 @@ public class FileUtils {
    * @return file extension
    */
   @Nullable
-  @SuppressWarnings("NestedAssignment")
   public static String getFileExtension(String fileName) {
     int lastIndexOf;
     if (fileName == null || (lastIndexOf = fileName.lastIndexOf('.')) == -1
@@ -120,7 +118,6 @@ public class FileUtils {
    * @return file extension
    */
   @Nullable
-  @SuppressWarnings("NestedAssignment")
   public static String getFileNameWithoutExtension(String fileName, boolean shortExtensionMode) {
     if (shortExtensionMode) {
       return FileUtils.getFileNameWithoutExtension(fileName);
@@ -140,7 +137,6 @@ public class FileUtils {
    * @return file extension
    */
   @Nullable
-  @SuppressWarnings("NestedAssignment")
   public static String getFileNameWithoutExtension(String fileName) {
     int lastIndexOf;
     if (fileName == null || (lastIndexOf = fileName.lastIndexOf('.')) == -1) {

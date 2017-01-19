@@ -33,7 +33,7 @@ import lombok.extern.slf4j.Slf4j;
 @ToString
 public class Events {
 
-  @SuppressWarnings({"BroadCatchBlock", "TooBroadCatch"})
+  @SuppressWarnings({"BroadCatchBlock", "TooBroadCatch", "UseSpecificCatch"})
   private static <T> boolean run(List<? extends IEventHandler<T>> handlers,
           T args, IConfiguration configuration) throws ConnectorException {
     log.trace("{}", handlers);

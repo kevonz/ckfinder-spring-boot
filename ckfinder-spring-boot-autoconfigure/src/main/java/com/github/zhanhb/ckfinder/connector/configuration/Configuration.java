@@ -27,7 +27,8 @@ import lombok.Value;
   "CollectionWithoutInitialCapacity",
   "ReturnOfCollectionOrArrayField",
   "FinalMethod",
-  "FinalClass"
+  "FinalClass",
+  "PublicInnerClass"
 })
 @Value
 public class Configuration implements IConfiguration {
@@ -66,7 +67,6 @@ public class Configuration implements IConfiguration {
   private AccessControl accessControl;
   private boolean enableCsrfProtection;
 
-  @SuppressWarnings("PublicInnerClass")
   public static class Builder {
 
     Builder() {

@@ -27,8 +27,7 @@ import javax.servlet.http.HttpServletResponse;
 /**
  * Class to handle <code>DownloadFile</code> command.
  */
-@SuppressWarnings("FinalClass")
-public final class DownloadFileCommand extends Command<DownloadFileArguments> {
+public class DownloadFileCommand extends Command<DownloadFileArguments> {
 
   public DownloadFileCommand() {
     super(DownloadFileArguments::new);

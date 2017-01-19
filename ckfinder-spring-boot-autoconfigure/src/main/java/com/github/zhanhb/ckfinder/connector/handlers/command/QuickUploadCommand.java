@@ -96,8 +96,7 @@ public class QuickUploadCommand extends FileUploadCommand {
           FileUploadArguments arguments) throws IOException {
 
     Gson gson = new GsonBuilder().serializeNulls().create();
-    @SuppressWarnings("CollectionWithoutInitialCapacity")
-    Map<String, Object> jsonObj = new HashMap<>();
+    Map<String, Object> jsonObj = new HashMap<>(6);
 
     jsonObj.put("fileName", arguments.getNewFileName());
     jsonObj.put("uploaded", arguments.isUploaded() ? 1 : 0);

@@ -40,7 +40,6 @@ import lombok.extern.slf4j.Slf4j;
  *
  */
 @Slf4j
-@SuppressWarnings("ProtectedField")
 public class FileUploadCommand extends Command<FileUploadArguments> implements IPostCommand {
 
   /**
@@ -275,26 +274,22 @@ public class FileUploadCommand extends Command<FileUploadArguments> implements I
     int number = 0;
 
     String nameWithoutExtension = FileUtils.getFileNameWithoutExtension(name, false);
-    Pattern p = Pattern.compile("^(AUX|COM\\d|CLOCK\\$|CON|NUL|PRN|LPT\\d)$", Pattern.CASE_INSENSITIVE);
-    Matcher m = p.matcher(nameWithoutExtension);
-    boolean protectedName = m.find();
 
-    while (true) {
-      if (Files.exists(file) || protectedName) {
+    if (Files.exists(file) || isProtectedName(nameWithoutExtension)) {
+      @SuppressWarnings("StringBufferWithoutInitialCapacity")
+      StringBuilder sb = new StringBuilder();
+      sb.append(FileUtils.getFileNameWithoutExtension(name, false)).append("(");
+      int len = sb.length();
+      do {
         number++;
-        @SuppressWarnings("StringBufferWithoutInitialCapacity")
-        StringBuilder sb = new StringBuilder();
-        sb.append(FileUtils.getFileNameWithoutExtension(name, false));
-        sb.append("(").append(number).append(").");
-        sb.append(FileUtils.getFileExtension(name, false));
+        sb.append(number).append(").").append(FileUtils.getFileExtension(name, false));
         arguments.setNewFileName(sb.toString());
+        sb.setLength(len);
         file = Paths.get(path, arguments.getNewFileName());
-        protectedName = false;
         arguments.setErrorCode(Constants.Errors.CKFINDER_CONNECTOR_ERROR_UPLOADED_FILE_RENAMED);
-      } else {
-        return arguments.getNewFileName();
-      }
+      } while (Files.exists(file));
     }
+    return arguments.getNewFileName();
   }
 
   /**
@@ -425,6 +420,11 @@ public class FileUploadCommand extends Command<FileUploadArguments> implements I
       arguments.setErrorCode(ex.getErrorCode());
       return false;
     }
+  }
+
+  private boolean isProtectedName(String nameWithoutExtension) {
+    return Pattern.compile("^(AUX|COM\\d|CLOCK\\$|CON|NUL|PRN|LPT\\d)$",
+            Pattern.CASE_INSENSITIVE).matcher(nameWithoutExtension).matches();
   }
 
 }
