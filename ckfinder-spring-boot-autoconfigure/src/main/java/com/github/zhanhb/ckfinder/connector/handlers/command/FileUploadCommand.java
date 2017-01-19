@@ -64,7 +64,7 @@ public class FileUploadCommand extends Command<FileUploadArguments> implements I
   final void execute(FileUploadArguments arguments, HttpServletResponse response) throws ConnectorException {
     try {
       String errorMsg = arguments.getErrorCode() == Constants.Errors.CKFINDER_CONNECTOR_ERROR_NONE ? "" : (arguments.getErrorCode() == Constants.Errors.CKFINDER_CONNECTOR_ERROR_CUSTOM_ERROR ? arguments.getCustomErrorMsg()
-              : ErrorUtils.INSTANCE.getErrorMsgByLangAndCode(arguments.getLangCode(), arguments.getErrorCode(), this.getConfiguration()));
+              : ErrorUtils.INSTANCE.getErrorMsgByLangAndCode(arguments.getLangCode(), arguments.getErrorCode()));
       errorMsg = errorMsg.replace("%1", arguments.getNewFileName());
       String path = "";
 
