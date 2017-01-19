@@ -16,13 +16,14 @@ import com.github.zhanhb.ckfinder.connector.configuration.Events;
 import com.github.zhanhb.ckfinder.connector.configuration.IConfiguration;
 import com.github.zhanhb.ckfinder.connector.data.BeforeExecuteCommandEventArgs;
 import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
+import com.github.zhanhb.ckfinder.connector.errors.ErrorHandler;
+import com.github.zhanhb.ckfinder.connector.errors.XMLErrorHandler;
 import com.github.zhanhb.ckfinder.connector.handlers.command.Command;
 import com.github.zhanhb.ckfinder.connector.handlers.command.CopyFilesCommand;
 import com.github.zhanhb.ckfinder.connector.handlers.command.CreateFolderCommand;
 import com.github.zhanhb.ckfinder.connector.handlers.command.DeleteFilesCommand;
 import com.github.zhanhb.ckfinder.connector.handlers.command.DeleteFolderCommand;
 import com.github.zhanhb.ckfinder.connector.handlers.command.DownloadFileCommand;
-import com.github.zhanhb.ckfinder.connector.handlers.command.ErrorHandler;
 import com.github.zhanhb.ckfinder.connector.handlers.command.FileUploadCommand;
 import com.github.zhanhb.ckfinder.connector.handlers.command.GetFilesCommand;
 import com.github.zhanhb.ckfinder.connector.handlers.command.GetFoldersCommand;
@@ -34,7 +35,6 @@ import com.github.zhanhb.ckfinder.connector.handlers.command.RenameFileCommand;
 import com.github.zhanhb.ckfinder.connector.handlers.command.RenameFolderCommand;
 import com.github.zhanhb.ckfinder.connector.handlers.command.ThumbnailCommand;
 import com.github.zhanhb.ckfinder.connector.handlers.command.XMLCommand;
-import com.github.zhanhb.ckfinder.connector.handlers.command.XMLErrorHandler;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -119,11 +119,6 @@ public class ConnectorServlet extends HttpServlet {
                 && !FileUploadCommand.class.isAssignableFrom(commandClass)) {
           checkPostRequest(request);
         }
-      }
-
-      if (!configuration.isEnabled()) {
-        throw new ConnectorException(
-                Constants.Errors.CKFINDER_CONNECTOR_ERROR_CONNECTOR_DISABLED, false);
       }
 
       Events events = configuration.getEvents();

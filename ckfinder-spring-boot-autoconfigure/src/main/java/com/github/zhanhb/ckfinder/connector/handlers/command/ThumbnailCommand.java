@@ -181,7 +181,7 @@ public class ThumbnailCommand extends Command<ThumbnailArguments> {
   private void validate(ThumbnailArguments arguments) throws ConnectorException {
     if (!this.getConfiguration().isThumbsEnabled()) {
       throw new ConnectorException(
-              Constants.Errors.CKFINDER_CONNECTOR_ERROR_THUMBNAILS_DISABLED);
+              arguments.getCurrentFolder(), arguments.getType(), Constants.Errors.CKFINDER_CONNECTOR_ERROR_THUMBNAILS_DISABLED);
     }
     try {
       checkTypeExists(arguments.getType());
@@ -194,17 +194,17 @@ public class ThumbnailCommand extends Command<ThumbnailArguments> {
             arguments.getCurrentFolder(), arguments.getUserRole(),
             AccessControl.CKFINDER_CONNECTOR_ACL_FILE_VIEW)) {
       throw new ConnectorException(
-              Constants.Errors.CKFINDER_CONNECTOR_ERROR_UNAUTHORIZED);
+              arguments.getCurrentFolder(), arguments.getType(), Constants.Errors.CKFINDER_CONNECTOR_ERROR_UNAUTHORIZED);
     }
 
     if (!FileUtils.isFileNameInvalid(arguments.getFileName())) {
       throw new ConnectorException(
-              Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST);
+              arguments.getCurrentFolder(), arguments.getType(), Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST);
     }
 
     if (FileUtils.isFileHidden(arguments.getFileName(), this.getConfiguration())) {
       throw new ConnectorException(
-              Constants.Errors.CKFINDER_CONNECTOR_ERROR_FILE_NOT_FOUND);
+              arguments.getCurrentFolder(), arguments.getType(), Constants.Errors.CKFINDER_CONNECTOR_ERROR_FILE_NOT_FOUND);
     }
 
     log.debug("configuration thumbsPath: {}", getConfiguration().getThumbsPath());
@@ -245,7 +245,7 @@ public class ThumbnailCommand extends Command<ThumbnailArguments> {
         log.debug("orginFile: {}", orginFile);
         if (!Files.exists(orginFile)) {
           throw new ConnectorException(
-                  Constants.Errors.CKFINDER_CONNECTOR_ERROR_FILE_NOT_FOUND);
+                  arguments.getCurrentFolder(), arguments.getType(), Constants.Errors.CKFINDER_CONNECTOR_ERROR_FILE_NOT_FOUND);
         }
         try {
           ImageUtils.createThumb(orginFile, thumbFile, getConfiguration());

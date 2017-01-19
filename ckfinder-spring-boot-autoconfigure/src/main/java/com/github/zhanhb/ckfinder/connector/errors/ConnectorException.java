@@ -25,15 +25,23 @@ public class ConnectorException extends Exception {
    */
   private static final long serialVersionUID = -8643752550259111562L;
   private final int errorCode;
-  private final boolean addCurrentFolder;
+  private final String currentFolder;
+  private String type;
 
   /**
    * standard constructor.
    *
+   * @param currentFolder current folder
+   * @param type type
    * @param errorCode error code number
    */
-  public ConnectorException(int errorCode) {
-    this(errorCode, true);
+  public ConnectorException(String currentFolder, String type, int errorCode) {
+    if (currentFolder == null || type == null) {
+      throw new IllegalArgumentException();
+    }
+    this.errorCode = errorCode;
+    this.currentFolder = currentFolder;
+    this.type = type;
   }
 
   /**
@@ -44,8 +52,11 @@ public class ConnectorException extends Exception {
    */
   public ConnectorException(int errorCode, boolean addCurrentFolder) {
     super(null, null);
+    if (addCurrentFolder) {
+      throw new IllegalArgumentException();
+    }
     this.errorCode = errorCode;
-    this.addCurrentFolder = addCurrentFolder;
+    this.currentFolder = null;
   }
 
   /**
@@ -57,7 +68,7 @@ public class ConnectorException extends Exception {
   public ConnectorException(int errorCode, String errorMsg) {
     super(errorMsg, null);
     this.errorCode = errorCode;
-    this.addCurrentFolder = false;
+    this.currentFolder = null;
   }
 
   /**
@@ -68,24 +79,25 @@ public class ConnectorException extends Exception {
    */
   public ConnectorException(int errorCode, Exception e) {
     super(e.getMessage(), e);
+    if (e instanceof ConnectorException) {
+      throw new IllegalArgumentException();
+    }
     this.errorCode = errorCode;
-    this.addCurrentFolder = false;
+    this.currentFolder = null;
   }
 
   /**
    * constructor with exception param.
    *
-   * @param e Exception
+   * @param cause Exception
    */
-  public ConnectorException(Exception e) {
-    super(e.getMessage(), e);
-    if (e instanceof ConnectorException) {
-      this.errorCode = ((ConnectorException) e).getErrorCode();
-      this.addCurrentFolder = ((ConnectorException) e).isAddCurrentFolder();
-    } else {
-      this.addCurrentFolder = false;
-      this.errorCode = Constants.Errors.CKFINDER_CONNECTOR_ERROR_UNKNOWN;
+  public ConnectorException(Exception cause) {
+    super(cause.getMessage(), cause);
+    if (cause instanceof ConnectorException) {
+      throw new IllegalArgumentException();
     }
+    this.currentFolder = null;
+    this.errorCode = Constants.Errors.CKFINDER_CONNECTOR_ERROR_UNKNOWN;
   }
 
 }

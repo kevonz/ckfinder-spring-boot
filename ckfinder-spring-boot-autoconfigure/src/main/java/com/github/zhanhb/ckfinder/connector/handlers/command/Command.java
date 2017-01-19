@@ -69,14 +69,6 @@ public abstract class Command<T extends Arguments> {
           HttpServletResponse response, IConfiguration configuration)
           throws ConnectorException, IOException {
     T arguments = argumentsSupplier.get();
-    runWithArguments(request, response, configuration, arguments);
-  }
-
-  @Deprecated
-  @SuppressWarnings("FinalMethod")
-  public final void runWithArguments(HttpServletRequest request,
-          HttpServletResponse response, IConfiguration configuration,
-          T arguments) throws ConnectorException, IOException {
     initParams(arguments, request, configuration);
 
     setResponseHeader(request, response, arguments);

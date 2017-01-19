@@ -84,7 +84,7 @@ public class FileUploadCommand extends Command<FileUploadArguments> implements I
         handleOnUploadCompleteResponse(writer, errorMsg, arguments);
       }
       writer.flush();
-    } catch (IOException e) {
+    } catch (IOException | SecurityException e) {
       throw new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_ACCESS_DENIED, e);
     }
