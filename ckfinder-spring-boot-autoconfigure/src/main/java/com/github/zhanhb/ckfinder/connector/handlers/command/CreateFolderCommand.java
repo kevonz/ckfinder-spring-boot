@@ -121,7 +121,7 @@ public class CreateFolderCommand extends XMLCommand<CreateFolderArguments> imple
     Path dir = Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath(),
             arguments.getCurrentFolder(), arguments.getNewFolderName());
     if (Files.exists(dir)) {
-      throw new ConnectorException(arguments.getCurrentFolder(), arguments.getType(), Constants.Errors.CKFINDER_CONNECTOR_ERROR_ALREADY_EXIST);
+      arguments.throwException(Constants.Errors.CKFINDER_CONNECTOR_ERROR_ALREADY_EXIST);
     }
     try {
       Files.createDirectories(dir);

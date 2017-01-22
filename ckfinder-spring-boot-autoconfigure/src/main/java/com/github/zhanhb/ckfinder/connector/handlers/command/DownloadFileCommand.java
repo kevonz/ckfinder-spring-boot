@@ -69,27 +69,23 @@ public class DownloadFileCommand extends Command<DownloadFileArguments> {
     if (!getConfiguration().getAccessControl().hasPermission(arguments.getType(),
             arguments.getCurrentFolder(), arguments.getUserRole(),
             AccessControl.CKFINDER_CONNECTOR_ACL_FILE_VIEW)) {
-      throw new ConnectorException(
-              arguments.getCurrentFolder(), arguments.getType(), Constants.Errors.CKFINDER_CONNECTOR_ERROR_UNAUTHORIZED);
+      arguments.throwException(Constants.Errors.CKFINDER_CONNECTOR_ERROR_UNAUTHORIZED);
     }
 
     if (!FileUtils.isFileNameInvalid(arguments.getFileName())
             || FileUtils.checkFileExtension(arguments.getFileName(),
                     getConfiguration().getTypes().get(arguments.getType())) == 1) {
-      throw new ConnectorException(
-              arguments.getCurrentFolder(), arguments.getType(), Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST);
+      arguments.throwException(Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST);
     }
 
     if (FileUtils.isDirectoryHidden(arguments.getCurrentFolder(), getConfiguration())) {
-      throw new ConnectorException(
-              arguments.getCurrentFolder(), arguments.getType(), Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST);
+      arguments.throwException(Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST);
     }
     try {
       if (!Files.exists(file)
               || !Files.isRegularFile(file)
               || FileUtils.isFileHidden(arguments.getFileName(), this.getConfiguration())) {
-        throw new ConnectorException(
-                arguments.getCurrentFolder(), arguments.getType(), Constants.Errors.CKFINDER_CONNECTOR_ERROR_FILE_NOT_FOUND);
+        arguments.throwException(Constants.Errors.CKFINDER_CONNECTOR_ERROR_FILE_NOT_FOUND);
       }
 
       FileUtils.printFileContentToResponse(file, response.getOutputStream());
