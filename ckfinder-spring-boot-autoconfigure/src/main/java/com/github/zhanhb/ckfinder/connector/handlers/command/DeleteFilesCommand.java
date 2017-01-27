@@ -40,7 +40,7 @@ public class DeleteFilesCommand extends XMLCommand<DeleteFilesArguments> impleme
   }
 
   @Override
-  protected void createXMLChildNodes(int errorNum, Connector.Builder rootElement, DeleteFilesArguments arguments) {
+  protected void createXMLChildNodes(int errorNum, Connector.Builder rootElement, DeleteFilesArguments arguments, IConfiguration configuration) {
     XMLCreator.INSTANCE.addErrors(arguments, rootElement);
 
     if (arguments.isAddDeleteNode()) {
@@ -63,17 +63,18 @@ public class DeleteFilesCommand extends XMLCommand<DeleteFilesArguments> impleme
    * Prepares data for XML response.
    *
    * @param arguments
+   * @param configuration connector configuration
    * @return error code or 0 if action ended with success.
    */
   @Override
-  protected int getDataForXml(DeleteFilesArguments arguments) {
+  protected int getDataForXml(DeleteFilesArguments arguments, IConfiguration configuration) {
 
     arguments.setFilesDeleted(0);
 
     arguments.setAddDeleteNode(false);
 
     try {
-      checkTypeExists(arguments.getType());
+      checkTypeExists(arguments.getType(), configuration);
     } catch (ConnectorException ex) {
       arguments.setType(null);
       return ex.getErrorCode();
@@ -84,7 +85,7 @@ public class DeleteFilesCommand extends XMLCommand<DeleteFilesArguments> impleme
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
       }
 
-      if (getConfiguration().getTypes().get(fileItem.getType()) == null) {
+      if (configuration.getTypes().get(fileItem.getType()) == null) {
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
       }
 
@@ -94,25 +95,25 @@ public class DeleteFilesCommand extends XMLCommand<DeleteFilesArguments> impleme
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
       }
 
-      if (FileUtils.isDirectoryHidden(fileItem.getFolder(), this.getConfiguration())) {
+      if (FileUtils.isDirectoryHidden(fileItem.getFolder(), configuration)) {
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
       }
 
-      if (FileUtils.isFileHidden(fileItem.getName(), this.getConfiguration())) {
+      if (FileUtils.isFileHidden(fileItem.getName(), configuration)) {
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
       }
 
-      if (FileUtils.checkFileExtension(fileItem.getName(), this.getConfiguration().getTypes().get(fileItem.getType())) == 1) {
+      if (FileUtils.checkFileExtension(fileItem.getName(), configuration.getTypes().get(fileItem.getType())) == 1) {
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
 
       }
 
-      if (!getConfiguration().getAccessControl().hasPermission(fileItem.getType(), fileItem.getFolder(), arguments.getUserRole(),
+      if (!configuration.getAccessControl().hasPermission(fileItem.getType(), fileItem.getFolder(), arguments.getUserRole(),
               AccessControl.CKFINDER_CONNECTOR_ACL_FILE_DELETE)) {
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_UNAUTHORIZED;
       }
 
-      Path file = Paths.get(getConfiguration().getTypes().get(fileItem.getType()).getPath(), fileItem.getFolder(), fileItem.getName());
+      Path file = Paths.get(configuration.getTypes().get(fileItem.getType()).getPath(), fileItem.getFolder(), fileItem.getName());
 
       try {
         arguments.setAddDeleteNode(true);
@@ -124,7 +125,7 @@ public class DeleteFilesCommand extends XMLCommand<DeleteFilesArguments> impleme
 
         log.debug("prepare delete file '{}'", file);
         if (FileUtils.delete(file)) {
-          Path thumbFile = Paths.get(getConfiguration().getThumbsPath(),
+          Path thumbFile = Paths.get(configuration.getThumbsPath(),
                   fileItem.getType(), arguments.getCurrentFolder(), fileItem.getName());
           arguments.filesDeletedPlus();
 
@@ -165,7 +166,7 @@ public class DeleteFilesCommand extends XMLCommand<DeleteFilesArguments> impleme
   @SuppressWarnings("CollectionWithoutInitialCapacity")
   protected void initParams(DeleteFilesArguments arguments, HttpServletRequest request, IConfiguration configuration) throws ConnectorException {
     super.initParams(arguments, request, configuration);
-    if (getConfiguration().isEnableCsrfProtection() && !checkCsrfToken(request, null)) {
+    if (configuration.isEnableCsrfProtection() && !checkCsrfToken(request)) {
       throw new ConnectorException(Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST, "CSRF Attempt");
     }
     arguments.setFiles(new ArrayList<>());

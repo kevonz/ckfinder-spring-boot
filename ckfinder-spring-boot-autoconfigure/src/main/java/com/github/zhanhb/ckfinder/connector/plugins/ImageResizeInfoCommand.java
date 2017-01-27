@@ -51,7 +51,7 @@ public class ImageResizeInfoCommand extends XMLCommand<ImageResizeInfoArguments>
   }
 
   @Override
-  protected void createXMLChildNodes(int errorNum, Connector.Builder rootElement, ImageResizeInfoArguments arguments) {
+  protected void createXMLChildNodes(int errorNum, Connector.Builder rootElement, ImageResizeInfoArguments arguments, IConfiguration configuration) {
     if (errorNum == Constants.Errors.CKFINDER_CONNECTOR_ERROR_NONE) {
       createImageInfoNode(rootElement, arguments);
     }
@@ -65,15 +65,15 @@ public class ImageResizeInfoCommand extends XMLCommand<ImageResizeInfoArguments>
   }
 
   @Override
-  protected int getDataForXml(ImageResizeInfoArguments arguments) {
+  protected int getDataForXml(ImageResizeInfoArguments arguments, IConfiguration configuration) {
     try {
-      checkTypeExists(arguments.getType());
+      checkTypeExists(arguments.getType(), configuration);
     } catch (ConnectorException ex) {
       arguments.setType(null);
       return ex.getErrorCode();
     }
 
-    if (!getConfiguration().getAccessControl().hasPermission(arguments.getType(),
+    if (!configuration.getAccessControl().hasPermission(arguments.getType(),
             arguments.getCurrentFolder(), arguments.getUserRole(),
             AccessControl.CKFINDER_CONNECTOR_ACL_FILE_VIEW)) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_UNAUTHORIZED;
@@ -81,15 +81,15 @@ public class ImageResizeInfoCommand extends XMLCommand<ImageResizeInfoArguments>
 
     if (arguments.getFileName() == null || arguments.getFileName().isEmpty()
             || !FileUtils.isFileNameInvalid(arguments.getFileName())
-            || FileUtils.isFileHidden(arguments.getFileName(), this.getConfiguration())) {
+            || FileUtils.isFileHidden(arguments.getFileName(), configuration)) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
     }
 
-    if (FileUtils.checkFileExtension(arguments.getFileName(), getConfiguration().getTypes().get(arguments.getType())) == 1) {
+    if (FileUtils.checkFileExtension(arguments.getFileName(), configuration.getTypes().get(arguments.getType())) == 1) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
     }
 
-    Path imageFile = Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath(),
+    Path imageFile = Paths.get(configuration.getTypes().get(arguments.getType()).getPath(),
             arguments.getCurrentFolder(),
             arguments.getFileName());
 

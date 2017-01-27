@@ -141,9 +141,9 @@ public class ThumbnailCommand extends Command<ThumbnailArguments> {
 
   @Override
   @SuppressWarnings("FinalMethod")
-  final void execute(ThumbnailArguments arguments, HttpServletResponse response) throws ConnectorException {
-    validate(arguments);
-    createThumb(arguments);
+  final void execute(ThumbnailArguments arguments, HttpServletResponse response, IConfiguration configuration) throws ConnectorException {
+    validate(arguments, configuration);
+    createThumb(arguments, configuration);
     if (setResponseHeadersAfterCreatingFile(response, arguments)) {
       try (ServletOutputStream out = response.getOutputStream()) {
         FileUtils.printFileContentToResponse(arguments.getThumbFile(), out);
@@ -178,18 +178,18 @@ public class ThumbnailCommand extends Command<ThumbnailArguments> {
    *
    * @throws ConnectorException when validation fails.
    */
-  private void validate(ThumbnailArguments arguments) throws ConnectorException {
-    if (!this.getConfiguration().isThumbsEnabled()) {
+  private void validate(ThumbnailArguments arguments, IConfiguration configuration) throws ConnectorException {
+    if (!configuration.isThumbsEnabled()) {
       arguments.throwException(Constants.Errors.CKFINDER_CONNECTOR_ERROR_THUMBNAILS_DISABLED);
     }
     try {
-      checkTypeExists(arguments.getType());
+      checkTypeExists(arguments.getType(), configuration);
     } catch (ConnectorException ex) {
       arguments.setType(null);
       throw ex;
     }
 
-    if (!getConfiguration().getAccessControl().hasPermission(arguments.getType(),
+    if (!configuration.getAccessControl().hasPermission(arguments.getType(),
             arguments.getCurrentFolder(), arguments.getUserRole(),
             AccessControl.CKFINDER_CONNECTOR_ACL_FILE_VIEW)) {
       arguments.throwException(Constants.Errors.CKFINDER_CONNECTOR_ERROR_UNAUTHORIZED);
@@ -199,12 +199,12 @@ public class ThumbnailCommand extends Command<ThumbnailArguments> {
       arguments.throwException(Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST);
     }
 
-    if (FileUtils.isFileHidden(arguments.getFileName(), this.getConfiguration())) {
+    if (FileUtils.isFileHidden(arguments.getFileName(), configuration)) {
       arguments.throwException(Constants.Errors.CKFINDER_CONNECTOR_ERROR_FILE_NOT_FOUND);
     }
 
-    log.debug("configuration thumbsPath: {}", getConfiguration().getThumbsPath());
-    Path fullCurrentDir = Paths.get(getConfiguration().getThumbsPath(), arguments.getType(), arguments.getCurrentFolder());
+    log.debug("configuration thumbsPath: {}", configuration.getThumbsPath());
+    Path fullCurrentDir = Paths.get(configuration.getThumbsPath(), arguments.getType(), arguments.getCurrentFolder());
     log.debug("typeThumbDir: {}", fullCurrentDir);
 
     try {
@@ -228,7 +228,7 @@ public class ThumbnailCommand extends Command<ThumbnailArguments> {
    * @throws ConnectorException when thumbnail creation fails.
    */
   @SuppressWarnings({"BroadCatchBlock", "TooBroadCatch"})
-  private void createThumb(ThumbnailArguments arguments) throws ConnectorException {
+  private void createThumb(ThumbnailArguments arguments, IConfiguration configuration) throws ConnectorException {
     log.debug("ThumbnailCommand.createThumb()");
     log.debug("{}", arguments.getFullCurrentPath());
     Path thumbFile = Paths.get(arguments.getFullCurrentPath(), arguments.getFileName());
@@ -236,14 +236,14 @@ public class ThumbnailCommand extends Command<ThumbnailArguments> {
     arguments.setThumbFile(thumbFile);
     try {
       if (!Files.exists(thumbFile)) {
-        Path orginFile = Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath(),
+        Path orginFile = Paths.get(configuration.getTypes().get(arguments.getType()).getPath(),
                 arguments.getCurrentFolder(), arguments.getFileName());
         log.debug("orginFile: {}", orginFile);
         if (!Files.exists(orginFile)) {
           arguments.throwException(Constants.Errors.CKFINDER_CONNECTOR_ERROR_FILE_NOT_FOUND);
         }
         try {
-          ImageUtils.createThumb(orginFile, thumbFile, getConfiguration());
+          ImageUtils.createThumb(orginFile, thumbFile, configuration);
         } catch (Exception e) {
           try {
             Files.deleteIfExists(thumbFile);

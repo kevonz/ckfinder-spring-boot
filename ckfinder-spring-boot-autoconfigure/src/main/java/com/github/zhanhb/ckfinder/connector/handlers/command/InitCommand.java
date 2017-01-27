@@ -12,6 +12,7 @@
 package com.github.zhanhb.ckfinder.connector.handlers.command;
 
 import com.github.zhanhb.ckfinder.connector.configuration.Constants;
+import com.github.zhanhb.ckfinder.connector.configuration.IConfiguration;
 import com.github.zhanhb.ckfinder.connector.data.InitCommandEventArgs;
 import com.github.zhanhb.ckfinder.connector.data.ResourceType;
 import com.github.zhanhb.ckfinder.connector.handlers.arguments.XMLArguments;
@@ -52,23 +53,24 @@ public class InitCommand extends XMLCommand<XMLArguments> {
    * method from super class - not used in this command.
    *
    * @param arguments
+   * @param configuration connector configuration
    * @return 0
    */
   @Override
-  protected int getDataForXml(XMLArguments arguments) {
+  protected int getDataForXml(XMLArguments arguments, IConfiguration configuration) {
     return Constants.Errors.CKFINDER_CONNECTOR_ERROR_NONE;
   }
 
   @Override
-  protected void createXMLChildNodes(int errorNum, Connector.Builder rootElement, XMLArguments arguments) {
+  protected void createXMLChildNodes(int errorNum, Connector.Builder rootElement, XMLArguments arguments, IConfiguration configuration) {
     if (errorNum == Constants.Errors.CKFINDER_CONNECTOR_ERROR_NONE) {
-      createConnectorData(rootElement, arguments);
+      createConnectorData(rootElement, arguments, configuration);
       try {
-        createResouceTypesData(rootElement, arguments);
+        createResouceTypesData(rootElement, arguments, configuration);
       } catch (Exception e) {
         log.error("", e);
       }
-      createPluginsData(rootElement, arguments);
+      createPluginsData(rootElement, arguments, configuration);
     }
   }
 
@@ -77,26 +79,26 @@ public class InitCommand extends XMLCommand<XMLArguments> {
    *
    * @param rootElement root element in XML
    */
-  private void createConnectorData(Connector.Builder rootElement, XMLArguments arguments) {
+  private void createConnectorData(Connector.Builder rootElement, XMLArguments arguments, IConfiguration configuration) {
     // connector info
     ConnectorInfo.Builder element = ConnectorInfo.builder();
-    element.enabled(getConfiguration().isEnabled());
-    element.licenseName(getLicenseName());
-    element.licenseKey(createLicenseKey(getConfiguration().getLicenseKey()));
-    element.thumbsEnabled(getConfiguration().isThumbsEnabled());
-    element.uploadCheckImages(!getConfiguration().isCheckSizeAfterScaling());
-    if (getConfiguration().isThumbsEnabled()) {
-      element.thumbsUrl(getConfiguration().getThumbsUrl());
-      element.thumbsDirectAccess(getConfiguration().isThumbsDirectAccess());
-      element.thumbsWidth(getConfiguration().getMaxThumbWidth());
-      element.thumbsHeight(getConfiguration().getMaxThumbHeight());
+    element.enabled(configuration.isEnabled());
+    element.licenseName(getLicenseName(configuration));
+    element.licenseKey(createLicenseKey(configuration.getLicenseKey()));
+    element.thumbsEnabled(configuration.isThumbsEnabled());
+    element.uploadCheckImages(!configuration.isCheckSizeAfterScaling());
+    if (configuration.isThumbsEnabled()) {
+      element.thumbsUrl(configuration.getThumbsUrl());
+      element.thumbsDirectAccess(configuration.isThumbsDirectAccess());
+      element.thumbsWidth(configuration.getMaxThumbWidth());
+      element.thumbsHeight(configuration.getMaxThumbHeight());
     }
-    element.imgWidth(getConfiguration().getImgWidth());
-    element.imgHeight(getConfiguration().getImgHeight());
-    element.csrfProtection(getConfiguration().isEnableCsrfProtection());
-    String plugins = getPlugins();
+    element.imgWidth(configuration.getImgWidth());
+    element.imgHeight(configuration.getImgHeight());
+    element.csrfProtection(configuration.isEnableCsrfProtection());
+    String plugins = getPlugins(configuration);
     if (plugins.length() > 0) {
-      element.plugins(getPlugins());
+      element.plugins(plugins);
     }
     rootElement.connectorInfo(element.build());
   }
@@ -106,8 +108,8 @@ public class InitCommand extends XMLCommand<XMLArguments> {
    *
    * @return plugins names.
    */
-  private String getPlugins() {
-    return getConfiguration().getPublicPluginNames();
+  private String getPlugins(IConfiguration configuration) {
+    return configuration.getPublicPluginNames();
   }
 
   /**
@@ -115,12 +117,12 @@ public class InitCommand extends XMLCommand<XMLArguments> {
    *
    * @return license name if key is ok, or empty string if not.
    */
-  private String getLicenseName() {
-    if (validateLicenseKey(getConfiguration().getLicenseKey())) {
-      int index = Constants.CKFINDER_CHARS.indexOf(getConfiguration().getLicenseKey().charAt(0))
+  private String getLicenseName(IConfiguration configuration) {
+    if (validateLicenseKey(configuration.getLicenseKey())) {
+      int index = Constants.CKFINDER_CHARS.indexOf(configuration.getLicenseKey().charAt(0))
               % LICENSE_CHAR_NR;
       if (index == 1 || index == 4) {
-        return getConfiguration().getLicenseName();
+        return configuration.getLicenseName();
       }
     }
     return "";
@@ -158,10 +160,10 @@ public class InitCommand extends XMLCommand<XMLArguments> {
    *
    * @param rootElement root element in XML
    */
-  private void createPluginsData(Connector.Builder rootElement, XMLArguments arguments) {
-    if (getConfiguration().getEvents() != null) {
+  private void createPluginsData(Connector.Builder rootElement, XMLArguments arguments, IConfiguration configuration) {
+    if (configuration.getEvents() != null) {
       InitCommandEventArgs args = new InitCommandEventArgs(rootElement);
-      getConfiguration().getEvents().runInitCommand(args, getConfiguration());
+      configuration.getEvents().runInitCommand(args, configuration);
     }
   }
 
@@ -172,7 +174,7 @@ public class InitCommand extends XMLCommand<XMLArguments> {
    * @throws Exception when error occurs
    */
   @SuppressWarnings("CollectionWithoutInitialCapacity")
-  private void createResouceTypesData(Connector.Builder rootElement, XMLArguments arguments) throws IOException {
+  private void createResouceTypesData(Connector.Builder rootElement, XMLArguments arguments, IConfiguration configuration) throws IOException {
     //resurcetypes
     ResourceTypes.Builder resourceTypes = ResourceTypes.builder();
     Set<String> types;
@@ -180,18 +182,18 @@ public class InitCommand extends XMLCommand<XMLArguments> {
       types = new LinkedHashSet<>();
       types.add(arguments.getType());
     } else {
-      types = getTypes();
+      types = getTypes(configuration);
     }
 
     for (String key : types) {
-      ResourceType resourceType = getConfiguration().getTypes().get(key);
+      ResourceType resourceType = configuration.getTypes().get(key);
       if (((arguments.getType() == null || arguments.getType().equals(key)) && resourceType != null)
-              && getConfiguration().getAccessControl().hasPermission(key, "/", arguments.getUserRole(),
+              && configuration.getAccessControl().hasPermission(key, "/", arguments.getUserRole(),
                       AccessControl.CKFINDER_CONNECTOR_ACL_FOLDER_VIEW)) {
 
         com.github.zhanhb.ckfinder.connector.handlers.response.ResourceType.Builder childElement = com.github.zhanhb.ckfinder.connector.handlers.response.ResourceType.builder();
         childElement.name(resourceType.getName());
-        childElement.acl(getConfiguration().getAccessControl().checkACLForRole(key, "/", arguments.getUserRole()));
+        childElement.acl(configuration.getAccessControl().checkACLForRole(key, "/", arguments.getUserRole()));
         childElement.hash(randomHash(
                 resourceType.getPath()));
         childElement.allowedExtensions(resourceType.getAllowedExtensions());
@@ -199,7 +201,7 @@ public class InitCommand extends XMLCommand<XMLArguments> {
         childElement.url(resourceType.getUrl() + "/");
         long maxSize = resourceType.getMaxSize();
         childElement.maxSize(maxSize > 0 ? maxSize : 0);
-        boolean hasChildren = FileUtils.hasChildren(getConfiguration().getAccessControl(), "/", Paths.get(PathUtils.escape(resourceType.getPath())), getConfiguration(), resourceType.getName(), arguments.getUserRole());
+        boolean hasChildren = FileUtils.hasChildren(configuration.getAccessControl(), "/", Paths.get(PathUtils.escape(resourceType.getPath())), configuration, resourceType.getName(), arguments.getUserRole());
         childElement.hasChildren(hasChildren);
         resourceTypes.resourceType(childElement.build());
       }
@@ -212,11 +214,11 @@ public class InitCommand extends XMLCommand<XMLArguments> {
    *
    * @return list of types names.
    */
-  private Set<String> getTypes() {
-    if (getConfiguration().getDefaultResourceTypes().size() > 0) {
-      return getConfiguration().getDefaultResourceTypes();
+  private Set<String> getTypes(IConfiguration configuration) {
+    if (configuration.getDefaultResourceTypes().size() > 0) {
+      return configuration.getDefaultResourceTypes();
     } else {
-      return getConfiguration().getTypes().keySet();
+      return configuration.getTypes().keySet();
     }
   }
 

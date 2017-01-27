@@ -37,7 +37,7 @@ public class RenameFileCommand extends XMLCommand<RenameFileArguments> implement
   }
 
   @Override
-  protected void createXMLChildNodes(int errorNum, Connector.Builder rootElement, RenameFileArguments arguments) {
+  protected void createXMLChildNodes(int errorNum, Connector.Builder rootElement, RenameFileArguments arguments, IConfiguration configuration) {
     if (arguments.isAddRenameNode()) {
       createRenamedFileNode(rootElement, arguments);
     }
@@ -60,27 +60,28 @@ public class RenameFileCommand extends XMLCommand<RenameFileArguments> implement
    * gets data for XML and checks all validation.
    *
    * @param arguments
+   * @param configuration connector configuration
    * @return error code or 0 if it's correct.
    */
   @Override
-  protected int getDataForXml(RenameFileArguments arguments) {
+  protected int getDataForXml(RenameFileArguments arguments, IConfiguration configuration) {
     log.trace("getDataForXml");
 
     try {
-      checkTypeExists(arguments.getType());
+      checkTypeExists(arguments.getType(), configuration);
     } catch (ConnectorException ex) {
       log.info("isTypeExists({}): false", arguments.getType());
       arguments.setType(null);
       return ex.getErrorCode();
     }
 
-    if (!getConfiguration().getAccessControl().hasPermission(arguments.getType(),
+    if (!configuration.getAccessControl().hasPermission(arguments.getType(),
             arguments.getCurrentFolder(), arguments.getUserRole(),
             AccessControl.CKFINDER_CONNECTOR_ACL_FILE_RENAME)) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_UNAUTHORIZED;
     }
 
-    if (getConfiguration().isForceAscii()) {
+    if (configuration.isForceAscii()) {
       arguments.setNewFileName(FileUtils.convertToASCII(arguments.getNewFileName()));
     }
 
@@ -90,31 +91,31 @@ public class RenameFileCommand extends XMLCommand<RenameFileArguments> implement
     }
 
     int checkFileExt = FileUtils.checkFileExtension(arguments.getNewFileName(),
-            this.getConfiguration().getTypes().get(arguments.getType()));
+            configuration.getTypes().get(arguments.getType()));
     if (checkFileExt == 1) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_EXTENSION;
     }
-    if (getConfiguration().isCheckDoubleFileExtensions()) {
-      arguments.setNewFileName(FileUtils.renameFileWithBadExt(this.getConfiguration().getTypes().get(arguments.getType()),
+    if (configuration.isCheckDoubleFileExtensions()) {
+      arguments.setNewFileName(FileUtils.renameFileWithBadExt(configuration.getTypes().get(arguments.getType()),
               arguments.getNewFileName()));
     }
 
     if (!FileUtils.isFileNameInvalid(arguments.getFileName())
-            || FileUtils.isFileHidden(arguments.getFileName(), getConfiguration())) {
+            || FileUtils.isFileHidden(arguments.getFileName(), configuration)) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
     }
 
-    if (!FileUtils.isFileNameInvalid(arguments.getNewFileName(), getConfiguration())
-            || FileUtils.isFileHidden(arguments.getNewFileName(), getConfiguration())) {
+    if (!FileUtils.isFileNameInvalid(arguments.getNewFileName(), configuration)
+            || FileUtils.isFileHidden(arguments.getNewFileName(), configuration)) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_NAME;
     }
 
     if (FileUtils.checkFileExtension(arguments.getFileName(),
-            this.getConfiguration().getTypes().get(arguments.getType())) == 1) {
+            configuration.getTypes().get(arguments.getType())) == 1) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
     }
 
-    String dirPath = getConfiguration().getTypes().get(arguments.getType()).getPath();
+    String dirPath = configuration.getTypes().get(arguments.getType()).getPath();
     Path file = Paths.get(dirPath, arguments.getCurrentFolder(), arguments.getFileName());
     Path newFile = Paths.get(dirPath, arguments.getCurrentFolder(), arguments.getNewFileName());
 
@@ -130,7 +131,7 @@ public class RenameFileCommand extends XMLCommand<RenameFileArguments> implement
       try {
         Files.move(file, newFile);
         arguments.setRenamed(true);
-        renameThumb(arguments);
+        renameThumb(arguments, configuration);
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_NONE;
       } catch (IOException ex) {
         arguments.setRenamed(false);
@@ -147,11 +148,11 @@ public class RenameFileCommand extends XMLCommand<RenameFileArguments> implement
   /**
    * rename thumb file.
    */
-  private void renameThumb(RenameFileArguments arguments) throws IOException {
-    Path thumbFile = Paths.get(getConfiguration().getThumbsPath(),
+  private void renameThumb(RenameFileArguments arguments, IConfiguration configuration) throws IOException {
+    Path thumbFile = Paths.get(configuration.getThumbsPath(),
             arguments.getType(), arguments.getCurrentFolder(),
             arguments.getFileName());
-    Path newThumbFile = Paths.get(getConfiguration().getThumbsPath(),
+    Path newThumbFile = Paths.get(configuration.getThumbsPath(),
             arguments.getType(), arguments.getCurrentFolder(),
             arguments.getNewFileName());
 
@@ -165,7 +166,7 @@ public class RenameFileCommand extends XMLCommand<RenameFileArguments> implement
   protected void initParams(RenameFileArguments arguments, HttpServletRequest request, IConfiguration configuration)
           throws ConnectorException {
     super.initParams(arguments, request, configuration);
-    if (getConfiguration().isEnableCsrfProtection() && !checkCsrfToken(request, null)) {
+    if (configuration.isEnableCsrfProtection() && !checkCsrfToken(request)) {
       throw new ConnectorException(Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST, "CSRF Attempt");
     }
     arguments.setFileName(request.getParameter("fileName"));

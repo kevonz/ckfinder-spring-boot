@@ -28,7 +28,6 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -46,11 +45,6 @@ public abstract class Command<T extends Arguments> {
    */
   protected static final String tokenParamName = "ckCsrfToken";
 
-  /**
-   * Connector configuration.
-   */
-  @Getter(AccessLevel.PROTECTED)
-  private IConfiguration configuration;
   @Getter
   @NonNull
   private final Supplier<? extends T> argumentsSupplier;
@@ -72,7 +66,7 @@ public abstract class Command<T extends Arguments> {
     initParams(arguments, request, configuration);
 
     setResponseHeader(request, response, arguments);
-    execute(arguments, response);
+    execute(arguments, response, configuration);
   }
 
   /**
@@ -85,7 +79,6 @@ public abstract class Command<T extends Arguments> {
    */
   protected void initParams(T arguments, HttpServletRequest request,
           IConfiguration configuration) throws ConnectorException {
-    this.configuration = configuration;
     HttpSession session = request.getSession(false);
     String userRole = session == null ? null : (String) session.getAttribute(configuration.getUserRoleName());
     arguments.setUserRole(userRole);
@@ -93,19 +86,19 @@ public abstract class Command<T extends Arguments> {
     arguments.setCurrentFolder(getCurrentFolderParam(request));
 
     String currentFolder = arguments.getCurrentFolder();
-    checkConnectorEnabled();
+    checkConnectorEnabled(configuration);
     checkRequestPathValid(currentFolder);
 
     currentFolder = PathUtils.escape(currentFolder);
     arguments.setCurrentFolder(currentFolder);
-    if (FileUtils.isDirectoryHidden(arguments.getCurrentFolder(), getConfiguration())) {
+    if (FileUtils.isDirectoryHidden(arguments.getCurrentFolder(), configuration)) {
       throw new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST,
               false);
     }
 
     if (currentFolder == null || currentFolder.isEmpty()
-            || isCurrFolderExists(arguments, request)) {
+            || isCurrFolderExists(arguments, request, configuration)) {
       arguments.setType(request.getParameter("type"));
     }
   }
@@ -116,8 +109,8 @@ public abstract class Command<T extends Arguments> {
    * @return true if connector is enabled and user is authenticated
    * @throws ConnectorException when connector is disabled
    */
-  private void checkConnectorEnabled() throws ConnectorException {
-    if (!getConfiguration().isEnabled()) {
+  private void checkConnectorEnabled(IConfiguration configuration) throws ConnectorException {
+    if (!configuration.isEnabled()) {
       throw new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_CONNECTOR_DISABLED, false);
     }
@@ -128,20 +121,21 @@ public abstract class Command<T extends Arguments> {
    *
    * @param arguments
    * @param request current request object
+   * @param configuration connector configuration
    * @return {@code true} if current folder exists
    * @throws ConnectorException if current folder doesn't exist
    */
   @Deprecated
-  protected boolean isCurrFolderExists(T arguments, HttpServletRequest request)
+  protected boolean isCurrFolderExists(T arguments, HttpServletRequest request, IConfiguration configuration)
           throws ConnectorException {
     String tmpType = request.getParameter("type");
     if (tmpType != null) {
       try {
-        checkTypeExists(tmpType);
+        checkTypeExists(tmpType, configuration);
       } catch (ConnectorException ex) {
         return false;
       }
-      Path currDir = Paths.get(getConfiguration().getTypes().get(tmpType).getPath(),
+      Path currDir = Paths.get(configuration.getTypes().get(tmpType).getPath(),
               arguments.getCurrentFolder());
       if (!Files.isDirectory(currDir)) {
         throw new ConnectorException(
@@ -158,12 +152,13 @@ public abstract class Command<T extends Arguments> {
    * Checks if type of resource provided as parameter exists.
    *
    * @param type name of the resource type to check if it exists
+   * @param configuration connector configuration
    * @throws com.github.zhanhb.ckfinder.connector.errors.ConnectorException
    */
   @Deprecated
   @SuppressWarnings("FinalMethod")
-  protected final void checkTypeExists(String type) throws ConnectorException {
-    ResourceType testType = getConfiguration().getTypes().get(type);
+  protected final void checkTypeExists(String type, IConfiguration configuration) throws ConnectorException {
+    ResourceType testType = configuration.getTypes().get(type);
     if (testType == null) {
       throw new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE, false);
@@ -177,7 +172,7 @@ public abstract class Command<T extends Arguments> {
    * @throws ConnectorException when error occurs
    * @throws java.io.IOException
    */
-  abstract void execute(T arguments, HttpServletResponse response) throws ConnectorException, IOException;
+  abstract void execute(T arguments, HttpServletResponse response, IConfiguration configuration) throws ConnectorException, IOException;
 
   /**
    * sets header in response.
@@ -235,24 +230,22 @@ public abstract class Command<T extends Arguments> {
    * parameter
    * @return {@code true} if token is valid, {@code false} otherwise.
    */
-  protected boolean checkCsrfToken(final HttpServletRequest request, String csrfTokenValue) {
+  protected boolean checkCsrfToken(final HttpServletRequest request) {
     final String tokenCookieName = "ckCsrfToken", paramToken;
     final int minTokenLength = 32;
 
-    if (csrfTokenValue != null) {
-      paramToken = csrfTokenValue;
-    } else {
-      String token = request.getParameter(tokenParamName);
-      paramToken = token != null ? token.trim() : "";
-    }
+    String token = request.getParameter(tokenParamName);
+    paramToken = token != null ? token.trim() : "";
 
     Cookie[] cookies = request.getCookies();
     String cookieToken = "";
-    for (Cookie cookie : cookies) {
-      if (cookie.getName().equals(tokenCookieName)) {
-        cookieToken = cookie.getValue();
-        cookieToken = cookieToken != null ? cookieToken.trim() : "";
-        break;
+    if (cookies != null) {
+      for (Cookie cookie : cookies) {
+        if (cookie.getName().equals(tokenCookieName)) {
+          cookieToken = cookie.getValue();
+          cookieToken = cookieToken != null ? cookieToken.trim() : "";
+          break;
+        }
       }
     }
 

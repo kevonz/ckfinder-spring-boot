@@ -56,8 +56,8 @@ public abstract class XMLCommand<T extends XMLArguments> extends Command<T> {
    */
   @Override
   @SuppressWarnings("FinalMethod")
-  final void execute(T arguments, HttpServletResponse response) throws IOException {
-    createXMLResponse(arguments, getDataForXml(arguments));
+  final void execute(T arguments, HttpServletResponse response, IConfiguration configuration) throws IOException {
+    createXMLResponse(arguments, getDataForXml(arguments, configuration), configuration);
     try (PrintWriter out = response.getWriter()) {
       XMLCreator.INSTANCE.writeTo(arguments.getConnector().build(), out);
     }
@@ -69,16 +69,16 @@ public abstract class XMLCommand<T extends XMLArguments> extends Command<T> {
    * @param errorNum error code from method getDataForXml()
    * @throws ConnectorException to handle in error handler.
    */
-  private void createXMLResponse(T arguments, int errorNum) {
+  private void createXMLResponse(T arguments, int errorNum, IConfiguration configuration) {
     Connector.Builder rootElement = arguments.getConnector();
     if (arguments.getType() != null && !arguments.getType().isEmpty()) {
       rootElement.resourceType(arguments.getType());
     }
     if (shouldAddCurrentFolderNode(arguments)) {
-      createCurrentFolderNode(arguments, rootElement);
+      createCurrentFolderNode(arguments, rootElement, configuration);
     }
     rootElement.error(Error.builder().number(errorNum).build());
-    createXMLChildNodes(errorNum, rootElement, arguments);
+    createXMLChildNodes(errorNum, rootElement, arguments, configuration);
   }
 
   /**
@@ -87,34 +87,37 @@ public abstract class XMLCommand<T extends XMLArguments> extends Command<T> {
    * @param errorNum error code
    * @param rootElement XML root node
    * @param arguments
+   * @param configuration connector configuration
    */
-  protected abstract void createXMLChildNodes(int errorNum, Connector.Builder rootElement, T arguments);
+  protected abstract void createXMLChildNodes(int errorNum, Connector.Builder rootElement, T arguments, IConfiguration configuration);
 
   /**
    * gets all necessary data to create XML response.
    *
    * @param arguments
+   * @param configuration connector configuration
    * @return error code
    * {@link com.github.zhanhb.ckfinder.connector.configuration.Constants.Errors}
    * or
    * {@link com.github.zhanhb.ckfinder.connector.configuration.Constants.Errors#CKFINDER_CONNECTOR_ERROR_NONE}
    * if no error occurred.
    */
-  protected abstract int getDataForXml(T arguments);
+  protected abstract int getDataForXml(T arguments, IConfiguration configuration);
 
   /**
    * creates <code>CurrentFolder</code> element.
    *
    * @param arguments
    * @param rootElement XML root node.
+   * @param configuration connector configuration
    */
   @SuppressWarnings("FinalMethod")
-  protected final void createCurrentFolderNode(T arguments, Connector.Builder rootElement) {
+  protected final void createCurrentFolderNode(T arguments, Connector.Builder rootElement, IConfiguration configuration) {
     rootElement.currentFolder(CurrentFolder.builder()
             .path(arguments.getCurrentFolder())
-            .url(getConfiguration().getTypes().get(arguments.getType()).getUrl()
+            .url(configuration.getTypes().get(arguments.getType()).getUrl()
                     + arguments.getCurrentFolder())
-            .acl(getConfiguration().getAccessControl().checkACLForRole(arguments.getType(), arguments.getCurrentFolder(), arguments.getUserRole()))
+            .acl(configuration.getAccessControl().checkACLForRole(arguments.getType(), arguments.getCurrentFolder(), arguments.getUserRole()))
             .build());
   }
 

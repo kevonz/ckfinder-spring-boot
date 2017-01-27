@@ -56,23 +56,23 @@ public class ImageResizeCommand extends XMLCommand<ImageResizeArguments> impleme
   }
 
   @Override
-  protected void createXMLChildNodes(int errorNum, Connector.Builder rootElement, ImageResizeArguments arguments) {
+  protected void createXMLChildNodes(int errorNum, Connector.Builder rootElement, ImageResizeArguments arguments, IConfiguration configuration) {
   }
 
   @Override
-  protected int getDataForXml(ImageResizeArguments arguments) {
-    if (getConfiguration().isEnableCsrfProtection() && !checkCsrfToken(arguments.getRequest(), null)) {
+  protected int getDataForXml(ImageResizeArguments arguments, IConfiguration configuration) {
+    if (configuration.isEnableCsrfProtection() && !checkCsrfToken(arguments.getRequest())) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
     }
 
     try {
-      checkTypeExists(arguments.getType());
+      checkTypeExists(arguments.getType(), configuration);
     } catch (ConnectorException ex) {
       arguments.setType(null);
       return ex.getErrorCode();
     }
 
-    if (!getConfiguration().getAccessControl().hasPermission(arguments.getType(),
+    if (!configuration.getAccessControl().hasPermission(arguments.getType(),
             arguments.getCurrentFolder(), arguments.getUserRole(),
             AccessControl.CKFINDER_CONNECTOR_ACL_FILE_DELETE
             | AccessControl.CKFINDER_CONNECTOR_ACL_FILE_UPLOAD)) {
@@ -84,15 +84,15 @@ public class ImageResizeCommand extends XMLCommand<ImageResizeArguments> impleme
     }
 
     if (!FileUtils.isFileNameInvalid(arguments.getFileName())
-            || FileUtils.isFileHidden(arguments.getFileName(), getConfiguration())) {
+            || FileUtils.isFileHidden(arguments.getFileName(), configuration)) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
     }
 
-    if (FileUtils.checkFileExtension(arguments.getFileName(), getConfiguration().getTypes().get(arguments.getType())) == 1) {
+    if (FileUtils.checkFileExtension(arguments.getFileName(), configuration.getTypes().get(arguments.getType())) == 1) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
     }
 
-    Path file = Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath(),
+    Path file = Paths.get(configuration.getTypes().get(arguments.getType()).getPath(),
             arguments.getCurrentFolder(),
             arguments.getFileName());
     try {
@@ -107,16 +107,16 @@ public class ImageResizeCommand extends XMLCommand<ImageResizeArguments> impleme
       if (arguments.getWidth() != null && arguments.getHeight() != null) {
 
         if (!FileUtils.isFileNameInvalid(arguments.getNewFileName())
-                && FileUtils.isFileHidden(arguments.getNewFileName(), getConfiguration())) {
+                && FileUtils.isFileHidden(arguments.getNewFileName(), configuration)) {
           return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_NAME;
         }
 
         if (FileUtils.checkFileExtension(arguments.getNewFileName(),
-                getConfiguration().getTypes().get(arguments.getType())) == 1) {
+                configuration.getTypes().get(arguments.getType())) == 1) {
           return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_EXTENSION;
         }
 
-        Path thumbFile = Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath(),
+        Path thumbFile = Paths.get(configuration.getTypes().get(arguments.getType()).getPath(),
                 arguments.getCurrentFolder(),
                 arguments.getNewFileName());
 
@@ -126,8 +126,8 @@ public class ImageResizeCommand extends XMLCommand<ImageResizeArguments> impleme
         if (!"1".equals(arguments.getOverwrite()) && Files.exists(thumbFile)) {
           return Constants.Errors.CKFINDER_CONNECTOR_ERROR_ALREADY_EXIST;
         }
-        int maxImageHeight = getConfiguration().getImgHeight();
-        int maxImageWidth = getConfiguration().getImgWidth();
+        int maxImageHeight = configuration.getImgHeight();
+        int maxImageWidth = configuration.getImgWidth();
         if ((maxImageWidth > 0 && arguments.getWidth() > maxImageWidth)
                 || (maxImageHeight > 0 && arguments.getHeight() > maxImageHeight)) {
           return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
@@ -135,7 +135,7 @@ public class ImageResizeCommand extends XMLCommand<ImageResizeArguments> impleme
 
         try {
           ImageUtils.createResizedImage(file, thumbFile,
-                  arguments.getWidth(), arguments.getHeight(), getConfiguration().getImgQuality());
+                  arguments.getWidth(), arguments.getHeight(), configuration.getImgQuality());
 
         } catch (IOException e) {
           log.error("", e);
@@ -148,7 +148,7 @@ public class ImageResizeCommand extends XMLCommand<ImageResizeArguments> impleme
       for (String size : SIZES) {
         if ("1".equals(arguments.getSizesFromReq().get(size))) {
           String thumbName = fileNameWithoutExt + "_" + size + "." + fileExt;
-          Path thumbFile = Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath(),
+          Path thumbFile = Paths.get(configuration.getTypes().get(arguments.getType()).getPath(),
                   arguments.getCurrentFolder(), thumbName);
           String value = pluginParams.get(size + "Thumb");
           if (value != null) {
@@ -157,7 +157,7 @@ public class ImageResizeCommand extends XMLCommand<ImageResizeArguments> impleme
               String[] params = new String[]{matcher.group(1), matcher.group(2)};
               try {
                 ImageUtils.createResizedImage(file, thumbFile, Integer.parseInt(params[0]),
-                        Integer.parseInt(params[1]), getConfiguration().getImgQuality());
+                        Integer.parseInt(params[1]), configuration.getImgQuality());
               } catch (IOException e) {
                 log.error("", e);
                 return Constants.Errors.CKFINDER_CONNECTOR_ERROR_ACCESS_DENIED;

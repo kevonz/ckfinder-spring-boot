@@ -61,10 +61,10 @@ public class FileUploadCommand extends Command<FileUploadArguments> implements I
    */
   @Override
   @SuppressWarnings("FinalMethod")
-  final void execute(FileUploadArguments arguments, HttpServletResponse response) throws ConnectorException {
+  final void execute(FileUploadArguments arguments, HttpServletResponse response, IConfiguration configuration) throws ConnectorException {
     try {
       String errorMsg = arguments.getErrorCode() == Constants.Errors.CKFINDER_CONNECTOR_ERROR_NONE ? "" : (arguments.getErrorCode() == Constants.Errors.CKFINDER_CONNECTOR_ERROR_CUSTOM_ERROR ? arguments.getCustomErrorMsg()
-              : ErrorUtils.INSTANCE.getErrorMsgByLangAndCode(arguments.getLangCode(), arguments.getErrorCode(), this.getConfiguration()));
+              : ErrorUtils.INSTANCE.getErrorMsgByLangAndCode(arguments.getLangCode(), arguments.getErrorCode(), configuration));
       errorMsg = errorMsg.replace("%1", arguments.getNewFileName());
       String path = "";
 
@@ -72,16 +72,16 @@ public class FileUploadCommand extends Command<FileUploadArguments> implements I
         arguments.setNewFileName("");
         arguments.setCurrentFolder("");
       } else {
-        path = getConfiguration().getTypes().get(arguments.getType()).getUrl()
+        path = configuration.getTypes().get(arguments.getType()).getUrl()
                 + arguments.getCurrentFolder();
       }
       PrintWriter writer = response.getWriter();
       if (arguments.getResponseType() != null && arguments.getResponseType().equals("txt")) {
         writer.write(arguments.getNewFileName() + "|" + errorMsg);
       } else if (checkFuncNum(arguments)) {
-        handleOnUploadCompleteCallFuncResponse(writer, errorMsg, path, arguments);
+        handleOnUploadCompleteCallFuncResponse(writer, errorMsg, path, arguments, configuration);
       } else {
-        handleOnUploadCompleteResponse(writer, errorMsg, arguments);
+        handleOnUploadCompleteResponse(writer, errorMsg, arguments, configuration);
       }
       writer.flush();
     } catch (IOException | SecurityException e) {
@@ -107,10 +107,10 @@ public class FileUploadCommand extends Command<FileUploadArguments> implements I
    * @param errorMsg error message
    * @param path path
    * @param arguments
+   * @param configuration connector configuration
    * @throws IOException when error occurs.
    */
-  protected void handleOnUploadCompleteCallFuncResponse(Writer out, String errorMsg,
-          String path, FileUploadArguments arguments) throws IOException {
+  protected void handleOnUploadCompleteCallFuncResponse(Writer out, String errorMsg, String path, FileUploadArguments arguments, IConfiguration configuration) throws IOException {
     arguments.setCkFinderFuncNum(arguments.getCkFinderFuncNum().replaceAll(
             "[^\\d]", ""));
     out.write("<script type=\"text/javascript\">");
@@ -127,10 +127,10 @@ public class FileUploadCommand extends Command<FileUploadArguments> implements I
    * @param writer out put stream
    * @param errorMsg error message
    * @param arguments
+   * @param configuration connector configuration
    * @throws IOException when error occurs
    */
-  protected void handleOnUploadCompleteResponse(Writer writer, String errorMsg,
-          FileUploadArguments arguments) throws IOException {
+  protected void handleOnUploadCompleteResponse(Writer writer, String errorMsg, FileUploadArguments arguments, IConfiguration configuration) throws IOException {
     writer.write("<script type=\"text/javascript\">");
     writer.write("window.parent.OnUploadCompleted(");
     writer.write("'" + FileUtils.backupWithBackSlash(arguments.getNewFileName(), "'") + "'");
@@ -162,7 +162,7 @@ public class FileUploadCommand extends Command<FileUploadArguments> implements I
     arguments.setLangCode(request.getParameter("langCode"));
 
     if (arguments.getErrorCode() == Constants.Errors.CKFINDER_CONNECTOR_ERROR_NONE) {
-      arguments.setUploaded(uploadFile(request, arguments));
+      arguments.setUploaded(uploadFile(request, arguments, configuration));
     }
 
   }
@@ -173,14 +173,14 @@ public class FileUploadCommand extends Command<FileUploadArguments> implements I
    * @param request request
    * @return true if uploaded correctly.
    */
-  private boolean uploadFile(HttpServletRequest request, FileUploadArguments arguments) {
-    if (!getConfiguration().getAccessControl().hasPermission(arguments.getType(),
+  private boolean uploadFile(HttpServletRequest request, FileUploadArguments arguments, IConfiguration configuration) {
+    if (!configuration.getAccessControl().hasPermission(arguments.getType(),
             arguments.getCurrentFolder(), arguments.getUserRole(),
             AccessControl.CKFINDER_CONNECTOR_ACL_FILE_UPLOAD)) {
       arguments.setErrorCode(Constants.Errors.CKFINDER_CONNECTOR_ERROR_UNAUTHORIZED);
       return false;
     }
-    return fileUpload(request, arguments);
+    return fileUpload(request, arguments, configuration);
   }
 
   /**
@@ -188,15 +188,15 @@ public class FileUploadCommand extends Command<FileUploadArguments> implements I
    * @param request http request
    * @return true if uploaded correctly
    */
-  private boolean fileUpload(HttpServletRequest request, FileUploadArguments arguments) {
+  private boolean fileUpload(HttpServletRequest request, FileUploadArguments arguments, IConfiguration configuration) {
     try {
       Collection<Part> parts = request.getParts();
       for (Part part : parts) {
-        String path = Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath(),
+        String path = Paths.get(configuration.getTypes().get(arguments.getType()).getPath(),
                 arguments.getCurrentFolder()).toString();
         arguments.setFileName(getFileItemName(part));
-        if (validateUploadItem(part, path, arguments)) {
-          return saveTemporaryFile(path, part, arguments);
+        if (validateUploadItem(part, path, arguments, configuration)) {
+          return saveTemporaryFile(path, part, arguments, configuration);
         }
       }
       return false;
@@ -230,25 +230,25 @@ public class FileUploadCommand extends Command<FileUploadArguments> implements I
    * @return result of saving, true if saved correctly
    * @throws Exception when error occurs.
    */
-  private boolean saveTemporaryFile(String path, Part item, FileUploadArguments arguments)
+  private boolean saveTemporaryFile(String path, Part item, FileUploadArguments arguments, IConfiguration configuration)
           throws Exception {
     Path file = Paths.get(path, arguments.getNewFileName());
 
     if (!ImageUtils.isImageExtension(file)) {
       item.write(file.toString());
-      if (getConfiguration().getEvents() != null) {
+      if (configuration.getEvents() != null) {
         AfterFileUploadEventArgs args = new AfterFileUploadEventArgs(arguments.getCurrentFolder(), file);
-        getConfiguration().getEvents().runAfterFileUpload(args, getConfiguration());
+        configuration.getEvents().runAfterFileUpload(args, configuration);
       }
       return true;
-    } else if (ImageUtils.checkImageSize(item, this.getConfiguration())
-            || getConfiguration().isCheckSizeAfterScaling()) {
-      ImageUtils.createTmpThumb(item, file, getFileItemName(item), this.getConfiguration());
-      if (!getConfiguration().isCheckSizeAfterScaling()
-              || FileUtils.isFileSizeInRange(getConfiguration().getTypes().get(arguments.getType()), Files.size(file))) {
-        if (getConfiguration().getEvents() != null) {
+    } else if (ImageUtils.checkImageSize(item, configuration)
+            || configuration.isCheckSizeAfterScaling()) {
+      ImageUtils.createTmpThumb(item, file, getFileItemName(item), configuration);
+      if (!configuration.isCheckSizeAfterScaling()
+              || FileUtils.isFileSizeInRange(configuration.getTypes().get(arguments.getType()), Files.size(file))) {
+        if (configuration.getEvents() != null) {
           AfterFileUploadEventArgs args = new AfterFileUploadEventArgs(arguments.getCurrentFolder(), file);
-          getConfiguration().getEvents().runAfterFileUpload(args, getConfiguration());
+          configuration.getEvents().runAfterFileUpload(args, configuration);
         }
         return true;
       } else {
@@ -299,7 +299,7 @@ public class FileUploadCommand extends Command<FileUploadArguments> implements I
    * @param path file path
    * @return true if validation
    */
-  private boolean validateUploadItem(Part item, String path, FileUploadArguments arguments) {
+  private boolean validateUploadItem(Part item, String path, FileUploadArguments arguments, IConfiguration configuration) {
 
     if (item.getSubmittedFileName() != null && item.getSubmittedFileName().length() > 0) {
       arguments.setFileName(getFileItemName(item));
@@ -311,50 +311,50 @@ public class FileUploadCommand extends Command<FileUploadArguments> implements I
 
     arguments.setNewFileName(UNSAFE_FILE_NAME_PATTERN.matcher(arguments.getNewFileName()).replaceAll("_"));
 
-    if (getConfiguration().isDisallowUnsafeCharacters()) {
+    if (configuration.isDisallowUnsafeCharacters()) {
       arguments.setNewFileName(arguments.getNewFileName().replace(';', '_'));
     }
-    if (getConfiguration().isForceAscii()) {
+    if (configuration.isForceAscii()) {
       arguments.setNewFileName(FileUtils.convertToASCII(arguments.getNewFileName()));
     }
     if (!arguments.getNewFileName().equals(arguments.getFileName())) {
       arguments.setErrorCode(Constants.Errors.CKFINDER_CONNECTOR_ERROR_UPLOADED_INVALID_NAME_RENAMED);
     }
 
-    if (FileUtils.isDirectoryHidden(arguments.getCurrentFolder(), getConfiguration())) {
+    if (FileUtils.isDirectoryHidden(arguments.getCurrentFolder(), configuration)) {
       arguments.setErrorCode(Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST);
       return false;
     }
     if (!FileUtils.isFileNameInvalid(arguments.getNewFileName())
-            || FileUtils.isFileHidden(arguments.getNewFileName(), getConfiguration())) {
+            || FileUtils.isFileHidden(arguments.getNewFileName(), configuration)) {
       arguments.setErrorCode(Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_NAME);
       return false;
     }
-    final ResourceType resourceType = getConfiguration().getTypes().get(arguments.getType());
+    final ResourceType resourceType = configuration.getTypes().get(arguments.getType());
     int checkFileExt = FileUtils.checkFileExtension(arguments.getNewFileName(), resourceType);
     if (checkFileExt == 1) {
       arguments.setErrorCode(Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_EXTENSION);
       return false;
     }
-    if (getConfiguration().isCheckDoubleFileExtensions()) {
+    if (configuration.isCheckDoubleFileExtensions()) {
       arguments.setNewFileName(FileUtils.renameFileWithBadExt(resourceType, arguments.getNewFileName()));
     }
 
     try {
       Path file = Paths.get(path, getFinalFileName(path, arguments.getNewFileName(), arguments));
-      if (!(ImageUtils.isImageExtension(file) && getConfiguration().isCheckSizeAfterScaling())
+      if (!(ImageUtils.isImageExtension(file) && configuration.isCheckSizeAfterScaling())
               && !FileUtils.isFileSizeInRange(resourceType, item.getSize())) {
         arguments.setErrorCode(Constants.Errors.CKFINDER_CONNECTOR_ERROR_UPLOADED_TOO_BIG);
         return false;
       }
 
-      if (getConfiguration().isSecureImageUploads() && ImageUtils.isImageExtension(file)
+      if (configuration.isSecureImageUploads() && ImageUtils.isImageExtension(file)
               && !ImageUtils.isValid(item)) {
         arguments.setErrorCode(Constants.Errors.CKFINDER_CONNECTOR_ERROR_UPLOADED_CORRUPT);
         return false;
       }
 
-      if (!FileUtils.isExtensionHtml(file.getFileName().toString(), getConfiguration())
+      if (!FileUtils.isExtensionHtml(file.getFileName().toString(), configuration)
               && FileUtils.hasHtmlContent(item)) {
         arguments.setErrorCode(Constants.Errors.CKFINDER_CONNECTOR_ERROR_UPLOADED_WRONG_HTML_FILE);
         return false;
@@ -395,17 +395,17 @@ public class FileUploadCommand extends Command<FileUploadArguments> implements I
 
   @Deprecated
   @Override
-  protected boolean isCurrFolderExists(FileUploadArguments arguments, HttpServletRequest request) {
+  protected boolean isCurrFolderExists(FileUploadArguments arguments, HttpServletRequest request, IConfiguration configuration) {
     try {
       String tmpType = request.getParameter("type");
       if (tmpType != null) {
         try {
-          checkTypeExists(tmpType);
+          checkTypeExists(tmpType, configuration);
         } catch (ConnectorException ex) {
           arguments.setErrorCode(ex.getErrorCode());
           return false;
         }
-        Path currDir = Paths.get(getConfiguration().getTypes().get(tmpType).getPath(),
+        Path currDir = Paths.get(configuration.getTypes().get(tmpType).getPath(),
                 arguments.getCurrentFolder());
         if (!Files.isDirectory(currDir)) {
           throw new ConnectorException(

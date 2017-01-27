@@ -62,9 +62,9 @@ public class GetFilesCommand extends XMLCommand<GetFilesArguments> {
   }
 
   @Override
-  protected void createXMLChildNodes(int errorNum, Connector.Builder rootElement, GetFilesArguments arguments) {
+  protected void createXMLChildNodes(int errorNum, Connector.Builder rootElement, GetFilesArguments arguments, IConfiguration configuration) {
     if (errorNum == Constants.Errors.CKFINDER_CONNECTOR_ERROR_NONE) {
-      createFilesData(rootElement, arguments);
+      createFilesData(rootElement, arguments, configuration);
     }
   }
 
@@ -75,18 +75,18 @@ public class GetFilesCommand extends XMLCommand<GetFilesArguments> {
    * @return 0 if ok, otherwise error code
    */
   @Override
-  protected int getDataForXml(GetFilesArguments arguments) {
+  protected int getDataForXml(GetFilesArguments arguments, IConfiguration configuration) {
     try {
-      checkTypeExists(arguments.getType());
+      checkTypeExists(arguments.getType(), configuration);
     } catch (ConnectorException ex) {
       arguments.setType(null);
       return ex.getErrorCode();
     }
 
-    arguments.setFullCurrentPath(Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath(),
+    arguments.setFullCurrentPath(Paths.get(configuration.getTypes().get(arguments.getType()).getPath(),
             arguments.getCurrentFolder()).toString());
 
-    if (!getConfiguration().getAccessControl().hasPermission(arguments.getType(),
+    if (!configuration.getAccessControl().hasPermission(arguments.getType(),
             arguments.getCurrentFolder(), arguments.getUserRole(),
             AccessControl.CKFINDER_CONNECTOR_ACL_FILE_VIEW)) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_UNAUTHORIZED;
@@ -102,7 +102,7 @@ public class GetFilesCommand extends XMLCommand<GetFilesArguments> {
       log.error("", e);
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_ACCESS_DENIED;
     }
-    filterListByHiddenAndNotAllowed(arguments);
+    filterListByHiddenAndNotAllowed(arguments, configuration);
     Collections.sort(arguments.getFiles());
     return Constants.Errors.CKFINDER_CONNECTOR_ERROR_NONE;
   }
@@ -111,10 +111,10 @@ public class GetFilesCommand extends XMLCommand<GetFilesArguments> {
    *
    *
    */
-  private void filterListByHiddenAndNotAllowed(GetFilesArguments arguments) {
+  private void filterListByHiddenAndNotAllowed(GetFilesArguments arguments, IConfiguration configuration) {
     List<String> tmpFiles = arguments.getFiles().stream()
-            .filter(file -> (FileUtils.checkFileExtension(file, getConfiguration().getTypes().get(arguments.getType())) == 0
-            && !FileUtils.isFileHidden(file, getConfiguration())))
+            .filter(file -> (FileUtils.checkFileExtension(file, configuration.getTypes().get(arguments.getType())) == 0
+            && !FileUtils.isFileHidden(file, configuration)))
             .collect(Collectors.toList());
 
     arguments.getFiles().clear();
@@ -127,7 +127,7 @@ public class GetFilesCommand extends XMLCommand<GetFilesArguments> {
    *
    * @param rootElement root element from XML.
    */
-  private void createFilesData(Connector.Builder rootElement, GetFilesArguments arguments) {
+  private void createFilesData(Connector.Builder rootElement, GetFilesArguments arguments, IConfiguration configuration) {
     com.github.zhanhb.ckfinder.connector.handlers.response.Files.Builder files = com.github.zhanhb.ckfinder.connector.handlers.response.Files.builder();
     for (String filePath : arguments.getFiles()) {
       Path file = Paths.get(arguments.getFullCurrentPath(), filePath);
@@ -137,8 +137,8 @@ public class GetFilesCommand extends XMLCommand<GetFilesArguments> {
                   .name(filePath)
                   .date(FileUtils.parseLastModifDate(file))
                   .size(getSize(file));
-          if (ImageUtils.isImageExtension(file) && isAddThumbsAttr(arguments)) {
-            String attr = createThumbAttr(file, arguments);
+          if (ImageUtils.isImageExtension(file) && isAddThumbsAttr(arguments, configuration)) {
+            String attr = createThumbAttr(file, arguments, configuration);
             if (!attr.isEmpty()) {
               builder.thumb(attr);
             }
@@ -157,8 +157,8 @@ public class GetFilesCommand extends XMLCommand<GetFilesArguments> {
    * @param file file to check if has thumb.
    * @return thumb attribute values
    */
-  private String createThumbAttr(Path file, GetFilesArguments arguments) {
-    Path thumbFile = Paths.get(getConfiguration().getThumbsPath(),
+  private String createThumbAttr(Path file, GetFilesArguments arguments, IConfiguration configuration) {
+    Path thumbFile = Paths.get(configuration.getThumbsPath(),
             arguments.getType(), arguments.getCurrentFolder(),
             file.getFileName().toString());
     if (Files.exists(thumbFile)) {
@@ -190,9 +190,9 @@ public class GetFilesCommand extends XMLCommand<GetFilesArguments> {
    *
    * @return true if show thumbs
    */
-  private boolean isAddThumbsAttr(GetFilesArguments arguments) {
-    return getConfiguration().isThumbsEnabled()
-            && (getConfiguration().isThumbsDirectAccess()
+  private boolean isAddThumbsAttr(GetFilesArguments arguments, IConfiguration configuration) {
+    return configuration.isThumbsEnabled()
+            && (configuration.isThumbsDirectAccess()
             || isShowThumbs(arguments));
   }
 

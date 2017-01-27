@@ -11,6 +11,7 @@
  */
 package com.github.zhanhb.ckfinder.connector.handlers.command;
 
+import com.github.zhanhb.ckfinder.connector.configuration.IConfiguration;
 import com.github.zhanhb.ckfinder.connector.handlers.arguments.FileUploadArguments;
 import com.github.zhanhb.ckfinder.connector.utils.FileUtils;
 import com.google.gson.Gson;
@@ -28,15 +29,15 @@ import javax.servlet.http.HttpServletResponse;
 public class QuickUploadCommand extends FileUploadCommand {
 
   @Override
-  protected void handleOnUploadCompleteResponse(Writer writer, String errorMsg, FileUploadArguments arguments) throws IOException {
+  protected void handleOnUploadCompleteResponse(Writer writer, String errorMsg, FileUploadArguments arguments, IConfiguration configuration) throws IOException {
     if (arguments.getResponseType() != null && arguments.getResponseType().equalsIgnoreCase("json")) {
-      handleJSONResponse(writer, errorMsg, null, arguments);
+      handleJSONResponse(writer, errorMsg, null, arguments, configuration);
     } else {
       writer.write("<script type=\"text/javascript\">");
       writer.write("window.parent.OnUploadCompleted(");
       writer.write("" + arguments.getErrorCode() + ", ");
       if (arguments.isUploaded()) {
-        writer.write("'" + getConfiguration().getTypes().get(arguments.getType()).getUrl()
+        writer.write("'" + configuration.getTypes().get(arguments.getType()).getUrl()
                 + arguments.getCurrentFolder()
                 + FileUtils.backupWithBackSlash(FileUtils.encodeURIComponent(arguments.getNewFileName()), "'")
                 + "', ");
@@ -52,11 +53,10 @@ public class QuickUploadCommand extends FileUploadCommand {
   }
 
   @Override
-  protected void handleOnUploadCompleteCallFuncResponse(Writer writer,
-          String errorMsg, String path, FileUploadArguments arguments)
+  protected void handleOnUploadCompleteCallFuncResponse(Writer writer, String errorMsg, String path, FileUploadArguments arguments, IConfiguration configuration)
           throws IOException {
     if (arguments.getResponseType() != null && arguments.getResponseType().equalsIgnoreCase("json")) {
-      handleJSONResponse(writer, errorMsg, path, arguments);
+      handleJSONResponse(writer, errorMsg, path, arguments, configuration);
     } else {
       writer.write("<script type=\"text/javascript\">");
       arguments.setCkEditorFuncNum(arguments.getCkEditorFuncNum().replaceAll("[^\\d]", ""));
@@ -92,8 +92,7 @@ public class QuickUploadCommand extends FileUploadCommand {
    * there was an error during upload or uploaded file was renamed
    * @param path path to uploaded file
    */
-  private void handleJSONResponse(Writer writer, String errorMsg, String path,
-          FileUploadArguments arguments) throws IOException {
+  private void handleJSONResponse(Writer writer, String errorMsg, String path, FileUploadArguments arguments, IConfiguration configuration) throws IOException {
 
     Gson gson = new GsonBuilder().serializeNulls().create();
     Map<String, Object> jsonObj = new HashMap<>(6);
@@ -106,7 +105,7 @@ public class QuickUploadCommand extends FileUploadCommand {
         jsonObj.put("url", path + FileUtils.backupWithBackSlash(FileUtils.encodeURIComponent(arguments.getNewFileName()), "'"));
       } else {
         jsonObj.put("url",
-                getConfiguration().getTypes().get(arguments.getType()).getUrl()
+                configuration.getTypes().get(arguments.getType()).getUrl()
                 + arguments.getCurrentFolder()
                 + FileUtils.backupWithBackSlash(FileUtils
                         .encodeURIComponent(arguments.getNewFileName()),

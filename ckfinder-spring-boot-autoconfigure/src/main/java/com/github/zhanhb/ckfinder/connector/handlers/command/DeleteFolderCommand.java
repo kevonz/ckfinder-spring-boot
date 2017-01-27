@@ -38,29 +38,30 @@ public class DeleteFolderCommand extends XMLCommand<XMLArguments> implements IPo
   public void initParams(XMLArguments arguments, HttpServletRequest request, IConfiguration configuration)
           throws ConnectorException {
     super.initParams(arguments, request, configuration);
-    if (getConfiguration().isEnableCsrfProtection() && !checkCsrfToken(request, null)) {
+    if (configuration.isEnableCsrfProtection() && !checkCsrfToken(request)) {
       throw new ConnectorException(Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST, "CSRF Attempt");
     }
   }
 
   @Override
-  protected void createXMLChildNodes(int errorNum, Connector.Builder rootElement, XMLArguments arguments) {
+  protected void createXMLChildNodes(int errorNum, Connector.Builder rootElement, XMLArguments arguments, IConfiguration configuration) {
   }
 
   /**
    * @param arguments
+   * @param configuration connector configuration
    * @return error code or 0 if ok. Deletes folder and thumb folder.
    */
   @Override
-  protected int getDataForXml(XMLArguments arguments) {
+  protected int getDataForXml(XMLArguments arguments, IConfiguration configuration) {
     try {
-      checkTypeExists(arguments.getType());
+      checkTypeExists(arguments.getType(), configuration);
     } catch (ConnectorException ex) {
       arguments.setType(null);
       return ex.getErrorCode();
     }
 
-    if (!getConfiguration().getAccessControl().hasPermission(arguments.getType(),
+    if (!configuration.getAccessControl().hasPermission(arguments.getType(),
             arguments.getCurrentFolder(),
             arguments.getUserRole(),
             AccessControl.CKFINDER_CONNECTOR_ACL_FOLDER_DELETE)) {
@@ -70,11 +71,11 @@ public class DeleteFolderCommand extends XMLCommand<XMLArguments> implements IPo
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
     }
 
-    if (FileUtils.isDirectoryHidden(arguments.getCurrentFolder(), getConfiguration())) {
+    if (FileUtils.isDirectoryHidden(arguments.getCurrentFolder(), configuration)) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
     }
 
-    Path dir = Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath(),
+    Path dir = Paths.get(configuration.getTypes().get(arguments.getType()).getPath(),
             arguments.getCurrentFolder());
 
     try {
@@ -83,7 +84,7 @@ public class DeleteFolderCommand extends XMLCommand<XMLArguments> implements IPo
       }
 
       if (FileUtils.delete(dir)) {
-        Path thumbDir = Paths.get(getConfiguration().getThumbsPath(),
+        Path thumbDir = Paths.get(configuration.getThumbsPath(),
                 arguments.getType(), arguments.getCurrentFolder());
         FileUtils.delete(thumbDir);
       } else {

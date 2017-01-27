@@ -37,7 +37,7 @@ public class CreateFolderCommand extends XMLCommand<CreateFolderArguments> imple
   }
 
   @Override
-  protected void createXMLChildNodes(int errorNum, Connector.Builder rootElement, CreateFolderArguments arguments) {
+  protected void createXMLChildNodes(int errorNum, Connector.Builder rootElement, CreateFolderArguments arguments, IConfiguration configuration) {
     if (errorNum == Constants.Errors.CKFINDER_CONNECTOR_ERROR_NONE) {
       createNewFolderElement(rootElement, arguments);
     }
@@ -58,10 +58,11 @@ public class CreateFolderCommand extends XMLCommand<CreateFolderArguments> imple
    * gets data for xml. Not used in this handler.
    *
    * @param arguments
-   * @return always 0
+   * @param configuration connector configuration
+   * @return returns 0 if success
    */
   @Override
-  protected int getDataForXml(CreateFolderArguments arguments) {
+  protected int getDataForXml(CreateFolderArguments arguments, IConfiguration configuration) {
     try {
       checkRequestPathValid(arguments.getNewFolderName());
     } catch (ConnectorException e) {
@@ -69,34 +70,34 @@ public class CreateFolderCommand extends XMLCommand<CreateFolderArguments> imple
     }
 
     try {
-      checkTypeExists(arguments.getType());
+      checkTypeExists(arguments.getType(), configuration);
     } catch (ConnectorException ex) {
       arguments.setType(null);
       return ex.getErrorCode();
     }
 
-    if (!getConfiguration().getAccessControl().hasPermission(arguments.getType(),
+    if (!configuration.getAccessControl().hasPermission(arguments.getType(),
             arguments.getCurrentFolder(), arguments.getUserRole(),
             AccessControl.CKFINDER_CONNECTOR_ACL_FOLDER_CREATE)) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_UNAUTHORIZED;
     }
 
-    if (getConfiguration().isForceAscii()) {
+    if (configuration.isForceAscii()) {
       arguments.setNewFolderName(FileUtils.convertToASCII(arguments.getNewFolderName()));
     }
 
-    if (!FileUtils.isFolderNameInvalid(arguments.getNewFolderName(), getConfiguration())) {
+    if (!FileUtils.isFolderNameInvalid(arguments.getNewFolderName(), configuration)) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_NAME;
     }
-    if (FileUtils.isDirectoryHidden(arguments.getCurrentFolder(), getConfiguration())) {
+    if (FileUtils.isDirectoryHidden(arguments.getCurrentFolder(), configuration)) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST;
     }
-    if (FileUtils.isDirectoryHidden(arguments.getNewFolderName(), getConfiguration())) {
+    if (FileUtils.isDirectoryHidden(arguments.getNewFolderName(), configuration)) {
       return Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_NAME;
     }
 
     try {
-      if (createFolder(arguments)) {
+      if (createFolder(arguments, configuration)) {
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_NONE;
       } else {
         return Constants.Errors.CKFINDER_CONNECTOR_ERROR_UNAUTHORIZED;
@@ -117,8 +118,8 @@ public class CreateFolderCommand extends XMLCommand<CreateFolderArguments> imple
    * @return true if folder is created correctly
    * @throws ConnectorException when error occurs or dir exists
    */
-  private boolean createFolder(CreateFolderArguments arguments) throws ConnectorException {
-    Path dir = Paths.get(getConfiguration().getTypes().get(arguments.getType()).getPath(),
+  private boolean createFolder(CreateFolderArguments arguments, IConfiguration configuration) throws ConnectorException {
+    Path dir = Paths.get(configuration.getTypes().get(arguments.getType()).getPath(),
             arguments.getCurrentFolder(), arguments.getNewFolderName());
     if (Files.exists(dir)) {
       arguments.throwException(Constants.Errors.CKFINDER_CONNECTOR_ERROR_ALREADY_EXIST);
@@ -135,7 +136,7 @@ public class CreateFolderCommand extends XMLCommand<CreateFolderArguments> imple
   protected void initParams(CreateFolderArguments arguments, HttpServletRequest request, IConfiguration configuration)
           throws ConnectorException {
     super.initParams(arguments, request, configuration);
-    if (getConfiguration().isEnableCsrfProtection() && !checkCsrfToken(request, null)) {
+    if (configuration.isEnableCsrfProtection() && !checkCsrfToken(request)) {
       throw new ConnectorException(Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST, "CSRF Attempt");
     }
     arguments.setNewFolderName(request.getParameter("NewFolderName"));
