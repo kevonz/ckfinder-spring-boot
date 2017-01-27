@@ -206,7 +206,6 @@ public abstract class Command<T extends Arguments> {
    * gets current folder request param or sets default value if it's not set.
    *
    * @param request request
-   * @param arguments
    */
   @Deprecated
   String getCurrentFolderParam(HttpServletRequest request) {
@@ -226,8 +225,6 @@ public abstract class Command<T extends Arguments> {
    * <a href="https://www.owasp.org/index.php/Cross-Site_Request_Forgery_(CSRF)_Prevention_Cheat_Sheet#Double_Submit_Cookies">Cross-Site_Request_Forgery_(CSRF)_Prevention</a>
    *
    * @param request current request object
-   * @param csrfTokenValue string value of CSRF token passed as request
-   * parameter
    * @return {@code true} if token is valid, {@code false} otherwise.
    */
   protected boolean checkCsrfToken(final HttpServletRequest request) {
