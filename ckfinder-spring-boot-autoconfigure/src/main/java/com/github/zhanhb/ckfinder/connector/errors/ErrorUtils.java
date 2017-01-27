@@ -11,7 +11,6 @@
  */
 package com.github.zhanhb.ckfinder.connector.errors;
 
-import com.github.zhanhb.ckfinder.connector.configuration.IConfiguration;
 import java.util.Locale;
 import java.util.ResourceBundle;
 import lombok.extern.slf4j.Slf4j;
@@ -32,11 +31,9 @@ public enum ErrorUtils {
    *
    * @param errorCode error number
    * @param lang connector language code
-   * @param conf connector configuration object
    * @return localized error message.
    */
-  public String getErrorMsgByLangAndCode(String lang,
-          int errorCode, IConfiguration conf) {
+  public String getErrorMsgByLangAndCode(String lang, int errorCode) {
     try {
       return ResourceBundle.getBundle(BUNDLE_NAME, new Locale(lang))
               .getString(Integer.toString(errorCode));
