@@ -12,7 +12,7 @@
   <dependencies>
     <dependency>
       <groupId>${project.groupId}</groupId>
-      <artifactId>ckfinder-spring-boot-autoconfigure</artifactId>
+      <artifactId>ckfinder-spring-boot-starter</artifactId>
       <version>${project.version}</version>
     </dependency>
   </dependencies>

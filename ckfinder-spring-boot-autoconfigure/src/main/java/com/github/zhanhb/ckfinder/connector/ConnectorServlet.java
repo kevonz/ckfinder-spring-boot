@@ -11,6 +11,7 @@
  */
 package com.github.zhanhb.ckfinder.connector;
 
+import com.github.zhanhb.ckfinder.connector.configuration.CommandFactory;
 import com.github.zhanhb.ckfinder.connector.configuration.Constants;
 import com.github.zhanhb.ckfinder.connector.configuration.Events;
 import com.github.zhanhb.ckfinder.connector.configuration.IConfiguration;
@@ -19,25 +20,10 @@ import com.github.zhanhb.ckfinder.connector.errors.ConnectorException;
 import com.github.zhanhb.ckfinder.connector.errors.ErrorHandler;
 import com.github.zhanhb.ckfinder.connector.errors.XMLErrorHandler;
 import com.github.zhanhb.ckfinder.connector.handlers.command.Command;
-import com.github.zhanhb.ckfinder.connector.handlers.command.CopyFilesCommand;
-import com.github.zhanhb.ckfinder.connector.handlers.command.CreateFolderCommand;
-import com.github.zhanhb.ckfinder.connector.handlers.command.DeleteFilesCommand;
-import com.github.zhanhb.ckfinder.connector.handlers.command.DeleteFolderCommand;
-import com.github.zhanhb.ckfinder.connector.handlers.command.DownloadFileCommand;
 import com.github.zhanhb.ckfinder.connector.handlers.command.FileUploadCommand;
-import com.github.zhanhb.ckfinder.connector.handlers.command.GetFilesCommand;
-import com.github.zhanhb.ckfinder.connector.handlers.command.GetFoldersCommand;
 import com.github.zhanhb.ckfinder.connector.handlers.command.IPostCommand;
-import com.github.zhanhb.ckfinder.connector.handlers.command.InitCommand;
-import com.github.zhanhb.ckfinder.connector.handlers.command.MoveFilesCommand;
-import com.github.zhanhb.ckfinder.connector.handlers.command.QuickUploadCommand;
-import com.github.zhanhb.ckfinder.connector.handlers.command.RenameFileCommand;
-import com.github.zhanhb.ckfinder.connector.handlers.command.RenameFolderCommand;
-import com.github.zhanhb.ckfinder.connector.handlers.command.ThumbnailCommand;
 import com.github.zhanhb.ckfinder.connector.handlers.command.XMLCommand;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -55,6 +41,7 @@ public class ConnectorServlet extends HttpServlet {
   private static final long serialVersionUID = 2960665641425153638L;
 
   private final IConfiguration configuration;
+  private final CommandFactory commandFactory = new CommandFactory();
 
   /**
    * Handling get requests.
@@ -109,8 +96,7 @@ public class ConnectorServlet extends HttpServlet {
 
       BeforeExecuteCommandEventArgs args = new BeforeExecuteCommandEventArgs(commandName, request, response);
 
-      final String commandUpperCase = commandName.toUpperCase();
-      command = CommandHolder.getCommand(commandUpperCase);
+      command = commandFactory.getCommand(commandName);
       if (command != null) {
         // checks if command should go via POST request or it's a post request
         // and it's not upload command
@@ -194,77 +180,5 @@ public class ConnectorServlet extends HttpServlet {
     }
   }
 
-  @SuppressWarnings("UtilityClassWithoutPrivateConstructor")
-  private static class CommandHolder {
-
-    private static final Map<String, Command<?>> MAP;
-
-    static {
-      Map<String, Command<?>> map = new HashMap<>(15);
-
-      /**
-       * init command.
-       */
-      map.put("INIT", new InitCommand());
-      /**
-       * get subfolders for selected location command.
-       */
-      map.put("GETFOLDERS", new GetFoldersCommand());
-      /**
-       * get files from current folder command.
-       */
-      map.put("GETFILES", new GetFilesCommand());
-      /**
-       * get thumbnail for file command.
-       */
-      map.put("THUMBNAIL", new ThumbnailCommand());
-      /**
-       * download file command.
-       */
-      map.put("DOWNLOADFILE", new DownloadFileCommand());
-      /**
-       * create subfolder.
-       */
-      map.put("CREATEFOLDER", new CreateFolderCommand());
-      /**
-       * rename file.
-       */
-      map.put("RENAMEFILE", new RenameFileCommand());
-      /**
-       * rename folder.
-       */
-      map.put("RENAMEFOLDER", new RenameFolderCommand());
-      /**
-       * delete folder.
-       */
-      map.put("DELETEFOLDER", new DeleteFolderCommand());
-      /**
-       * copy files.
-       */
-      map.put("COPYFILES", new CopyFilesCommand());
-      /**
-       * move files.
-       */
-      map.put("MOVEFILES", new MoveFilesCommand());
-      /**
-       * delete files.
-       */
-      map.put("DELETEFILES", new DeleteFilesCommand());
-      /**
-       * file upload.
-       */
-      map.put("FILEUPLOAD", new FileUploadCommand());
-      /**
-       * quick file upload.
-       */
-      map.put("QUICKUPLOAD", new QuickUploadCommand());
-      MAP = map;
-    }
-
-    static Command<?> getCommand(String commandUpperCase) {
-      return MAP.get(commandUpperCase);
-    }
-
-  }
 
 }
