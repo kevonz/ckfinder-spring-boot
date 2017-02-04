@@ -14,6 +14,11 @@
   <name>CKFinder Spring Boot</name>
   <description>Spring Boot Support for CKFinder</description>
 
+  <organization>
+    <name>zhanhb</name>
+    <url>https://github.com/zhanhb</url>
+  </organization>
+
   <licenses>
     <license>
       <name>LGPL, version 3</name>
