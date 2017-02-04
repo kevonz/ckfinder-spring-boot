@@ -176,9 +176,9 @@ public class ImageResizeCommand extends XMLCommand<ImageResizeArguments> impleme
 
   @Override
   @SuppressWarnings("CollectionWithoutInitialCapacity")
-  protected void initParams(ImageResizeArguments arguments, HttpServletRequest request, IConfiguration configuration1)
+  protected void initParams(ImageResizeArguments arguments, HttpServletRequest request, IConfiguration configuration)
           throws ConnectorException {
-    super.initParams(arguments, request, configuration1);
+    super.initParams(arguments, request, configuration);
 
     arguments.setSizesFromReq(new HashMap<>());
     arguments.setFileName(request.getParameter("fileName"));

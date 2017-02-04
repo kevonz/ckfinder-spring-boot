@@ -48,6 +48,7 @@ class URLEncoder {
    * @param charset the encoding to use.
    * @return the translated {@code String}.
    * @see java.net.URLEncoder#encode(java.lang.String, java.lang.String)
+   * @throws NullPointerException s or charset is null
    */
   public String encode(String s, Charset charset) {
     boolean needToChange = false;
@@ -55,21 +56,21 @@ class URLEncoder {
     Objects.requireNonNull(charset, "charset");
     StringBuilder out = new StringBuilder(length);
 
-    for (int cur = 0; cur < length;) {
-      int start = cur;
+    for (int i = 0; i < length;) {
+      int cur = i;
       while (cur < length && dontNeedEncoding.get(s.charAt(cur))) {
         ++cur;
       }
-      if (start != cur) {
-        out.append(s, start, cur);
-        start = cur;
+      if (i != cur) {
+        out.append(s, i, cur);
+        i = cur;
       }
       while (cur < length && !dontNeedEncoding.get(s.charAt(cur))) {
         ++cur;
       }
-      if (start != cur) {
+      if (i != cur) {
         // convert to external encoding before hex conversion
-        byte[] bytes = s.substring(start, cur).getBytes(charset);
+        byte[] bytes = s.substring(i, cur).getBytes(charset);
         for (int j = 0, limit = bytes.length; j < limit; ++j) {
           byte b = bytes[j];
           out.append('%').append(HEX_CHARS[b >> 4 & 0xF]).append(HEX_CHARS[b & 0xF]);
@@ -80,6 +81,12 @@ class URLEncoder {
     return needToChange ? out.toString() : s;
   }
 
+  /**
+   *
+   * @param s {@code String} to be translated.
+   * @return the translated {@code String}.
+   * @throws NullPointerException s is null
+   */
   public String encode(String s) {
     return encode(s, StandardCharsets.UTF_8);
   }

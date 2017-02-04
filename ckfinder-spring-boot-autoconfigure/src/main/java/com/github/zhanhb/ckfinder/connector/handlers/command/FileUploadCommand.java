@@ -30,6 +30,7 @@ import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.Part;
@@ -76,7 +77,7 @@ public class FileUploadCommand extends Command<FileUploadArguments> implements I
                 + arguments.getCurrentFolder();
       }
       PrintWriter writer = response.getWriter();
-      if (arguments.getResponseType() != null && arguments.getResponseType().equals("txt")) {
+      if ("txt".equals(arguments.getResponseType())) {
         writer.write(arguments.getNewFileName() + "|" + errorMsg);
       } else if (checkFuncNum(arguments)) {
         handleOnUploadCompleteCallFuncResponse(writer, errorMsg, path, arguments, configuration);
@@ -111,8 +112,7 @@ public class FileUploadCommand extends Command<FileUploadArguments> implements I
    * @throws IOException when error occurs.
    */
   protected void handleOnUploadCompleteCallFuncResponse(Writer out, String errorMsg, String path, FileUploadArguments arguments, IConfiguration configuration) throws IOException {
-    arguments.setCkFinderFuncNum(arguments.getCkFinderFuncNum().replaceAll(
-            "[^\\d]", ""));
+    arguments.setCkFinderFuncNum(arguments.getCkFinderFuncNum().replaceAll("[^\\d]", ""));
     out.write("<script type=\"text/javascript\">");
     out.write("window.parent.CKFinder.tools.callFunction("
             + arguments.getCkFinderFuncNum() + ", '"
@@ -206,7 +206,7 @@ public class FileUploadCommand extends Command<FileUploadArguments> implements I
         arguments.setCustomErrorMsg(e.getMessage());
       }
       return false;
-    } catch (Exception e) {
+    } catch (IOException | ServletException | RuntimeException e) {
       String message = e.getMessage();
       if (message != null
               && (message.toLowerCase().contains("sizelimit")
@@ -231,7 +231,7 @@ public class FileUploadCommand extends Command<FileUploadArguments> implements I
    * @throws Exception when error occurs.
    */
   private boolean saveTemporaryFile(String path, Part item, FileUploadArguments arguments, IConfiguration configuration)
-          throws Exception {
+          throws IOException, ConnectorException {
     Path file = Paths.get(path, arguments.getNewFileName());
 
     if (!ImageUtils.isImageExtension(file)) {

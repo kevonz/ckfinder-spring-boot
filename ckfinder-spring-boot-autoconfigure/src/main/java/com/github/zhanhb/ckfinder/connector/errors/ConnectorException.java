@@ -12,6 +12,8 @@
 package com.github.zhanhb.ckfinder.connector.errors;
 
 import com.github.zhanhb.ckfinder.connector.configuration.Constants;
+import com.github.zhanhb.ckfinder.connector.handlers.arguments.Arguments;
+import java.util.Objects;
 import lombok.Getter;
 
 /**
@@ -31,17 +33,13 @@ public class ConnectorException extends Exception {
   /**
    * standard constructor.
    *
-   * @param currentFolder current folder
-   * @param type type
+   * @param arguments the arguments
    * @param errorCode error code number
    */
-  public ConnectorException(String currentFolder, String type, int errorCode) {
-    if (currentFolder == null || type == null) {
-      throw new IllegalArgumentException();
-    }
+  public ConnectorException(Arguments arguments, int errorCode) {
     this.errorCode = errorCode;
-    this.currentFolder = currentFolder;
-    this.type = type;
+    this.currentFolder = Objects.requireNonNull(arguments.getCurrentFolder());
+    this.type = Objects.requireNonNull(arguments.getType());
   }
 
   /**

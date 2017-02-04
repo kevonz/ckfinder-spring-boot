@@ -195,8 +195,8 @@ public class ImageUtils {
    */
   public static boolean isImageExtension(Path file) {
     if (file != null) {
-      String fileExt = FileUtils.getFileExtension(file.getFileName().toString()).toLowerCase();
-      return (fileExt != null) ? ALLOWED_EXT.contains(fileExt) : false;
+      String fileExt = FileUtils.getFileExtension(file.getFileName().toString());
+      return fileExt != null && ALLOWED_EXT.contains(fileExt.toLowerCase());
     } else {
       return false;
     }

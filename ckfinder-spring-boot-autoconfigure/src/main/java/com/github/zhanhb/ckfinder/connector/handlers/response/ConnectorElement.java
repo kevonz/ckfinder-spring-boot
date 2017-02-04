@@ -26,6 +26,18 @@ public interface ConnectorElement {
     return Error.builder();
   }
 
+  public static Errors.Builder errors() {
+    return Errors.builder();
+  }
+
+  public static Files.Builder files() {
+    return Files.builder();
+  }
+
+  public static Folders.Builder folders() {
+    return Folders.builder();
+  }
+
   public static ImageInfo.Builder imageInfo() {
     return ImageInfo.builder();
   }
@@ -44,6 +56,10 @@ public interface ConnectorElement {
 
   public static RenamedFolder.Builder renamedFolder() {
     return RenamedFolder.builder();
+  }
+
+  public static ResourceTypes.Builder resourceTypes() {
+    return ResourceTypes.builder();
   }
 
 }

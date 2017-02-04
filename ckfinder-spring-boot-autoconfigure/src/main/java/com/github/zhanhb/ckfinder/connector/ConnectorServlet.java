@@ -96,23 +96,25 @@ public class ConnectorServlet extends HttpServlet {
 
       BeforeExecuteCommandEventArgs args = new BeforeExecuteCommandEventArgs(commandName, request, response);
 
-      command = commandFactory.getCommand(commandName);
-      if (command != null) {
-        // checks if command should go via POST request or it's a post request
-        // and it's not upload command
-        Class<?> commandClass = command.getClass();
-        if ((IPostCommand.class.isAssignableFrom(commandClass) || post)
-                && !FileUploadCommand.class.isAssignableFrom(commandClass)) {
-          checkPostRequest(request);
+      Events events = configuration.getEvents();
+      if (events == null || events.runBeforeExecuteCommand(args, configuration)) {
+        command = commandFactory.getCommand(commandName);
+        log.debug("{} {}", command, events);
+        if (command != null) {
+          // checks if command should go via POST request or it's a post request
+          // and it's not upload command
+          Class<?> commandClass = command.getClass();
+          if ((IPostCommand.class.isAssignableFrom(commandClass) || post)
+                  && !FileUploadCommand.class.isAssignableFrom(commandClass)) {
+            checkPostRequest(request);
+          }
+          command.runCommand(request, response, configuration);
+        } else {
+          throw new ConnectorException(
+                  Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_COMMAND);
         }
       }
-
-      Events events = configuration.getEvents();
-      log.debug("{} {}", command, events);
-      if (events == null || events.runBeforeExecuteCommand(args, configuration)) {
-        executeCommand(command, request, response, configuration);
-      }
-    } catch (IllegalArgumentException e) {
+    } catch (RuntimeException | Error e) {
       log.error("", e);
       handleError(new ConnectorException(
               Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_COMMAND),
@@ -120,29 +122,6 @@ public class ConnectorServlet extends HttpServlet {
     } catch (ConnectorException e) {
       log.error("", e);
       handleError(e, configuration, request, response, command);
-    }
-  }
-
-  /**
-   * Executes one of connector's predefined commands specified as parameter.
-   *
-   * @param command command to run, null if not native command
-   * @param request current request object
-   * @param response current response object
-   * @param configuration CKFinder connector configuration enumeration object
-   *
-   * @throws ConnectorException when command isn't native
-   * @throws IllegalArgumentException when provided command is not found in
-   * enumeration object
-   */
-  private void executeCommand(Command<?> command, HttpServletRequest request,
-          HttpServletResponse response, IConfiguration configuration)
-          throws ConnectorException, IOException {
-    if (command != null) {
-      command.runCommand(request, response, configuration);
-    } else {
-      throw new ConnectorException(
-              Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_COMMAND);
     }
   }
 
@@ -172,13 +151,12 @@ public class ConnectorServlet extends HttpServlet {
    */
   private void handleError(ConnectorException e, IConfiguration configuration,
           HttpServletRequest request, HttpServletResponse response,
-          Command<?> command) throws ServletException, IOException {
+          Command<?> command) throws IOException {
     if (command == null || command instanceof XMLCommand) {
       XMLErrorHandler.INSTANCE.handleException(request, response, configuration, e);
     } else {
       ErrorHandler.INSTANCE.handleException(request, response, configuration, e);
     }
   }
-
 
 }

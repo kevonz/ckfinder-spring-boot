@@ -17,7 +17,7 @@ public abstract class Arguments {
   private String type;
 
   public void throwException(int code) throws ConnectorException {
-    throw new ConnectorException(currentFolder, type, code);
+    throw new ConnectorException(this, code);
   }
 
 }

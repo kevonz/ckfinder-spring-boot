@@ -388,10 +388,9 @@ public class FileUtils {
    */
   public static boolean isExtensionHtml(String file,
           IConfiguration configuration) {
-
-    return configuration.getHtmlExtensions().contains(
-            getFileExtension(file).toLowerCase());
-
+    String extension = getFileExtension(file);
+    return extension != null && configuration.getHtmlExtensions().contains(
+            extension.toLowerCase());
   }
 
   /**
@@ -500,18 +499,22 @@ public class FileUtils {
     }
 
     StringTokenizer tokens = new StringTokenizer(fileName, ".");
-    String cfileName = tokens.nextToken();
-    String currToken;
-    while (tokens.hasMoreTokens()) {
-      currToken = tokens.nextToken();
-      if (tokens.hasMoreElements()) {
-        cfileName = cfileName.concat(isExtensionAllowed(currToken, type) ? "." : "_");
-        cfileName = cfileName.concat(currToken);
-      } else {
-        cfileName = cfileName.concat(".".concat(currToken));
-      }
+    String currToken = tokens.nextToken();
+    if (tokens.hasMoreTokens()) {
+      StringBuilder cfileName = new StringBuilder(fileName.length()).append(currToken);
+      boolean more;
+      do {
+        currToken = tokens.nextToken();
+        more = tokens.hasMoreElements();
+        if (more) {
+          cfileName.append(isExtensionAllowed(currToken, type) ? '.' : '_').append(currToken);
+        } else {
+          cfileName.append('.').append(currToken);
+        }
+      } while (more);
+      return cfileName.toString();
     }
-    return cfileName;
+    return currToken;
   }
 
   public static String encodeURIComponent(String fileName) {

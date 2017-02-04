@@ -23,7 +23,7 @@ import com.github.zhanhb.ckfinder.connector.utils.AccessControl;
 import com.github.zhanhb.ckfinder.connector.utils.FileUtils;
 import com.github.zhanhb.ckfinder.connector.utils.PathUtils;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -44,6 +44,7 @@ public class InitCommand extends XMLCommand<XMLArguments> {
   private static final int[] LICENSE_CHARS = {11, 0, 8, 12, 26, 2, 3, 25, 1};
   private static final int LICENSE_CHAR_NR = 5;
   private static final int LICENSE_KEY_LENGTH = 34;
+  private static final char[] hexChars = "0123456789abcdef".toCharArray();
 
   public InitCommand() {
     super(XMLArguments::new);
@@ -231,19 +232,19 @@ public class InitCommand extends XMLCommand<XMLArguments> {
   private String randomHash(String folder) {
     try {
       MessageDigest algorithm = MessageDigest.getInstance("SHA-256");
-      byte[] messageDigest = algorithm.digest(folder.getBytes("UTF8"));
+      byte[] messageDigest = algorithm.digest(folder.getBytes(StandardCharsets.UTF_8));
+      int len = messageDigest.length;
 
-      StringBuilder hexString = new StringBuilder(messageDigest.length << 1);
+      StringBuilder hexString = new StringBuilder(len << 1);
 
-      for (int i = 0; i < messageDigest.length; i++) {
-        hexString.append(Integer.toString((messageDigest[i] & 0xff) + 0x100, 16).substring(1));
+      for (int i = 0; i < len; i++) {
+        byte b = messageDigest[i];
+        hexString.append(hexChars[b >> 4 & 15]).append(hexChars[b & 15]);
       }
       return hexString.substring(0, 15);
     } catch (NoSuchAlgorithmException e) {
       log.error("", e);
       return "";
-    } catch (UnsupportedEncodingException ex) {
-      throw new AssertionError(ex);
     }
   }
 
