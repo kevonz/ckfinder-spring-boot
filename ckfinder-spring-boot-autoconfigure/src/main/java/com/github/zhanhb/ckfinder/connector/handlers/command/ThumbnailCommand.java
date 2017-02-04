@@ -36,7 +36,8 @@ import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Class to handle <code>Thumbnail</code> command.
+ * Class to handle <code>Thumbnail</code> command. Get thumbnail for file
+ * command.
  */
 @Slf4j
 public class ThumbnailCommand extends Command<ThumbnailArguments> {

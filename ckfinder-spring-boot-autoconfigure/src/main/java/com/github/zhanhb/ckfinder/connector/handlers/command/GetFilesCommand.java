@@ -31,7 +31,8 @@ import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Class to handle <code>GetFiles</code> command.
+ * Class to handle <code>GetFiles</code> command. Get files from current folder
+ * command.
  */
 @Slf4j
 public class GetFilesCommand extends XMLCommand<GetFilesArguments> {

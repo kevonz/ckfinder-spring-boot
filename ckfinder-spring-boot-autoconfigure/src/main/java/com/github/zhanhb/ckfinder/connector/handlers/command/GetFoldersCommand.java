@@ -30,7 +30,8 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Class to handle <code>GetFolders</code> command.
+ * Class to handle <code>GetFolders</code> command. Get subfolders for selected
+ * location command.
  */
 @Slf4j
 public class GetFoldersCommand extends XMLCommand<GetFoldersArguments> {
@@ -121,9 +122,9 @@ public class GetFoldersCommand extends XMLCommand<GetFoldersArguments> {
                 .name(dirPath)
                 .hasChildren(hasChildren)
                 .acl(configuration.getAccessControl()
-                                .checkACLForRole(arguments.getType(),
-                                        arguments.getCurrentFolder()
-                                        + dirPath, arguments.getUserRole())).build());
+                        .checkACLForRole(arguments.getType(),
+                                arguments.getCurrentFolder()
+                                + dirPath, arguments.getUserRole())).build());
       }
     }
     rootElement.folders(folders.build());

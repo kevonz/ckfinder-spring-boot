@@ -15,8 +15,10 @@ import com.github.zhanhb.ckfinder.connector.handlers.command.QuickUploadCommand;
 import com.github.zhanhb.ckfinder.connector.handlers.command.RenameFileCommand;
 import com.github.zhanhb.ckfinder.connector.handlers.command.RenameFolderCommand;
 import com.github.zhanhb.ckfinder.connector.handlers.command.ThumbnailCommand;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
+import java.util.TreeMap;
 
 /**
  *
@@ -24,71 +26,59 @@ import java.util.Map;
  */
 public class CommandFactory {
 
-  private final Map<String, Command<?>> commands;
+  private final Map<String, Command<?>> commands = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
-  public CommandFactory() {
-    Map<String, Command<?>> map = new HashMap<>(20);
-    /**
-     * init command.
-     */
-    map.put("INIT", new InitCommand());
-    /**
-     * get subfolders for selected location command.
-     */
-    map.put("GETFOLDERS", new GetFoldersCommand());
-    /**
-     * get files from current folder command.
-     */
-    map.put("GETFILES", new GetFilesCommand());
-    /**
-     * get thumbnail for file command.
-     */
-    map.put("THUMBNAIL", new ThumbnailCommand());
-    /**
-     * download file command.
-     */
-    map.put("DOWNLOADFILE", new DownloadFileCommand());
-    /**
-     * create subfolder.
-     */
-    map.put("CREATEFOLDER", new CreateFolderCommand());
-    /**
-     * rename file.
-     */
-    map.put("RENAMEFILE", new RenameFileCommand());
-    /**
-     * rename folder.
-     */
-    map.put("RENAMEFOLDER", new RenameFolderCommand());
-    /**
-     * delete folder.
-     */
-    map.put("DELETEFOLDER", new DeleteFolderCommand());
-    /**
-     * copy files.
-     */
-    map.put("COPYFILES", new CopyFilesCommand());
-    /**
-     * move files.
-     */
-    map.put("MOVEFILES", new MoveFilesCommand());
-    /**
-     * delete files.
-     */
-    map.put("DELETEFILES", new DeleteFilesCommand());
-    /**
-     * file upload.
-     */
-    map.put("FILEUPLOAD", new FileUploadCommand());
-    /**
-     * quick file upload.
-     */
-    map.put("QUICKUPLOAD", new QuickUploadCommand());
-    commands = map;
+  public CommandFactory enableDefaultCommands() {
+    return registerCommands(new InitCommand(),
+            new GetFoldersCommand(),
+            new GetFilesCommand(),
+            new ThumbnailCommand(),
+            new DownloadFileCommand(),
+            new CreateFolderCommand(),
+            new RenameFileCommand(),
+            new RenameFolderCommand(),
+            new DeleteFolderCommand(),
+            new CopyFilesCommand(),
+            new MoveFilesCommand(),
+            new DeleteFilesCommand(),
+            new FileUploadCommand(),
+            new QuickUploadCommand());
+  }
+
+  public CommandFactory registerCommands(Command<?>... commands) {
+    Map<String, Command<?>> map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+    for (Command<?> command : commands) {
+      String className = command.getClass().getSimpleName();
+      final String suffix = "Command";
+      if (!className.endsWith(suffix)) {
+        throw new IllegalArgumentException("Can't detect command name for class " + command.getClass().getName());
+      }
+      String name = className.substring(0, className.length() - suffix.length());
+      if (map.put(name, command) != null) {
+        throw new IllegalArgumentException("duplicate command '" + name + "'");
+      }
+    }
+    return registerCommands(map);
+  }
+
+  public CommandFactory registerCommand(String name, Command<?> command) {
+    return registerCommands(Collections.singletonMap(name, command));
+  }
+
+  private CommandFactory registerCommands(Map<String, ? extends Command<?>> commands) {
+    for (Map.Entry<String, ? extends Command<?>> entry : commands.entrySet()) {
+      String name = entry.getKey();
+      Objects.requireNonNull(entry.getValue());
+      if (this.commands.containsKey(name)) {
+        throw new IllegalArgumentException("duplicate command '" + name + "'");
+      }
+    }
+    this.commands.putAll(commands);
+    return this;
   }
 
   public Command<?> getCommand(String commandName) {
-    return commands.get(commandName.toUpperCase());
+    return commands.get(commandName);
   }
 
 }

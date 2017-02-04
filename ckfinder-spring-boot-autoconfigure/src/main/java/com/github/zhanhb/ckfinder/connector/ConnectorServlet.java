@@ -41,7 +41,7 @@ public class ConnectorServlet extends HttpServlet {
   private static final long serialVersionUID = 2960665641425153638L;
 
   private final IConfiguration configuration;
-  private final CommandFactory commandFactory = new CommandFactory();
+  private final CommandFactory commandFactory = new CommandFactory().enableDefaultCommands();
 
   /**
    * Handling get requests.

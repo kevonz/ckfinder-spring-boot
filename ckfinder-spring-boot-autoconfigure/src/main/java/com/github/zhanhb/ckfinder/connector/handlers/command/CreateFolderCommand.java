@@ -27,7 +27,7 @@ import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Class to handle <code>CreateFolder</code> command.
+ * Class to handle <code>CreateFolder</code> command. Create subfolder.
  */
 @Slf4j
 public class CreateFolderCommand extends XMLCommand<CreateFolderArguments> implements IPostCommand {
