@@ -47,14 +47,10 @@ public class ConnectorException extends Exception {
   /**
    * standard constructor.
    *
-   * @param addCurrentFolder add current node flag
    * @param errorCode error code number
    */
-  public ConnectorException(int errorCode, boolean addCurrentFolder) {
+  public ConnectorException(int errorCode) {
     super(null, null);
-    if (addCurrentFolder) {
-      throw new IllegalArgumentException();
-    }
     this.errorCode = errorCode;
     this.currentFolder = null;
   }

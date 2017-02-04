@@ -45,7 +45,7 @@ public class DownloadFileCommand extends Command<DownloadFileArguments> {
       checkTypeExists(arguments.getType(), configuration);
     } catch (ConnectorException ex) {
       arguments.setType(null);
-      throw new ConnectorException(ex.getErrorCode(), false);
+      throw new ConnectorException(ex.getErrorCode());
     }
 
     Path file = Paths.get(configuration.getTypes().get(arguments.getType()).getPath(),

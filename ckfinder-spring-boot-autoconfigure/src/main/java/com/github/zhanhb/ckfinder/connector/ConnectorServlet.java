@@ -91,7 +91,7 @@ public class ConnectorServlet extends HttpServlet {
     try {
       if (commandName == null || commandName.isEmpty()) {
         throw new ConnectorException(
-                Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_COMMAND, false);
+                Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_COMMAND);
       }
 
       BeforeExecuteCommandEventArgs args = new BeforeExecuteCommandEventArgs(commandName, request, response);
@@ -115,7 +115,7 @@ public class ConnectorServlet extends HttpServlet {
     } catch (IllegalArgumentException e) {
       log.error("", e);
       handleError(new ConnectorException(
-              Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_COMMAND, false),
+              Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_COMMAND),
               configuration, request, response, command);
     } catch (ConnectorException e) {
       log.error("", e);
@@ -142,7 +142,7 @@ public class ConnectorServlet extends HttpServlet {
       command.runCommand(request, response, configuration);
     } else {
       throw new ConnectorException(
-              Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_COMMAND, false);
+              Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_COMMAND);
     }
   }
 
@@ -156,7 +156,7 @@ public class ConnectorServlet extends HttpServlet {
           throws ConnectorException {
     if (!"true".equals(request.getParameter("CKFinderCommand"))) {
       throw new ConnectorException(
-              Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST, true);
+              Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST);
     }
   }
 

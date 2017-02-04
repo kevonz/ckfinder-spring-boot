@@ -93,8 +93,7 @@ public abstract class Command<T extends Arguments> {
     arguments.setCurrentFolder(currentFolder);
     if (FileUtils.isDirectoryHidden(arguments.getCurrentFolder(), configuration)) {
       throw new ConnectorException(
-              Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST,
-              false);
+              Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_REQUEST);
     }
 
     if (currentFolder == null || currentFolder.isEmpty()
@@ -112,7 +111,7 @@ public abstract class Command<T extends Arguments> {
   private void checkConnectorEnabled(IConfiguration configuration) throws ConnectorException {
     if (!configuration.isEnabled()) {
       throw new ConnectorException(
-              Constants.Errors.CKFINDER_CONNECTOR_ERROR_CONNECTOR_DISABLED, false);
+              Constants.Errors.CKFINDER_CONNECTOR_ERROR_CONNECTOR_DISABLED);
     }
   }
 
@@ -139,8 +138,7 @@ public abstract class Command<T extends Arguments> {
               arguments.getCurrentFolder());
       if (!Files.isDirectory(currDir)) {
         throw new ConnectorException(
-                Constants.Errors.CKFINDER_CONNECTOR_ERROR_FOLDER_NOT_FOUND,
-                false);
+                Constants.Errors.CKFINDER_CONNECTOR_ERROR_FOLDER_NOT_FOUND);
       } else {
         return true;
       }
@@ -161,7 +159,7 @@ public abstract class Command<T extends Arguments> {
     ResourceType testType = configuration.getTypes().get(type);
     if (testType == null) {
       throw new ConnectorException(
-              Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE, false);
+              Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_TYPE);
     }
   }
 
@@ -197,8 +195,7 @@ public abstract class Command<T extends Arguments> {
     if (reqParam != null && !reqParam.isEmpty()
             && Pattern.compile(Constants.INVALID_PATH_REGEX).matcher(reqParam).find()) {
       throw new ConnectorException(
-              Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_NAME,
-              false);
+              Constants.Errors.CKFINDER_CONNECTOR_ERROR_INVALID_NAME);
     }
   }
 

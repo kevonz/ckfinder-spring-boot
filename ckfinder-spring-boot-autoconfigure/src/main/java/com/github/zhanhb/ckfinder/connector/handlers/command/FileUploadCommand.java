@@ -409,8 +409,7 @@ public class FileUploadCommand extends Command<FileUploadArguments> implements I
                 arguments.getCurrentFolder());
         if (!Files.isDirectory(currDir)) {
           throw new ConnectorException(
-                  Constants.Errors.CKFINDER_CONNECTOR_ERROR_FOLDER_NOT_FOUND,
-                  false);
+                  Constants.Errors.CKFINDER_CONNECTOR_ERROR_FOLDER_NOT_FOUND);
         } else {
           return true;
         }
